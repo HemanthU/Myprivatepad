@@ -1,16 +1,18 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { doc, onSnapshot, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 export default function NotePage() {
   const params = useParams();
+  const router = useRouter();
   const slug = params.slug as string;
 
   const [text, setText] = useState("");
   const [loaded, setLoaded] = useState(false);
+  const [status, setStatus] = useState("Saved");
   const firstLoad = useRef(true);
 
   useEffect(() => {
@@ -35,25 +37,59 @@ export default function NotePage() {
   useEffect(() => {
     if (!loaded || firstLoad.current) return;
 
+    setStatus("Saving...");
+
     const timeout = setTimeout(async () => {
-      await setDoc(doc(db, "notes", slug), {
-        content: text,
-        updatedAt: new Date(),
-      });
+      try {
+        await setDoc(doc(db, "notes", slug), {
+          content: text,
+          updatedAt: new Date(),
+        });
+
+        setStatus("Saved");
+      } catch {
+        setStatus("Sync Error");
+      }
     }, 500);
 
     return () => clearTimeout(timeout);
   }, [text, slug, loaded]);
 
+  useEffect(() => {
+    const handleShortcuts = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        setStatus("Saving...");
+      }
+
+      if (e.ctrlKey && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        const nextPad = prompt("Enter pad keyword:");
+        if (nextPad) router.push(`/${nextPad}`);
+      }
+
+      if (e.ctrlKey && e.key.toLowerCase() === "d") {
+        e.preventDefault();
+        navigator.clipboard.writeText(text);
+      }
+    };
+
+    window.addEventListener("keydown", handleShortcuts);
+    return () => window.removeEventListener("keydown", handleShortcuts);
+  }, [text, router]);
+
   return (
-    <main className="min-h-screen bg-black text-white p-6">
-      <h1 className="text-2xl font-bold mb-4">Pad: {slug}</h1>
+    <main className="min-h-screen bg-black text-white p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
+        <h1 className="text-xl sm:text-2xl font-bold break-all">Pad: {slug}</h1>
+        <span className="text-sm text-gray-400">{status}</span>
+      </div>
 
       <textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
         placeholder="Start typing..."
-        className="w-full h-[80vh] bg-gray-900 rounded-xl p-4 outline-none"
+        className="w-full h-[80vh] sm:h-[85vh] bg-gray-900 rounded-xl p-4 outline-none text-base sm:text-lg"
       />
     </main>
   );
