@@ -27,7 +27,7 @@ export default function Home() {
 
         <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left w-full">
           <h1 className="text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            Private Pad Dashboard
+            Private Pad By HEMU
           </h1>
 
           <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
