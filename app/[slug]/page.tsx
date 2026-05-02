@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { doc, onSnapshot, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -11,14 +11,21 @@ export default function NotePage() {
 
   const [text, setText] = useState("");
   const [loaded, setLoaded] = useState(false);
+  const firstLoad = useRef(true);
 
   useEffect(() => {
     const ref = doc(db, "notes", slug);
 
     const unsubscribe = onSnapshot(ref, (snap) => {
       if (snap.exists()) {
-        setText(snap.data().content || "");
+        const savedText = snap.data().content || "";
+
+        if (firstLoad.current) {
+          setText(savedText);
+          firstLoad.current = false;
+        }
       }
+
       setLoaded(true);
     });
 
@@ -26,7 +33,7 @@ export default function NotePage() {
   }, [slug]);
 
   useEffect(() => {
-    if (!loaded) return;
+    if (!loaded || firstLoad.current) return;
 
     const timeout = setTimeout(async () => {
       await setDoc(doc(db, "notes", slug), {
