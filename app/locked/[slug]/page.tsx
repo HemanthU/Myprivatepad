@@ -24,10 +24,11 @@ export default function LockedPadPage() {
     const settings = settingsSnap.data();
 
     if (password === settings.password) {
-      router.push(`/${slug}`);
-    } else {
-      alert("Incorrect password");
-    }
+  sessionStorage.setItem(`unlocked-${slug}`, "true");
+  router.push(`/${slug}`);
+} else {
+  alert("Incorrect password");
+}
   };
 
   return (

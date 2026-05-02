@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { doc, onSnapshot, setDoc, getDoc } from "firebase/firestore";
+import { doc, onSnapshot, setDoc, getDoc, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 export default function NotePage() {
@@ -13,6 +13,7 @@ export default function NotePage() {
   const [text, setText] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [status, setStatus] = useState("Saved");
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const firstLoad = useRef(true);
 
   useEffect(() => {
@@ -23,9 +24,22 @@ export default function NotePage() {
       if (settingsSnap.exists()) {
         const settings = settingsSnap.data();
 
+        if (settings.selfDelete && settings.deleteAt) {
+          if (new Date() >= new Date(settings.deleteAt)) {
+            await deleteDoc(doc(db, "notes", slug));
+            await deleteDoc(doc(db, "padSettings", slug));
+            router.push("/");
+            return;
+          }
+        }
+
         if (settings.locked) {
-          router.push(`/locked/${slug}`);
-          return;
+          const unlocked = sessionStorage.getItem(`unlocked-${slug}`);
+
+          if (!unlocked) {
+            router.push(`/locked/${slug}`);
+            return;
+          }
         }
       }
 
@@ -38,7 +52,11 @@ export default function NotePage() {
           if (firstLoad.current) {
             setText(savedText);
             firstLoad.current = false;
+            setInitialLoadComplete(true);
           }
+        } else {
+          firstLoad.current = false;
+          setInitialLoadComplete(true);
         }
 
         setLoaded(true);
@@ -59,7 +77,7 @@ export default function NotePage() {
   }, [slug, router]);
 
   useEffect(() => {
-    if (!loaded || firstLoad.current) return;
+    if (!loaded || firstLoad.current || !initialLoadComplete) return;
 
     setStatus("Saving...");
 
@@ -77,10 +95,10 @@ export default function NotePage() {
     }, 500);
 
     return () => clearTimeout(timeout);
-  }, [text, slug, loaded]);
+  }, [text, slug, loaded, initialLoadComplete]);
 
   useEffect(() => {
-    const handleShortcuts = (e: KeyboardEvent) => {
+    const handleShortcuts = async (e: KeyboardEvent) => {
       if (e.ctrlKey && e.key.toLowerCase() === "s") {
         e.preventDefault();
 
@@ -118,6 +136,7 @@ export default function NotePage() {
         if (!password) return;
 
         setDoc(doc(db, "padSettings", slug), {
+          ...(await getDoc(doc(db, "padSettings", slug))).data(),
           locked: true,
           password,
         })
@@ -127,7 +146,20 @@ export default function NotePage() {
 
       if (e.ctrlKey && e.key.toLowerCase() === "x") {
         e.preventDefault();
-        alert("Self-delete feature coming in next step.");
+
+        const minutes = prompt("Delete this pad after how many minutes?");
+
+        if (!minutes) return;
+
+        const deleteAt = new Date(Date.now() + Number(minutes) * 60000);
+
+        setDoc(doc(db, "padSettings", slug), {
+          ...(await getDoc(doc(db, "padSettings", slug))).data(),
+          selfDelete: true,
+          deleteAt: deleteAt.toISOString(),
+        })
+          .then(() => alert("Self-delete timer set successfully."))
+          .catch(() => alert("Failed to set self-delete timer."));
       }
     };
 
