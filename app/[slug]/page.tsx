@@ -59,7 +59,15 @@ export default function NotePage() {
     const handleShortcuts = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.key.toLowerCase() === "s") {
         e.preventDefault();
+
         setStatus("Saving...");
+
+        setDoc(doc(db, "notes", slug), {
+          content: text,
+          updatedAt: new Date(),
+        })
+          .then(() => setStatus("Saved"))
+          .catch(() => setStatus("Sync Error"));
       }
 
       if (e.ctrlKey && e.key.toLowerCase() === "k") {
@@ -72,11 +80,26 @@ export default function NotePage() {
         e.preventDefault();
         navigator.clipboard.writeText(text);
       }
+
+      if (e.ctrlKey && e.key === "/") {
+        e.preventDefault();
+        router.push("/admin");
+      }
+
+      if (e.ctrlKey && e.key.toLowerCase() === "l") {
+        e.preventDefault();
+        alert("Pad lock feature coming in next step.");
+      }
+
+      if (e.ctrlKey && e.key.toLowerCase() === "x") {
+        e.preventDefault();
+        alert("Self-delete feature coming in next step.");
+      }
     };
 
     window.addEventListener("keydown", handleShortcuts);
     return () => window.removeEventListener("keydown", handleShortcuts);
-  }, [text, router]);
+  }, [text, router, slug]);
 
   return (
     <main className="min-h-screen bg-black text-white p-4 sm:p-6">
