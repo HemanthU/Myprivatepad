@@ -12,19 +12,48 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
+type PadData = {
+  name: string;
+  locked: boolean;
+  selfDelete: boolean;
+};
+
 export default function AdminPage() {
   const router = useRouter();
-  const [pads, setPads] = useState<string[]>([]);
+  const [pads, setPads] = useState<PadData[]>([]);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     const loadPads = async () => {
       const snapshot = await getDocs(collection(db, "notes"));
-      const names = snapshot.docs.map((doc) => doc.id);
-      setPads(names);
+
+      const padList = await Promise.all(
+        snapshot.docs.map(async (noteDoc) => {
+          const padName = noteDoc.id;
+
+          const settingsSnap = await getDoc(doc(db, "padSettings", padName));
+
+          const settings = settingsSnap.exists()
+            ? settingsSnap.data()
+            : {};
+
+          return {
+            name: padName,
+            locked: settings.locked || false,
+            selfDelete: settings.selfDelete || false,
+          };
+        })
+      );
+
+      setPads(padList);
     };
 
     loadPads();
   }, []);
+
+  const filteredPads = pads.filter((pad) =>
+    pad.name.toLowerCase().includes(search.toLowerCase())
+  );
 
   const managePad = async (padName: string) => {
     router.push(`/${padName}`);
@@ -42,15 +71,13 @@ export default function AdminPage() {
     });
 
     alert("Pad locked successfully.");
+    location.reload();
   };
 
   const unlockPad = async (padName: string) => {
     const settingsSnap = await getDoc(doc(db, "padSettings", padName));
 
-    if (!settingsSnap.exists()) {
-      alert("No settings found.");
-      return;
-    }
+    if (!settingsSnap.exists()) return;
 
     const settings = settingsSnap.data();
 
@@ -61,6 +88,7 @@ export default function AdminPage() {
     });
 
     alert("Pad unlocked successfully.");
+    location.reload();
   };
 
   const selfDeleteControls = async (padName: string) => {
@@ -82,15 +110,13 @@ export default function AdminPage() {
       });
 
       alert("Self-delete timer updated.");
+      location.reload();
     }
 
     if (action === "remove") {
       const settingsSnap = await getDoc(doc(db, "padSettings", padName));
 
-      if (!settingsSnap.exists()) {
-        alert("No settings found.");
-        return;
-      }
+      if (!settingsSnap.exists()) return;
 
       const settings = settingsSnap.data();
 
@@ -101,12 +127,13 @@ export default function AdminPage() {
       });
 
       alert("Self-delete removed.");
+      location.reload();
     }
   };
 
   const deletePad = async (padName: string) => {
     const confirmDelete = confirm(
-      `Delete "${padName}" permanently? This cannot be undone.`
+      `Delete "${padName}" permanently?`
     );
 
     if (!confirmDelete) return;
@@ -114,9 +141,7 @@ export default function AdminPage() {
     await deleteDoc(doc(db, "notes", padName));
     await deleteDoc(doc(db, "padSettings", padName));
 
-    setPads((prev) => prev.filter((pad) => pad !== padName));
-
-    alert("Pad deleted permanently.");
+    setPads((prev) => prev.filter((pad) => pad.name !== padName));
   };
 
   return (
@@ -130,47 +155,72 @@ export default function AdminPage() {
         Homepage
       </button>
 
-<div className="flex flex-col gap-4">
-  {pads.length === 0 && (
-    <p className="text-gray-400">No pads found.</p>
-  )}        {pads.map((pad) => (
+      <input
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Search pads..."
+        className="w-full max-w-md p-4 rounded-xl bg-gray-900 outline-none mb-6"
+      />
+
+      <div className="flex flex-col gap-4">
+        {filteredPads.length === 0 && (
+          <p className="text-gray-400">No pads found.</p>
+        )}
+
+        {filteredPads.map((pad) => (
           <div
-            key={pad}
+            key={pad.name}
             className="bg-gray-900 rounded-xl p-4 flex flex-col gap-3"
           >
-            <h2 className="text-xl font-semibold break-all">{pad}</h2>
+            <div className="flex flex-wrap items-center gap-3">
+              <h2 className="text-xl font-semibold break-all">
+                {pad.name}
+              </h2>
+
+              {pad.locked && (
+                <span className="text-sm bg-blue-800 px-2 py-1 rounded">
+                  Locked
+                </span>
+              )}
+
+              {pad.selfDelete && (
+                <span className="text-sm bg-yellow-700 px-2 py-1 rounded">
+                  Self-Delete
+                </span>
+              )}
+            </div>
 
             <div className="flex flex-wrap gap-2">
               <button
-                onClick={() => managePad(pad)}
+                onClick={() => managePad(pad.name)}
                 className="px-4 py-2 rounded-lg bg-white text-black"
               >
                 Open
               </button>
 
               <button
-                onClick={() => lockPad(pad)}
+                onClick={() => lockPad(pad.name)}
                 className="px-4 py-2 rounded-lg bg-blue-700"
               >
                 Lock
               </button>
 
               <button
-                onClick={() => unlockPad(pad)}
+                onClick={() => unlockPad(pad.name)}
                 className="px-4 py-2 rounded-lg bg-green-700"
               >
                 Unlock
               </button>
 
               <button
-                onClick={() => selfDeleteControls(pad)}
+                onClick={() => selfDeleteControls(pad.name)}
                 className="px-4 py-2 rounded-lg bg-yellow-700"
               >
                 Self-Delete
               </button>
 
               <button
-                onClick={() => deletePad(pad)}
+                onClick={() => deletePad(pad.name)}
                 className="px-4 py-2 rounded-lg bg-red-800"
               >
                 Delete
