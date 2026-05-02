@@ -2,37 +2,41 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, onSnapshot, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 export default function NotePage() {
   const params = useParams();
   const slug = params.slug as string;
+
   const [text, setText] = useState("");
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    const loadNote = async () => {
-      const ref = doc(db, "notes", slug);
-      const snap = await getDoc(ref);
+    const ref = doc(db, "notes", slug);
 
+    const unsubscribe = onSnapshot(ref, (snap) => {
       if (snap.exists()) {
         setText(snap.data().content || "");
       }
-    };
+      setLoaded(true);
+    });
 
-    loadNote();
+    return () => unsubscribe();
   }, [slug]);
 
   useEffect(() => {
+    if (!loaded) return;
+
     const timeout = setTimeout(async () => {
       await setDoc(doc(db, "notes", slug), {
         content: text,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       });
     }, 500);
 
     return () => clearTimeout(timeout);
-  }, [text, slug]);
+  }, [text, slug, loaded]);
 
   return (
     <main className="min-h-screen bg-black text-white p-6">
