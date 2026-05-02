@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { doc, onSnapshot, setDoc } from "firebase/firestore";
+import { doc, onSnapshot, setDoc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 export default function NotePage() {
@@ -16,6 +16,17 @@ export default function NotePage() {
   const firstLoad = useRef(true);
 
   useEffect(() => {
+    const settingsRef = doc(db, "padSettings", slug);
+const settingsSnap = await getDoc(settingsRef);
+
+if (settingsSnap.exists()) {
+  const settings = settingsSnap.data();
+
+  if (settings.locked) {
+    router.push(`/locked/${slug}`);
+    return;
+  }
+}
     const ref = doc(db, "notes", slug);
 
     const unsubscribe = onSnapshot(ref, (snap) => {
@@ -87,9 +98,19 @@ export default function NotePage() {
       }
 
       if (e.ctrlKey && e.key.toLowerCase() === "l") {
-        e.preventDefault();
-        alert("Pad lock feature coming in next step.");
-      }
+  e.preventDefault();
+
+  const password = prompt("Set a password for this pad:");
+
+  if (!password) return;
+
+  setDoc(doc(db, "padSettings", slug), {
+    locked: true,
+    password,
+  })
+    .then(() => alert("Pad locked successfully."))
+    .catch(() => alert("Failed to lock pad."));
+}
 
       if (e.ctrlKey && e.key.toLowerCase() === "x") {
         e.preventDefault();

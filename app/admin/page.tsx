@@ -14,11 +14,11 @@ export default function AdminPage() {
           onClick={() => router.push("/")}
           className="p-4 rounded-xl bg-white text-black font-semibold"
         >
-          Go to Homepage
+          Homepage
         </button>
 
         <button
-          onClick={() => alert("Pad management features coming next.")}
+          onClick={() => alert("Pad management system coming next.")}
           className="p-4 rounded-xl bg-gray-900"
         >
           Manage Pads
@@ -29,6 +29,13 @@ export default function AdminPage() {
           className="p-4 rounded-xl bg-gray-900"
         >
           Security Settings
+        </button>
+
+        <button
+          onClick={() => alert("Self-delete management coming next.")}
+          className="p-4 rounded-xl bg-gray-900"
+        >
+          Self-Delete Controls
         </button>
       </div>
     </main>
