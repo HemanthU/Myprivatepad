@@ -16,6 +16,7 @@ type PadData = {
   name: string;
   locked: boolean;
   selfDelete: boolean;
+  deleteAt?: string;
 };
 
 export default function AdminPage() {
@@ -41,6 +42,7 @@ export default function AdminPage() {
             name: padName,
             locked: settings.locked || false,
             selfDelete: settings.selfDelete || false,
+            deleteAt: settings.deleteAt || "",
           };
         })
       );
@@ -189,6 +191,12 @@ export default function AdminPage() {
                 </span>
               )}
             </div>
+
+            {pad.selfDelete && pad.deleteAt && (
+              <p className="text-sm text-yellow-400">
+                Deletes at: {new Date(pad.deleteAt).toLocaleString()}
+              </p>
+            )}
 
             <div className="flex flex-wrap gap-2">
               <button
