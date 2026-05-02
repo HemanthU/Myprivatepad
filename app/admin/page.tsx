@@ -130,8 +130,10 @@ export default function AdminPage() {
         Homepage
       </button>
 
-      <div className="flex flex-col gap-4">
-        {pads.map((pad) => (
+<div className="flex flex-col gap-4">
+  {pads.length === 0 && (
+    <p className="text-gray-400">No pads found.</p>
+  )}        {pads.map((pad) => (
           <div
             key={pad}
             className="bg-gray-900 rounded-xl p-4 flex flex-col gap-3"
