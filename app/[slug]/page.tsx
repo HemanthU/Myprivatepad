@@ -16,34 +16,47 @@ export default function NotePage() {
   const firstLoad = useRef(true);
 
   useEffect(() => {
-    const settingsRef = doc(db, "padSettings", slug);
-const settingsSnap = await getDoc(settingsRef);
+    const loadPad = async () => {
+      const settingsRef = doc(db, "padSettings", slug);
+      const settingsSnap = await getDoc(settingsRef);
 
-if (settingsSnap.exists()) {
-  const settings = settingsSnap.data();
+      if (settingsSnap.exists()) {
+        const settings = settingsSnap.data();
 
-  if (settings.locked) {
-    router.push(`/locked/${slug}`);
-    return;
-  }
-}
-    const ref = doc(db, "notes", slug);
-
-    const unsubscribe = onSnapshot(ref, (snap) => {
-      if (snap.exists()) {
-        const savedText = snap.data().content || "";
-
-        if (firstLoad.current) {
-          setText(savedText);
-          firstLoad.current = false;
+        if (settings.locked) {
+          router.push(`/locked/${slug}`);
+          return;
         }
       }
 
-      setLoaded(true);
+      const ref = doc(db, "notes", slug);
+
+      const unsubscribe = onSnapshot(ref, (snap) => {
+        if (snap.exists()) {
+          const savedText = snap.data().content || "";
+
+          if (firstLoad.current) {
+            setText(savedText);
+            firstLoad.current = false;
+          }
+        }
+
+        setLoaded(true);
+      });
+
+      return unsubscribe;
+    };
+
+    let unsubscribe: (() => void) | undefined;
+
+    loadPad().then((cleanup) => {
+      unsubscribe = cleanup;
     });
 
-    return () => unsubscribe();
-  }, [slug]);
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [slug, router]);
 
   useEffect(() => {
     if (!loaded || firstLoad.current) return;
@@ -98,19 +111,19 @@ if (settingsSnap.exists()) {
       }
 
       if (e.ctrlKey && e.key.toLowerCase() === "l") {
-  e.preventDefault();
+        e.preventDefault();
 
-  const password = prompt("Set a password for this pad:");
+        const password = prompt("Set a password for this pad:");
 
-  if (!password) return;
+        if (!password) return;
 
-  setDoc(doc(db, "padSettings", slug), {
-    locked: true,
-    password,
-  })
-    .then(() => alert("Pad locked successfully."))
-    .catch(() => alert("Failed to lock pad."));
-}
+        setDoc(doc(db, "padSettings", slug), {
+          locked: true,
+          password,
+        })
+          .then(() => alert("Pad locked successfully."))
+          .catch(() => alert("Failed to lock pad."));
+      }
 
       if (e.ctrlKey && e.key.toLowerCase() === "x") {
         e.preventDefault();
