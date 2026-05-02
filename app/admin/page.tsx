@@ -1,68 +1,69 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { doc, deleteDoc, getDoc, setDoc } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  doc,
+  deleteDoc,
+  getDoc,
+  setDoc,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 export default function AdminPage() {
   const router = useRouter();
+  const [pads, setPads] = useState<string[]>([]);
 
-  const managePad = async () => {
-    const padName = prompt("Enter pad keyword:");
+  useEffect(() => {
+    const loadPads = async () => {
+      const snapshot = await getDocs(collection(db, "notes"));
+      const names = snapshot.docs.map((doc) => doc.id);
+      setPads(names);
+    };
 
-    if (padName) {
-      router.push(`/${padName}`);
-    }
+    loadPads();
+  }, []);
+
+  const managePad = async (padName: string) => {
+    router.push(`/${padName}`);
   };
 
-  const securitySettings = async () => {
-    const padName = prompt("Enter pad keyword for security settings:");
+  const lockPad = async (padName: string) => {
+    const password = prompt(`Set password for "${padName}":`);
 
-    if (!padName) return;
+    if (!password) return;
 
-    const action = prompt(
-      "Type:\nlock → Set password lock\nunlock → Remove lock"
-    );
+    await setDoc(doc(db, "padSettings", padName), {
+      ...(await getDoc(doc(db, "padSettings", padName))).data(),
+      locked: true,
+      password,
+    });
 
-    if (action === "lock") {
-      const password = prompt("Enter new password:");
-
-      if (!password) return;
-
-      await setDoc(doc(db, "padSettings", padName), {
-        ...(await getDoc(doc(db, "padSettings", padName))).data(),
-        locked: true,
-        password,
-      });
-
-      alert("Pad locked successfully.");
-    }
-
-    if (action === "unlock") {
-      const settingsSnap = await getDoc(doc(db, "padSettings", padName));
-
-      if (!settingsSnap.exists()) {
-        alert("No settings found.");
-        return;
-      }
-
-      const settings = settingsSnap.data();
-
-      await setDoc(doc(db, "padSettings", padName), {
-        ...settings,
-        locked: false,
-        password: "",
-      });
-
-      alert("Pad unlocked successfully.");
-    }
+    alert("Pad locked successfully.");
   };
 
-  const selfDeleteControls = async () => {
-    const padName = prompt("Enter pad keyword:");
+  const unlockPad = async (padName: string) => {
+    const settingsSnap = await getDoc(doc(db, "padSettings", padName));
 
-    if (!padName) return;
+    if (!settingsSnap.exists()) {
+      alert("No settings found.");
+      return;
+    }
 
+    const settings = settingsSnap.data();
+
+    await setDoc(doc(db, "padSettings", padName), {
+      ...settings,
+      locked: false,
+      password: "",
+    });
+
+    alert("Pad unlocked successfully.");
+  };
+
+  const selfDeleteControls = async (padName: string) => {
     const action = prompt(
       "Type:\nset → Set self-delete timer\nremove → Remove self-delete"
     );
@@ -103,11 +104,7 @@ export default function AdminPage() {
     }
   };
 
-  const deletePad = async () => {
-    const padName = prompt("Enter pad keyword to delete permanently:");
-
-    if (!padName) return;
-
+  const deletePad = async (padName: string) => {
     const confirmDelete = confirm(
       `Delete "${padName}" permanently? This cannot be undone.`
     );
@@ -117,48 +114,68 @@ export default function AdminPage() {
     await deleteDoc(doc(db, "notes", padName));
     await deleteDoc(doc(db, "padSettings", padName));
 
+    setPads((prev) => prev.filter((pad) => pad !== padName));
+
     alert("Pad deleted permanently.");
   };
 
   return (
     <main className="min-h-screen bg-black text-white p-6">
-      <h1 className="text-3xl font-bold mb-6">Private Admin Panel</h1>
+      <h1 className="text-3xl font-bold mb-6">Private Admin Dashboard</h1>
 
-      <div className="flex flex-col gap-4 max-w-md">
-        <button
-          onClick={() => router.push("/")}
-          className="p-4 rounded-xl bg-white text-black font-semibold"
-        >
-          Homepage
-        </button>
+      <button
+        onClick={() => router.push("/")}
+        className="mb-6 p-4 rounded-xl bg-white text-black font-semibold"
+      >
+        Homepage
+      </button>
 
-        <button
-          onClick={managePad}
-          className="p-4 rounded-xl bg-gray-900"
-        >
-          Manage Pads
-        </button>
+      <div className="flex flex-col gap-4">
+        {pads.map((pad) => (
+          <div
+            key={pad}
+            className="bg-gray-900 rounded-xl p-4 flex flex-col gap-3"
+          >
+            <h2 className="text-xl font-semibold break-all">{pad}</h2>
 
-        <button
-          onClick={securitySettings}
-          className="p-4 rounded-xl bg-gray-900"
-        >
-          Security Settings
-        </button>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => managePad(pad)}
+                className="px-4 py-2 rounded-lg bg-white text-black"
+              >
+                Open
+              </button>
 
-        <button
-          onClick={selfDeleteControls}
-          className="p-4 rounded-xl bg-gray-900"
-        >
-          Self-Delete Controls
-        </button>
+              <button
+                onClick={() => lockPad(pad)}
+                className="px-4 py-2 rounded-lg bg-blue-700"
+              >
+                Lock
+              </button>
 
-        <button
-          onClick={deletePad}
-          className="p-4 rounded-xl bg-red-900"
-        >
-          Delete Pad Permanently
-        </button>
+              <button
+                onClick={() => unlockPad(pad)}
+                className="px-4 py-2 rounded-lg bg-green-700"
+              >
+                Unlock
+              </button>
+
+              <button
+                onClick={() => selfDeleteControls(pad)}
+                className="px-4 py-2 rounded-lg bg-yellow-700"
+              >
+                Self-Delete
+              </button>
+
+              <button
+                onClick={() => deletePad(pad)}
+                className="px-4 py-2 rounded-lg bg-red-800"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
     </main>
   );
