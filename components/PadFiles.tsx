@@ -122,7 +122,11 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
     if (file.isBurnAfterRead) {
       if (!confirm("This is a Burn After Read file. Downloading it will delete it permanently. Continue?")) return;
     }
-    window.open(file.downloadUrl, "_blank");
+    let downloadUrl = file.downloadUrl;
+    if (downloadUrl.includes("cloudinary.com") && !downloadUrl.includes("fl_attachment")) {
+      downloadUrl = downloadUrl.replace("/upload/", "/upload/fl_attachment/");
+    }
+    window.open(downloadUrl, "_blank");
     await setDoc(doc(db, "files", file.fileId), { ...file, totalDownloads: (file.totalDownloads || 0) + 1 });
     
     if (file.isBurnAfterRead) {
@@ -343,8 +347,10 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
                 </div>
               ) : previewFile.fileType.startsWith("image/") ? (
                 <img src={previewFile.downloadUrl} alt={previewFile.fileName} className="max-w-full max-h-full object-contain" />
-              ) : (previewFile.fileType === "application/pdf" || previewFile.fileType.includes("word") || previewFile.fileType.includes("presentation") || previewFile.fileType.includes("excel")) ? (
-                <iframe src={`https://docs.google.com/gview?url=${encodeURIComponent(previewFile.downloadUrl)}&embedded=true`} className="w-full h-full border-none bg-white rounded-xl" />
+              ) : previewFile.fileType === "application/pdf" ? (
+                <iframe src={`${previewFile.downloadUrl}#view=FitH`} className="w-full h-full border-none bg-white rounded-xl" />
+              ) : (previewFile.fileType.includes("word") || previewFile.fileType.includes("presentation") || previewFile.fileType.includes("excel")) ? (
+                <iframe src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(previewFile.downloadUrl)}`} className="w-full h-full border-none bg-white rounded-xl" />
               ) : (
                 <div className="text-center p-8">
                   <FileIcon size={64} className="mx-auto mb-6 text-gray-400" />
