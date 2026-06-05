@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { doc, onSnapshot, setDoc, getDoc, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function NotePage() {
   const params = useParams();
@@ -167,19 +168,43 @@ export default function NotePage() {
     return () => window.removeEventListener("keydown", handleShortcuts);
   }, [text, router, slug]);
 
-  return (
-    <main className="min-h-screen bg-black text-white p-4 sm:p-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
-        <h1 className="text-xl sm:text-2xl font-bold break-all">Pad: {slug}</h1>
-        <span className="text-sm text-gray-400">{status}</span>
-      </div>
+  const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
+  const charCount = text.length;
 
-      <textarea
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        placeholder="Start typing..."
-        className="w-full h-[80vh] sm:h-[85vh] bg-gray-900 rounded-xl p-4 outline-none text-base sm:text-lg"
-      />
-    </main>
+  return (
+    <div className="min-h-screen bg-background text-foreground transition-colors duration-300 flex flex-col items-center font-sans">
+      <header className="w-full max-w-[1100px] flex items-center justify-between p-4 sm:p-6 mb-2">
+        <h1 
+          onClick={() => router.push("/")}
+          className="text-2xl font-extrabold cursor-pointer hover:opacity-80 transition-opacity"
+        >
+          PadX
+        </h1>
+        <div className="flex items-center gap-3 sm:gap-4">
+          <span className={`text-sm font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5 ${status === 'Saved' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : status === 'Saving...' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'}`}>
+            {status === "Saved" ? "✓ Saved" : status === "Saving..." ? "⟳ Saving..." : "⚠ Sync Error"}
+          </span>
+          <ThemeToggle />
+        </div>
+      </header>
+
+      <main className="w-full max-w-[1100px] px-4 sm:px-6 flex-1 flex flex-col">
+        <h2 className="text-3xl sm:text-4xl font-bold mb-6 text-gray-800 dark:text-gray-200">
+          # {slug}
+        </h2>
+
+        <div className="flex-1 w-full bg-card shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] border border-border rounded-3xl p-6 sm:p-10 mb-8 flex flex-col transition-all duration-300">
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Start typing..."
+            className="w-full flex-1 bg-transparent outline-none text-lg sm:text-xl leading-relaxed resize-none"
+          />
+          <div className="mt-6 pt-4 border-t border-border flex justify-end text-sm font-medium text-gray-500 dark:text-gray-400">
+            {wordCount} words • {charCount} chars
+          </div>
+        </div>
+      </main>
+    </div>
   );
 }

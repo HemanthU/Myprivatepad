@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function Home() {
   const [keyword, setKeyword] = useState("");
@@ -14,38 +14,36 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-center py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert mb-8"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
+    <div className="flex flex-col min-h-screen bg-background text-foreground transition-colors duration-300 relative">
+      <header className="w-full flex justify-end p-4 sm:p-6 absolute top-0">
+        <ThemeToggle />
+      </header>
 
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left w-full">
-          <h1 className="text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            Private Pad By HEMU
+      <main className="flex flex-1 flex-col items-center justify-center p-4 sm:p-8">
+        <div className="w-full max-w-lg bg-card/80 backdrop-blur-xl border border-border rounded-3xl p-8 sm:p-12 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_40px_rgb(0,0,0,0.16)] transition-all duration-300 flex flex-col items-center text-center">
+          
+          <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight mb-2 bg-gradient-to-r from-gray-900 to-gray-500 dark:from-white dark:to-gray-400 bg-clip-text text-transparent">
+            PadX
           </h1>
-
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Enter a keyword to create or open your private cloud pad.
+          <h2 className="text-xl sm:text-2xl font-semibold mb-4 text-gray-700 dark:text-gray-300">
+            Private Pad by HEMU
+          </h2>
+          <p className="text-base sm:text-lg mb-8 text-gray-500 dark:text-gray-400 max-w-md">
+            Create, access, and manage your private cloud pads.
           </p>
 
-          <div className="w-full max-w-md flex flex-col gap-4 mt-4">
+          <div className="w-full flex flex-col gap-4">
             <input
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && openPad()}
               placeholder="Enter pad keyword"
-              className="w-full p-4 rounded-xl bg-gray-900 text-white outline-none text-lg"
+              className="w-full p-4 rounded-2xl bg-black/5 dark:bg-white/5 border border-transparent focus:border-gray-400 dark:focus:border-gray-600 outline-none text-lg transition-all text-center"
             />
 
             <button
               onClick={openPad}
-              className="w-full p-4 rounded-xl bg-black text-white dark:bg-white dark:text-black font-semibold"
+              className="w-full p-4 rounded-2xl bg-black text-white dark:bg-white dark:text-black font-semibold text-lg hover:opacity-90 active:scale-[0.98] shadow-lg hover:shadow-xl transition-all"
             >
               Open Pad
             </button>

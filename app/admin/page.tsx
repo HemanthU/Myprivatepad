@@ -11,6 +11,7 @@ import {
   setDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { Lock, Unlock, Trash, Clock, ExternalLink, Settings, Home, Search, FileText } from "lucide-react";
 
 type PadData = {
   name: string;
@@ -146,97 +147,143 @@ export default function AdminPage() {
     setPads((prev) => prev.filter((pad) => pad.name !== padName));
   };
 
+  const totalPads = pads.length;
+  const lockedPads = pads.filter(p => p.locked).length;
+  const selfDeletePads = pads.filter(p => p.selfDelete).length;
+  const trashCount = 0; // Placeholder as requested
+
   return (
-    <main className="min-h-screen bg-black text-white p-6">
-      <h1 className="text-3xl font-bold mb-6">Private Admin Dashboard</h1>
+    <div className="min-h-screen bg-background text-foreground transition-colors duration-300 font-sans pb-12">
+      <header className="w-full border-b border-border bg-card/50 backdrop-blur-md sticky top-0 z-10 px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <h1 className="text-2xl font-bold tracking-tight">Admin Dashboard</h1>
+        </div>
+        <button
+          onClick={() => router.push("/")}
+          className="flex items-center gap-2 px-4 py-2 rounded-full bg-black text-white dark:bg-white dark:text-black font-medium hover:opacity-90 transition-opacity shadow-sm"
+        >
+          <Home size={18} />
+          <span>Home</span>
+        </button>
+      </header>
 
-      <button
-        onClick={() => router.push("/")}
-        className="mb-6 p-4 rounded-xl bg-white text-black font-semibold"
-      >
-        Homepage
-      </button>
-
-      <input
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        placeholder="Search pads..."
-        className="w-full max-w-md p-4 rounded-xl bg-gray-900 outline-none mb-6"
-      />
-
-      <div className="flex flex-col gap-4">
-        {filteredPads.length === 0 && (
-          <p className="text-gray-400">No pads found.</p>
-        )}
-
-        {filteredPads.map((pad) => (
-          <div
-            key={pad.name}
-            className="bg-gray-900 rounded-xl p-4 flex flex-col gap-3"
-          >
-            <div className="flex flex-wrap items-center gap-3">
-              <h2 className="text-xl font-semibold break-all">
-                {pad.name}
-              </h2>
-
-              {pad.locked && (
-                <span className="text-sm bg-blue-800 px-2 py-1 rounded">
-                  Locked
-                </span>
-              )}
-
-              {pad.selfDelete && (
-                <span className="text-sm bg-yellow-700 px-2 py-1 rounded">
-                  Self-Delete
-                </span>
-              )}
+      <main className="max-w-6xl mx-auto px-6 pt-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-3 mb-2 text-gray-500 dark:text-gray-400">
+              <FileText size={20} />
+              <h3 className="font-medium">Total Pads</h3>
             </div>
-
-            {pad.selfDelete && pad.deleteAt && (
-              <p className="text-sm text-yellow-400">
-                Deletes at: {new Date(pad.deleteAt).toLocaleString()}
-              </p>
-            )}
-
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => managePad(pad.name)}
-                className="px-4 py-2 rounded-lg bg-white text-black"
-              >
-                Open
-              </button>
-
-              <button
-                onClick={() => lockPad(pad.name)}
-                className="px-4 py-2 rounded-lg bg-blue-700"
-              >
-                Lock
-              </button>
-
-              <button
-                onClick={() => unlockPad(pad.name)}
-                className="px-4 py-2 rounded-lg bg-green-700"
-              >
-                Unlock
-              </button>
-
-              <button
-                onClick={() => selfDeleteControls(pad.name)}
-                className="px-4 py-2 rounded-lg bg-yellow-700"
-              >
-                Self-Delete
-              </button>
-
-              <button
-                onClick={() => deletePad(pad.name)}
-                className="px-4 py-2 rounded-lg bg-red-800"
-              >
-                Delete
-              </button>
-            </div>
+            <p className="text-4xl font-bold">{totalPads}</p>
           </div>
-        ))}
-      </div>
-    </main>
+          
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-3 mb-2 text-blue-500">
+              <Lock size={20} />
+              <h3 className="font-medium">Locked Pads</h3>
+            </div>
+            <p className="text-4xl font-bold">{lockedPads}</p>
+          </div>
+
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-3 mb-2 text-yellow-500">
+              <Clock size={20} />
+              <h3 className="font-medium">Self-Delete Active</h3>
+            </div>
+            <p className="text-4xl font-bold">{selfDeletePads}</p>
+          </div>
+
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-3 mb-2 text-red-500">
+              <Trash size={20} />
+              <h3 className="font-medium">Trash Count</h3>
+            </div>
+            <p className="text-4xl font-bold">{trashCount}</p>
+          </div>
+        </div>
+
+        <div className="relative mb-8 max-w-md">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search pads..."
+            className="w-full pl-12 pr-4 py-4 rounded-2xl bg-card border border-border focus:border-gray-400 dark:focus:border-gray-500 outline-none shadow-sm transition-all text-lg"
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {filteredPads.length === 0 && (
+            <p className="text-gray-500 dark:text-gray-400 col-span-full text-center py-12 text-lg">No pads found.</p>
+          )}
+
+          {filteredPads.map((pad) => (
+            <div
+              key={pad.name}
+              className="bg-card border border-border rounded-3xl p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col"
+            >
+              <div className="flex items-start justify-between mb-4">
+                <h2 className="text-2xl font-bold break-all flex-1 pr-4 line-clamp-1">
+                  {pad.name}
+                </h2>
+                <div className="flex flex-col gap-2 shrink-0">
+                  {pad.locked && (
+                    <span className="text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 px-2 py-1 rounded-md flex items-center gap-1 w-max">
+                      <Lock size={12} /> Locked
+                    </span>
+                  )}
+                  {pad.selfDelete && (
+                    <span className="text-xs font-semibold bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 px-2 py-1 rounded-md flex items-center gap-1 w-max">
+                      <Clock size={12} /> Self-Delete
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {pad.selfDelete && pad.deleteAt && (
+                <div className="text-sm font-medium text-yellow-600 dark:text-yellow-500 mb-4 flex items-center gap-1.5">
+                  <Clock size={14} />
+                  Deletes at: {new Date(pad.deleteAt).toLocaleString()}
+                </div>
+              )}
+
+              <div className="mt-auto pt-6 border-t border-border flex flex-wrap gap-2">
+                <button
+                  onClick={() => managePad(pad.name)}
+                  className="p-2 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-200"
+                  title="Open Pad"
+                >
+                  <ExternalLink size={20} />
+                </button>
+
+                <button
+                  onClick={() => pad.locked ? unlockPad(pad.name) : lockPad(pad.name)}
+                  className={`p-2 rounded-xl transition-colors ${pad.locked ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/40 dark:text-green-400 dark:hover:bg-green-900/60' : 'bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-400 dark:hover:bg-blue-900/60'}`}
+                  title={pad.locked ? "Unlock Pad" : "Lock Pad"}
+                >
+                  {pad.locked ? <Unlock size={20} /> : <Lock size={20} />}
+                </button>
+
+                <button
+                  onClick={() => selfDeleteControls(pad.name)}
+                  className="p-2 rounded-xl bg-yellow-100 hover:bg-yellow-200 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400 dark:hover:bg-yellow-900/60 transition-colors"
+                  title="Self-Delete Controls"
+                >
+                  <Settings size={20} />
+                </button>
+
+                <button
+                  onClick={() => deletePad(pad.name)}
+                  className="p-2 rounded-xl bg-red-100 hover:bg-red-200 text-red-700 dark:bg-red-900/40 dark:text-red-400 dark:hover:bg-red-900/60 transition-colors ml-auto"
+                  title="Delete Pad Permanently"
+                >
+                  <Trash size={20} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </main>
+    </div>
   );
 }
