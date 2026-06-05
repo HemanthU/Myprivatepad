@@ -48,23 +48,13 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
       
       setUploadingFiles(prev => [...prev, { id: fileId, name: file.name, progress: 0 }]);
 
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", "ml_default");
-
-      const resourceType = file.type.startsWith("image/") ? "image" : "raw";
-      xhr.open("POST", `https://api.cloudinary.com/v1_1/dz7papuhb/${resourceType}/upload`, true);
-
-      xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable) {
-          const progress = (event.loaded / event.total) * 100;
-          setUploadingFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress } : f));
-        }
-      };
-
-      xhr.onload = async () => {
-        if (xhr.status === 200) {
-          const response = JSON.parse(xhr.responseText);
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const base64Data = (e.target?.result as string).split(',')[1];
+          const CHUNK_SIZE = 800 * 1024; // 800KB chunks
+          const totalChunks = Math.ceil(base64Data.length / CHUNK_SIZE);
+          
           const metadata: FileMetadata = {
             fileId,
             padId: slug,
@@ -72,26 +62,33 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
             fileType: file.type || "application/octet-stream",
             fileSize: file.size,
             uploadedAt: new Date().toISOString(),
-            storagePath: response.public_id, // Store Cloudinary public_id here
-            downloadUrl: response.secure_url,
+            storagePath: "firestore",
+            downloadUrl: "firestore",
             isEncrypted: encryptUploads,
             isBurnAfterRead: burnUploads,
             totalViews: 0,
-            totalDownloads: 0
+            totalDownloads: 0,
+            chunkCount: totalChunks
           };
+          
           await setDoc(doc(db, "files", fileId), metadata);
-        } else {
-          console.error("Upload failed", xhr.responseText);
+          
+          for (let i = 0; i < totalChunks; i++) {
+            const chunkData = base64Data.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+            await setDoc(doc(db, "files", fileId, "chunks", i.toString()), { data: chunkData });
+            setUploadingFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress: ((i + 1) / totalChunks) * 100 } : f));
+          }
+          
+          setUploadingFiles(prev => prev.filter(f => f.id !== fileId));
+        } catch (error) {
+          console.error("Upload failed", error);
+          setUploadingFiles(prev => prev.filter(f => f.id !== fileId));
         }
-        setUploadingFiles(prev => prev.filter(f => f.id !== fileId));
       };
+      reader.readAsDataURL(file);
+    });
 
-      xhr.onerror = () => {
-        console.error("Upload failed due to network error");
-        setUploadingFiles(prev => prev.filter(f => f.id !== fileId));
-      };
-
-      xhr.send(formData);
+      // Legacy Cloudinary logic removed.
     });
   }, [slug, encryptUploads, burnUploads]);
 
@@ -99,7 +96,12 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
 
   const deleteFile = async (file: FileMetadata) => {
     if (!confirm(`Delete ${file.fileName} permanently?`)) return;
-    // We remove the file from our database. (Cloudinary files will remain unlinked unless cleaned up via Admin API)
+    
+    if (file.chunkCount) {
+      for (let i = 0; i < file.chunkCount; i++) {
+        await deleteDoc(doc(db, "files", file.fileId, "chunks", i.toString()));
+      }
+    }
     await deleteDoc(doc(db, "files", file.fileId));
   };
 
@@ -110,14 +112,25 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
     return <FileIcon size={24} className="text-gray-500" />;
   };
 
-  const fetchCloudinaryBlob = async (url: string) => {
+  const fetchFileBlob = async (file: FileMetadata) => {
     try {
-      const response = await fetch(url);
-      const blob = await response.blob();
-      return window.URL.createObjectURL(blob);
+      if (file.chunkCount) {
+        let fullBase64 = "";
+        for (let i = 0; i < file.chunkCount; i++) {
+          const chunkDoc = await getDoc(doc(db, "files", file.fileId, "chunks", i.toString()));
+          if (chunkDoc.exists()) fullBase64 += chunkDoc.data().data;
+        }
+        const byteCharacters = atob(fullBase64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: file.fileType });
+        return window.URL.createObjectURL(blob);
+      }
+      return file.downloadUrl; // Fallback for old cloudinary files
     } catch(e) {
       console.error("Failed to fetch blob", e);
-      return url;
+      return file.downloadUrl;
     }
   };
 
@@ -127,9 +140,8 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
     }
     
     let previewUrl = file.downloadUrl;
-    if (file.fileType === "application/pdf") {
-      // Fetch as blob to bypass Cloudinary attachment headers and guarantee inline native rendering
-      previewUrl = await fetchCloudinaryBlob(file.downloadUrl);
+    if (file.chunkCount || file.fileType === "application/pdf") {
+      previewUrl = await fetchFileBlob(file);
     }
     
     setPreviewFile({ ...file, downloadUrl: previewUrl });
@@ -142,9 +154,14 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
     }
     
     try {
-      const response = await fetch(file.downloadUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      let url = file.downloadUrl;
+      if (file.chunkCount) {
+        url = await fetchFileBlob(file);
+      } else {
+        const response = await fetch(file.downloadUrl);
+        const blob = await response.blob();
+        url = window.URL.createObjectURL(blob);
+      }
       const a = document.createElement('a');
       a.style.display = 'none';
       a.href = url;
