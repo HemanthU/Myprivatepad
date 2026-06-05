@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import ThemeToggle from "@/components/ThemeToggle";
 
@@ -27,8 +27,13 @@ export default function OneTimeFilePage() {
       const data = linkSnap.data();
 
       if (data.used) {
-        setError("This one-time link has already been used and is now expired.");
-        return;
+        const createdTime = new Date(data.createdAt).getTime();
+        const now = Date.now();
+        // Allow a 10-second grace period for React Strict Mode double-firing
+        if (now - createdTime > 10000) {
+          setError("This one-time link has already been used and is now expired.");
+          return;
+        }
       }
 
       const fileRef = doc(db, "files", data.fileId);
@@ -42,6 +47,17 @@ export default function OneTimeFilePage() {
 
       setFileUrl(fileSnap.data().downloadUrl);
       await setDoc(linkRef, { ...data, used: true });
+
+      // If the file itself is marked as Burn After Read, wipe it from everywhere
+      if (fileSnap.data().isBurnAfterRead) {
+        const { ref, deleteObject } = await import("firebase/storage");
+        const { storage } = await import("@/lib/firebase");
+        const fileData = fileSnap.data();
+        try {
+          await deleteObject(ref(storage, fileData.storagePath));
+        } catch(e) {}
+        await deleteDoc(fileRef);
+      }
     };
 
     fetchLink();

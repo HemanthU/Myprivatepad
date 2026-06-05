@@ -114,8 +114,15 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
   };
 
   const handleDownload = async (file: FileMetadata) => {
+    if (file.isBurnAfterRead) {
+      if (!confirm("This is a Burn After Read file. Downloading it will delete it permanently. Continue?")) return;
+    }
     window.open(file.downloadUrl, "_blank");
     await setDoc(doc(db, "files", file.fileId), { ...file, totalDownloads: (file.totalDownloads || 0) + 1 });
+    
+    if (file.isBurnAfterRead) {
+      await deleteFile(file);
+    }
   };
 
   const handleClosePreview = async () => {
