@@ -3,8 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { collection, query, where, onSnapshot, doc, setDoc, deleteDoc } from "firebase/firestore";
-import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from "firebase/storage";
-import { db, storage } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
 import { FileText, Image as ImageIcon, Archive, File as FileIcon, X, Download, Trash, Eye, UploadCloud, Lock, FileArchive, Search, Folder, Flame, Star, Tag } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
@@ -46,25 +45,26 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
   const onDrop = useCallback((acceptedFiles: File[]) => {
     acceptedFiles.forEach(file => {
       const fileId = Math.random().toString(36).substring(2, 15);
-      const storagePath = `pads/${slug}/${fileId}-${file.name}`;
-      const storageRef = ref(storage, storagePath);
       
-      const uploadTask = uploadBytesResumable(storageRef, file);
-
       setUploadingFiles(prev => [...prev, { id: fileId, name: file.name, progress: 0 }]);
 
-      uploadTask.on(
-        "state_changed",
-        (snapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", "ml_default");
+
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", "https://api.cloudinary.com/v1_1/dz7papuhb/auto/upload", true);
+
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const progress = (event.loaded / event.total) * 100;
           setUploadingFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress } : f));
-        },
-        (error) => {
-          console.error("Upload failed", error);
-          setUploadingFiles(prev => prev.filter(f => f.id !== fileId));
-        },
-        async () => {
-          const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
+        }
+      };
+
+      xhr.onload = async () => {
+        if (xhr.status === 200) {
+          const response = JSON.parse(xhr.responseText);
           const metadata: FileMetadata = {
             fileId,
             padId: slug,
@@ -72,17 +72,26 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
             fileType: file.type || "application/octet-stream",
             fileSize: file.size,
             uploadedAt: new Date().toISOString(),
-            storagePath,
-            downloadUrl,
+            storagePath: response.public_id, // Store Cloudinary public_id here
+            downloadUrl: response.secure_url,
             isEncrypted: encryptUploads,
             isBurnAfterRead: burnUploads,
             totalViews: 0,
             totalDownloads: 0
           };
           await setDoc(doc(db, "files", fileId), metadata);
-          setUploadingFiles(prev => prev.filter(f => f.id !== fileId));
+        } else {
+          console.error("Upload failed", xhr.responseText);
         }
-      );
+        setUploadingFiles(prev => prev.filter(f => f.id !== fileId));
+      };
+
+      xhr.onerror = () => {
+        console.error("Upload failed due to network error");
+        setUploadingFiles(prev => prev.filter(f => f.id !== fileId));
+      };
+
+      xhr.send(formData);
     });
   }, [slug, encryptUploads, burnUploads]);
 
@@ -90,11 +99,7 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
 
   const deleteFile = async (file: FileMetadata) => {
     if (!confirm(`Delete ${file.fileName} permanently?`)) return;
-    try {
-      await deleteObject(ref(storage, file.storagePath));
-    } catch(e) {
-      console.log("File might already be deleted from storage", e);
-    }
+    // We remove the file from our database. (Cloudinary files will remain unlinked unless cleaned up via Admin API)
     await deleteDoc(doc(db, "files", file.fileId));
   };
 

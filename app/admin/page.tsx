@@ -176,15 +176,9 @@ export default function AdminPage() {
       const confirmDelete = confirm(`Delete "${padName}" permanently?`);
       if (!confirmDelete) return;
 
-      const { ref, deleteObject } = await import("firebase/storage");
-      const { storage } = await import("@/lib/firebase");
       const q = query(collection(db, "files"), where("padId", "==", padName));
       const filesSnap = await getDocs(q);
       for (const fileDoc of filesSnap.docs) {
-        const fileData = fileDoc.data();
-        try {
-          await deleteObject(ref(storage, fileData.storagePath));
-        } catch(e) {}
         await deleteDoc(fileDoc.ref);
       }
 

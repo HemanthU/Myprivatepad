@@ -62,15 +62,9 @@ export default function NotePage() {
           if (noteSnap.exists()) setText(noteSnap.data().content || "");
           
           const { collection, query, where, getDocs } = await import("firebase/firestore");
-          const { ref, deleteObject } = await import("firebase/storage");
-          const { storage } = await import("@/lib/firebase");
           const q = query(collection(db, "files"), where("padId", "==", slug));
           const filesSnap = await getDocs(q);
           for (const fileDoc of filesSnap.docs) {
-            const fileData = fileDoc.data();
-            try {
-              await deleteObject(ref(storage, fileData.storagePath));
-            } catch(e) {}
             await deleteDoc(fileDoc.ref);
           }
 
@@ -86,15 +80,9 @@ export default function NotePage() {
         if (settings.selfDelete && settings.deleteAt) {
           if (new Date() >= new Date(settings.deleteAt)) {
             const { collection, query, where, getDocs } = await import("firebase/firestore");
-            const { ref, deleteObject } = await import("firebase/storage");
-            const { storage } = await import("@/lib/firebase");
             const q = query(collection(db, "files"), where("padId", "==", slug));
             const filesSnap = await getDocs(q);
             for (const fileDoc of filesSnap.docs) {
-              const fileData = fileDoc.data();
-              try {
-                await deleteObject(ref(storage, fileData.storagePath));
-              } catch(e) {}
               await deleteDoc(fileDoc.ref);
             }
 

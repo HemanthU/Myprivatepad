@@ -50,12 +50,6 @@ export default function OneTimeFilePage() {
 
       // If the file itself is marked as Burn After Read, wipe it from everywhere
       if (fileSnap.data().isBurnAfterRead) {
-        const { ref, deleteObject } = await import("firebase/storage");
-        const { storage } = await import("@/lib/firebase");
-        const fileData = fileSnap.data();
-        try {
-          await deleteObject(ref(storage, fileData.storagePath));
-        } catch(e) {}
         await deleteDoc(fileRef);
       }
     };
