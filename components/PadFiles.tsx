@@ -52,8 +52,8 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
       formData.append("file", file);
       formData.append("upload_preset", "ml_default");
 
-      const xhr = new XMLHttpRequest();
-      xhr.open("POST", "https://api.cloudinary.com/v1_1/dz7papuhb/auto/upload", true);
+      const resourceType = file.type.startsWith("image/") ? "image" : "raw";
+      xhr.open("POST", `https://api.cloudinary.com/v1_1/dz7papuhb/${resourceType}/upload`, true);
 
       xhr.upload.onprogress = (event) => {
         if (event.lengthComputable) {
@@ -110,11 +110,29 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
     return <FileIcon size={24} className="text-gray-500" />;
   };
 
+  const fetchCloudinaryBlob = async (url: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      return window.URL.createObjectURL(blob);
+    } catch(e) {
+      console.error("Failed to fetch blob", e);
+      return url;
+    }
+  };
+
   const handlePreview = async (file: FileMetadata) => {
     if (file.isBurnAfterRead) {
       if (!confirm("This is a Burn After Read file. Viewing it will delete it permanently. Continue?")) return;
     }
-    setPreviewFile(file);
+    
+    let previewUrl = file.downloadUrl;
+    if (file.fileType === "application/pdf") {
+      // Fetch as blob to bypass Cloudinary attachment headers and guarantee inline native rendering
+      previewUrl = await fetchCloudinaryBlob(file.downloadUrl);
+    }
+    
+    setPreviewFile({ ...file, downloadUrl: previewUrl });
     await setDoc(doc(db, "files", file.fileId), { ...file, totalViews: (file.totalViews || 0) + 1 });
   };
 
@@ -122,11 +140,22 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
     if (file.isBurnAfterRead) {
       if (!confirm("This is a Burn After Read file. Downloading it will delete it permanently. Continue?")) return;
     }
-    let downloadUrl = file.downloadUrl;
-    if (downloadUrl.includes("cloudinary.com") && !downloadUrl.includes("fl_attachment")) {
-      downloadUrl = downloadUrl.replace("/upload/", "/upload/fl_attachment/");
+    
+    try {
+      const response = await fetch(file.downloadUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = file.fileName;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch(e) {
+      window.open(file.downloadUrl, "_blank");
     }
-    window.open(downloadUrl, "_blank");
+
     await setDoc(doc(db, "files", file.fileId), { ...file, totalDownloads: (file.totalDownloads || 0) + 1 });
     
     if (file.isBurnAfterRead) {
