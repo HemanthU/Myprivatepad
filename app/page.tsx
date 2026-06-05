@@ -38,7 +38,7 @@ export default function Home() {
               onChange={(e) => setKeyword(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && openPad()}
               placeholder="Enter pad keyword"
-              className="w-full p-4 rounded-2xl bg-black/5 dark:bg-white/5 border border-transparent focus:border-gray-400 dark:focus:border-gray-600 outline-none text-lg transition-all text-center"
+              className="w-full p-4 rounded-2xl bg-gray-100 dark:bg-white/10 border border-gray-200 dark:border-transparent focus:border-gray-400 dark:focus:border-gray-500 outline-none text-lg transition-all text-center text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 shadow-inner"
             />
 
             <button
