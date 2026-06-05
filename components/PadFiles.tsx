@@ -176,7 +176,7 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {items.map((f: FileMetadata) => (
-            <div key={f.fileId} className="bg-card border border-border rounded-2xl p-4 flex flex-col hover:shadow-md transition-shadow">
+            <div key={f.fileId} className="bg-card border border-border rounded-2xl p-4 flex flex-col hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
               <div className="flex items-start justify-between mb-3">
                 <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-xl">
                   {getFileIcon(f.fileType)}
@@ -343,10 +343,8 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
                 </div>
               ) : previewFile.fileType.startsWith("image/") ? (
                 <img src={previewFile.downloadUrl} alt={previewFile.fileName} className="max-w-full max-h-full object-contain" />
-              ) : previewFile.fileType === "application/pdf" ? (
-                <iframe src={`${previewFile.downloadUrl}#view=FitH`} className="w-full h-full border-none" />
-              ) : (previewFile.fileType.includes("word") || previewFile.fileType.includes("presentation") || previewFile.fileType.includes("excel")) ? (
-                <iframe src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(previewFile.downloadUrl)}`} className="w-full h-full border-none" />
+              ) : (previewFile.fileType === "application/pdf" || previewFile.fileType.includes("word") || previewFile.fileType.includes("presentation") || previewFile.fileType.includes("excel")) ? (
+                <iframe src={`https://docs.google.com/gview?url=${encodeURIComponent(previewFile.downloadUrl)}&embedded=true`} className="w-full h-full border-none bg-white rounded-xl" />
               ) : (
                 <div className="text-center p-8">
                   <FileIcon size={64} className="mx-auto mb-6 text-gray-400" />
