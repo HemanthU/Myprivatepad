@@ -235,7 +235,7 @@ export default function NotePage() {
         alert("Self-delete timer set successfully.");
       }
 
-      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "t") {
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "w") {
         e.preventDefault();
         const snap = await getDoc(doc(db, "padSettings", slug));
         const data = snap.exists() ? snap.data() : {};
@@ -296,7 +296,7 @@ export default function NotePage() {
         alert(data.burnAfterRead ? "Burn After Read disabled." : "Burn After Read enabled.");
       }
 
-      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "o") {
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "u") {
         e.preventDefault();
         const id = Math.random().toString(36).substring(2, 10);
         await setDoc(doc(db, "oneTimeLinks", id), {
