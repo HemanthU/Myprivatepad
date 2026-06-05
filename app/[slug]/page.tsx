@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { doc, onSnapshot, setDoc, getDoc, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import ThemeToggle from "@/components/ThemeToggle";
+import PadFiles from "@/components/PadFiles";
 
 export default function NotePage() {
   const params = useParams();
@@ -59,6 +60,20 @@ export default function NotePage() {
         if (settings.burnAfterRead && currentOpens >= 1) {
           const noteSnap = await getDoc(doc(db, "notes", slug));
           if (noteSnap.exists()) setText(noteSnap.data().content || "");
+          
+          const { collection, query, where, getDocs } = await import("firebase/firestore");
+          const { ref, deleteObject } = await import("firebase/storage");
+          const { storage } = await import("@/lib/firebase");
+          const q = query(collection(db, "files"), where("padId", "==", slug));
+          const filesSnap = await getDocs(q);
+          for (const fileDoc of filesSnap.docs) {
+            const fileData = fileDoc.data();
+            try {
+              await deleteObject(ref(storage, fileData.storagePath));
+            } catch(e) {}
+            await deleteDoc(fileDoc.ref);
+          }
+
           await deleteDoc(doc(db, "notes", slug));
           await deleteDoc(doc(db, "padSettings", slug));
           setIsBurned(true);
@@ -70,6 +85,19 @@ export default function NotePage() {
 
         if (settings.selfDelete && settings.deleteAt) {
           if (new Date() >= new Date(settings.deleteAt)) {
+            const { collection, query, where, getDocs } = await import("firebase/firestore");
+            const { ref, deleteObject } = await import("firebase/storage");
+            const { storage } = await import("@/lib/firebase");
+            const q = query(collection(db, "files"), where("padId", "==", slug));
+            const filesSnap = await getDocs(q);
+            for (const fileDoc of filesSnap.docs) {
+              const fileData = fileDoc.data();
+              try {
+                await deleteObject(ref(storage, fileData.storagePath));
+              } catch(e) {}
+              await deleteDoc(fileDoc.ref);
+            }
+
             await deleteDoc(doc(db, "notes", slug));
             await deleteDoc(doc(db, "padSettings", slug));
             router.push("/");
@@ -348,6 +376,8 @@ export default function NotePage() {
   const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
   const charCount = text.length;
 
+  const [activeTab, setActiveTab] = useState<"notes" | "files">("notes");
+
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-300 flex flex-col items-center font-sans relative">
       {isBurned && (
@@ -371,22 +401,42 @@ export default function NotePage() {
       </header>
 
       <main className="w-full max-w-[1100px] px-4 sm:px-6 flex-1 flex flex-col">
-        <h2 className="text-3xl sm:text-4xl font-bold mb-6 text-gray-800 dark:text-gray-200">
-          # {slug} {isDecoyMode && <span className="text-sm font-normal text-gray-500">(Decoy)</span>}
-        </h2>
-
-        <div className="flex-1 w-full bg-card shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] border border-border rounded-3xl p-6 sm:p-10 mb-8 flex flex-col transition-all duration-300">
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="Start typing..."
-            readOnly={isBurned}
-            className="w-full flex-1 bg-transparent outline-none text-lg sm:text-xl leading-relaxed resize-none"
-          />
-          <div className="mt-6 pt-4 border-t border-border flex justify-end text-sm font-medium text-gray-500 dark:text-gray-400">
-            {wordCount} words • {charCount} chars
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 dark:text-gray-200">
+            # {slug} {isDecoyMode && <span className="text-sm font-normal text-gray-500">(Decoy)</span>}
+          </h2>
+          <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl w-max">
+            <button
+              onClick={() => setActiveTab("notes")}
+              className={`px-6 py-2 rounded-lg font-semibold text-sm transition-all ${activeTab === 'notes' ? 'bg-white dark:bg-black shadow-sm text-black dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+            >
+              Notes
+            </button>
+            <button
+              onClick={() => setActiveTab("files")}
+              className={`px-6 py-2 rounded-lg font-semibold text-sm transition-all ${activeTab === 'files' ? 'bg-white dark:bg-black shadow-sm text-black dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+            >
+              Files
+            </button>
           </div>
         </div>
+
+        {activeTab === "notes" ? (
+          <div className="flex-1 w-full bg-card shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] border border-border rounded-3xl p-6 sm:p-10 mb-8 flex flex-col transition-all duration-300">
+            <textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="Start typing..."
+              readOnly={isBurned}
+              className="w-full flex-1 bg-transparent outline-none text-lg sm:text-xl leading-relaxed resize-none"
+            />
+            <div className="mt-6 pt-4 border-t border-border flex justify-end text-sm font-medium text-gray-500 dark:text-gray-400">
+              {wordCount} words • {charCount} chars
+            </div>
+          </div>
+        ) : (
+          <PadFiles slug={slug} isLocked={!!sessionStorage.getItem(`unlocked-${slug}`)} />
+        )}
       </main>
     </div>
   );

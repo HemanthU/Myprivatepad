@@ -9,9 +9,11 @@ import {
   deleteDoc,
   getDoc,
   setDoc,
+  query,
+  where,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { Lock, Unlock, Trash, Clock, ExternalLink, Settings, Home, Search, FileText, EyeOff, Flame, Link as LinkIcon, RefreshCw, Ghost } from "lucide-react";
+import { Lock, Unlock, Trash, Clock, ExternalLink, Settings, Home, Search, FileText, EyeOff, Flame, Link as LinkIcon, RefreshCw, Ghost, Database, Archive, File as FileIcon, Image as ImageIcon } from "lucide-react";
 
 type PadData = {
   name: string;
@@ -30,12 +32,46 @@ type PadData = {
 export default function AdminPage() {
   const router = useRouter();
   const [pads, setPads] = useState<PadData[]>([]);
+  const [stats, setStats] = useState({
+    total: 0,
+    locked: 0,
+    selfDelete: 0,
+    ghost: 0,
+    shadow: 0,
+    timeLocked: 0,
+    trash: 0,
+  });
+  const [fileStats, setFileStats] = useState({
+    totalFiles: 0,
+    storageUsed: 0,
+    pdfs: 0,
+    images: 0,
+    documents: 0,
+    archives: 0,
+  });
+  const [allFiles, setAllFiles] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [showTrash, setShowTrash] = useState(false);
+  const [auth, setAuth] = useState(false);
 
   useEffect(() => {
     const loadPads = async () => {
       const snapshot = await getDocs(collection(db, "notes"));
+      const filesSnap = await getDocs(collection(db, "files"));
+      let tf = 0, su = 0, pf = 0, im = 0, dc = 0, ar = 0;
+      const fileList: any[] = [];
+      filesSnap.forEach(doc => {
+        const d = doc.data();
+        tf++;
+        su += d.fileSize || 0;
+        if (d.fileType.startsWith("image/")) im++;
+        else if (d.fileType === "application/pdf") pf++;
+        else if (d.fileType.includes("word") || d.fileType.includes("text") || d.fileType.includes("presentation") || d.fileType.includes("excel")) dc++;
+        else if (d.fileType.includes("zip") || d.fileType.includes("tar") || d.fileType.includes("rar")) ar++;
+        fileList.push(d);
+      });
+      setFileStats({ totalFiles: tf, storageUsed: su, pdfs: pf, images: im, documents: dc, archives: ar });
+      setAllFiles(fileList.sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()));
 
       const padList = await Promise.all(
         snapshot.docs.map(async (noteDoc) => {
@@ -139,6 +175,19 @@ export default function AdminPage() {
     if (permanent) {
       const confirmDelete = confirm(`Delete "${padName}" permanently?`);
       if (!confirmDelete) return;
+
+      const { ref, deleteObject } = await import("firebase/storage");
+      const { storage } = await import("@/lib/firebase");
+      const q = query(collection(db, "files"), where("padId", "==", padName));
+      const filesSnap = await getDocs(q);
+      for (const fileDoc of filesSnap.docs) {
+        const fileData = fileDoc.data();
+        try {
+          await deleteObject(ref(storage, fileData.storagePath));
+        } catch(e) {}
+        await deleteDoc(fileDoc.ref);
+      }
+
       await deleteDoc(doc(db, "notes", padName));
       await deleteDoc(doc(db, "padSettings", padName));
       setPads((prev) => prev.filter((pad) => pad.name !== padName));
@@ -233,14 +282,70 @@ export default function AdminPage() {
       </header>
 
       <main className="max-w-6xl mx-auto px-6 pt-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard icon={FileText} title="Total Normal Pads" count={totalPads} color="gray" />
-          <StatCard icon={Lock} title="Locked Pads" count={lockedPads} color="blue" />
-          <StatCard icon={Clock} title="Self-Delete Active" count={selfDeletePads} color="yellow" />
-          <StatCard icon={Trash} title="Trash Count" count={trashCount} color="red" />
-          <StatCard icon={Ghost} title="Ghost Pads" count={ghostPadsCount} color="purple" />
-          <StatCard icon={EyeOff} title="Shadow Pads" count={shadowPadsCount} color="indigo" />
-          <StatCard icon={Clock} title="Time Locked" count={timeLockedPadsCount} color="orange" />
+        <div className="mb-8">
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Database size={20} /> Storage Dashboard</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+            <StatCard icon={FileIcon} title="Total Files" count={fileStats.totalFiles} color="blue" />
+            <StatCard icon={Database} title="Storage Used" count={`${(fileStats.storageUsed / 1024 / 1024).toFixed(2)} MB`} color="green" />
+            <StatCard icon={FileText} title="PDFs" count={fileStats.pdfs} color="red" />
+            <StatCard icon={ImageIcon} title="Images" count={fileStats.images} color="orange" />
+            <StatCard icon={FileText} title="Documents" count={fileStats.documents} color="indigo" />
+            <StatCard icon={Archive} title="Archives" count={fileStats.archives} color="yellow" />
+          </div>
+        </div>
+
+        <div className="mb-8">
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><FileText size={20} /> Pad Statistics</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard icon={FileText} title="Total Normal Pads" count={totalPads} color="gray" />
+            <StatCard icon={Lock} title="Locked Pads" count={lockedPads} color="blue" />
+            <StatCard icon={Clock} title="Self-Delete Active" count={selfDeletePads} color="yellow" />
+            <StatCard icon={Trash} title="Trash Count" count={trashCount} color="red" />
+            <StatCard icon={Ghost} title="Ghost Pads" count={ghostPadsCount} color="purple" />
+            <StatCard icon={EyeOff} title="Shadow Pads" count={shadowPadsCount} color="indigo" />
+            <StatCard icon={Clock} title="Time Locked" count={timeLockedPadsCount} color="orange" />
+          </div>
+        </div>
+
+        <div className="mb-12">
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><FileText size={20} /> File Access Logs</h2>
+          <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-gray-50 dark:bg-gray-800 border-b border-border text-sm text-gray-500">
+                    <th className="p-4 font-semibold">File Name</th>
+                    <th className="p-4 font-semibold">Pad</th>
+                    <th className="p-4 font-semibold">Views</th>
+                    <th className="p-4 font-semibold">Downloads</th>
+                    <th className="p-4 font-semibold">Size</th>
+                    <th className="p-4 font-semibold">Uploaded</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {allFiles.slice(0, 50).map((file, i) => (
+                    <tr key={i} className="border-b border-border last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-sm">
+                      <td className="p-4 font-medium max-w-[200px] truncate" title={file.fileName}>
+                        {file.fileName}
+                        {file.isBurnAfterRead && <Flame size={12} className="inline ml-2 text-orange-500" title="Burn After Read" />}
+                        {file.isEncrypted && <Lock size={12} className="inline ml-2 text-red-500" title="Vault Mode" />}
+                      </td>
+                      <td className="p-4 text-gray-500">{file.padId}</td>
+                      <td className="p-4 font-semibold text-blue-600">{file.totalViews || 0}</td>
+                      <td className="p-4 font-semibold text-green-600">{file.totalDownloads || 0}</td>
+                      <td className="p-4 text-gray-500">{(file.fileSize / 1024 / 1024).toFixed(2)} MB</td>
+                      <td className="p-4 text-gray-500">{new Date(file.uploadedAt).toLocaleString()}</td>
+                    </tr>
+                  ))}
+                  {allFiles.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="p-8 text-center text-gray-500">No files uploaded yet.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
