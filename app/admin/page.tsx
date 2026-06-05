@@ -327,8 +327,8 @@ export default function AdminPage() {
                     <tr key={i} className="border-b border-border last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-sm">
                       <td className="p-4 font-medium max-w-[200px] truncate" title={file.fileName}>
                         {file.fileName}
-                        {file.isBurnAfterRead && <Flame size={12} className="inline ml-2 text-orange-500" title="Burn After Read" />}
-                        {file.isEncrypted && <Lock size={12} className="inline ml-2 text-red-500" title="Vault Mode" />}
+                        {file.isBurnAfterRead && <span title="Burn After Read"><Flame size={12} className="inline ml-2 text-orange-500" /></span>}
+                        {file.isEncrypted && <span title="Vault Mode"><Lock size={12} className="inline ml-2 text-red-500" /></span>}
                       </td>
                       <td className="p-4 text-gray-500">{file.padId}</td>
                       <td className="p-4 font-semibold text-blue-600">{file.totalViews || 0}</td>

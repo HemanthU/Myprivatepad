@@ -5,7 +5,7 @@ import { useDropzone } from "react-dropzone";
 import { collection, query, where, onSnapshot, doc, setDoc, deleteDoc } from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from "firebase/storage";
 import { db, storage } from "@/lib/firebase";
-import { FileText, Image as ImageIcon, Archive, File as FileIcon, X, Download, Trash, Eye, UploadCloud, Lock, FileArchive, Search, Folder, Flame } from "lucide-react";
+import { FileText, Image as ImageIcon, Archive, File as FileIcon, X, Download, Trash, Eye, UploadCloud, Lock, FileArchive, Search, Folder, Flame, Star, Tag } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 type FileMetadata = {
@@ -21,6 +21,8 @@ type FileMetadata = {
   isBurnAfterRead: boolean;
   totalViews: number;
   totalDownloads: number;
+  isFavorite?: boolean;
+  tags?: string[];
 };
 
 export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: boolean }) {
@@ -30,6 +32,7 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
   const [encryptUploads, setEncryptUploads] = useState(false);
   const [burnUploads, setBurnUploads] = useState(false);
   const [previewFile, setPreviewFile] = useState<FileMetadata | null>(null);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
 
   useEffect(() => {
     const q = query(collection(db, "files"), where("padId", "==", slug));
@@ -122,7 +125,29 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
     setPreviewFile(null);
   };
 
-  const filteredFiles = files.filter(f => f.fileName.toLowerCase().includes(search.toLowerCase()));
+  const toggleFavorite = async (file: FileMetadata) => {
+    await setDoc(doc(db, "files", file.fileId), { ...file, isFavorite: !file.isFavorite });
+  };
+
+  const addTag = async (file: FileMetadata) => {
+    const tag = prompt("Enter a tag (e.g. urgent, draft):");
+    if (!tag) return;
+    const currentTags = file.tags || [];
+    if (!currentTags.includes(tag.toLowerCase())) {
+      await setDoc(doc(db, "files", file.fileId), { ...file, tags: [...currentTags, tag.toLowerCase()] });
+    }
+  };
+
+  const removeTag = async (file: FileMetadata, tagToRemove: string) => {
+    const currentTags = file.tags || [];
+    await setDoc(doc(db, "files", file.fileId), { ...file, tags: currentTags.filter(t => t !== tagToRemove) });
+  };
+
+  const filteredFiles = files.filter(f => {
+    const matchesSearch = f.fileName.toLowerCase().includes(search.toLowerCase()) || (f.tags && f.tags.some(t => t.includes(search.toLowerCase())));
+    const matchesFavorite = showFavoritesOnly ? f.isFavorite : true;
+    return matchesSearch && matchesFavorite;
+  });
 
   // Group files into pseudo-folders
   const images = filteredFiles.filter(f => f.fileType.startsWith("image/"));
@@ -144,17 +169,31 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
                 <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-xl">
                   {getFileIcon(f.fileType)}
                 </div>
-                <div className="flex gap-1">
+                <div className="flex gap-1 items-center">
                   {f.isEncrypted && <Lock size={14} className="text-red-500" />}
                   {f.isBurnAfterRead && <Flame size={14} className="text-orange-500" />}
+                  <button onClick={() => toggleFavorite(f)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
+                    <Star size={16} className={f.isFavorite ? "fill-yellow-400 text-yellow-400" : "text-gray-300 dark:text-gray-600"} />
+                  </button>
                 </div>
               </div>
               <h4 className="font-semibold text-sm line-clamp-1 break-all mb-1" title={f.fileName}>{f.fileName}</h4>
+              
+              <div className="flex flex-wrap gap-1 mb-2 min-h-[20px]">
+                {f.tags?.map(t => (
+                  <span key={t} className="px-2 py-0.5 bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400 rounded-md text-[10px] font-medium flex items-center gap-1 group">
+                    {t}
+                    <X size={10} className="cursor-pointer opacity-50 hover:opacity-100 transition-opacity" onClick={(e) => { e.stopPropagation(); removeTag(f, t); }} />
+                  </span>
+                ))}
+              </div>
+
               <p className="text-xs text-gray-500 mb-4">
                 {(f.fileSize / 1024 / 1024).toFixed(2)} MB • {formatDistanceToNow(new Date(f.uploadedAt))} ago
               </p>
               <div className="mt-auto flex items-center gap-2 pt-3 border-t border-border">
                 <button onClick={() => handlePreview(f)} className="flex-1 py-1.5 bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400 rounded-lg text-xs font-semibold flex justify-center items-center gap-1 hover:bg-blue-200 transition-colors"><Eye size={14} /> View</button>
+                <button onClick={() => addTag(f)} className="p-1.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 transition-colors" title="Add Tag"><Tag size={14} /></button>
                 <button onClick={() => handleDownload(f)} className="p-1.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 transition-colors"><Download size={14} /></button>
                 <button onClick={() => deleteFile(f)} className="p-1.5 bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400 rounded-lg hover:bg-red-200 transition-colors"><Trash size={14} /></button>
               </div>
@@ -209,14 +248,22 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
       )}
 
       {files.length > 0 && (
-        <div className="w-full relative mb-4">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search files..."
-            className="w-full pl-12 pr-4 py-3 rounded-2xl bg-card border border-border focus:border-gray-400 outline-none text-sm transition-all"
-          />
+        <div className="w-full flex flex-col sm:flex-row gap-4 mb-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name or tags..."
+              className="w-full pl-12 pr-4 py-3 rounded-2xl bg-card border border-border focus:border-gray-400 outline-none text-sm transition-all"
+            />
+          </div>
+          <button 
+            onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+            className={`px-4 py-3 rounded-2xl border flex items-center justify-center gap-2 text-sm font-semibold transition-all ${showFavoritesOnly ? 'bg-yellow-50 border-yellow-200 text-yellow-700 dark:bg-yellow-900/30 dark:border-yellow-700 dark:text-yellow-400' : 'bg-card border-border hover:bg-gray-50 dark:hover:bg-gray-800'}`}
+          >
+            <Star size={16} className={showFavoritesOnly ? "fill-current" : ""} /> Favorites
+          </button>
         </div>
       )}
 
