@@ -210,7 +210,7 @@ export default function NotePage() {
         }
       }
 
-      if (e.ctrlKey && e.key.toLowerCase() === "k") {
+      if (e.ctrlKey && e.code === "Space") {
         e.preventDefault();
         const nextPad = await prompt({ title: "Quick Switch", placeholder: "Enter pad keyword..." });
         if (nextPad) router.push(`/${nextPad}`);
