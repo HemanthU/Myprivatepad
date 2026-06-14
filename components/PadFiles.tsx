@@ -22,6 +22,7 @@ type FileMetadata = {
   totalDownloads: number;
   isFavorite?: boolean;
   tags?: string[];
+  chunkCount?: number;
 };
 
 export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: boolean }) {
