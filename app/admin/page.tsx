@@ -128,8 +128,8 @@ export default function AdminPage() {
       locked: true,
       password,
     });
+    setPads(prev => prev.map(p => p.name === padName ? { ...p, locked: true } : p));
     alert("Pad locked successfully.");
-    location.reload();
   };
 
   const unlockPad = async (padName: string) => {
@@ -140,8 +140,8 @@ export default function AdminPage() {
       locked: false,
       password: "",
     });
+    setPads(prev => prev.map(p => p.name === padName ? { ...p, locked: false } : p));
     alert("Pad unlocked successfully.");
-    location.reload();
   };
 
   const selfDeleteControls = async (padName: string) => {
@@ -155,8 +155,8 @@ export default function AdminPage() {
         selfDelete: true,
         deleteAt: deleteAt.toISOString(),
       });
+      setPads(prev => prev.map(p => p.name === padName ? { ...p, selfDelete: true, deleteAt: deleteAt.toISOString() } : p));
       alert("Self-delete timer updated.");
-      location.reload();
     }
     if (action === "remove") {
       const settingsSnap = await getDoc(doc(db, "padSettings", padName));
@@ -166,8 +166,8 @@ export default function AdminPage() {
         selfDelete: false,
         deleteAt: "",
       });
+      setPads(prev => prev.map(p => p.name === padName ? { ...p, selfDelete: false, deleteAt: undefined } : p));
       alert("Self-delete removed.");
-      location.reload();
     }
   };
 
@@ -179,6 +179,12 @@ export default function AdminPage() {
       const q = query(collection(db, "files"), where("padId", "==", padName));
       const filesSnap = await getDocs(q);
       for (const fileDoc of filesSnap.docs) {
+        const fileData = fileDoc.data();
+        if (fileData.chunkCount) {
+          for (let i = 0; i < fileData.chunkCount; i++) {
+            await deleteDoc(doc(db, "files", fileDoc.id, "chunks", i.toString()));
+          }
+        }
         await deleteDoc(fileDoc.ref);
       }
 
