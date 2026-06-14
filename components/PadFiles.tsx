@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { collection, query, where, onSnapshot, doc, setDoc, deleteDoc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { FileText, Image as ImageIcon, Archive, File as FileIcon, X, Download, Trash, Eye, UploadCloud, Lock, FileArchive, Search, Folder, Flame, Star, Tag } from "lucide-react";
+import { FileText, Image as ImageIcon, Archive, File as FileIcon, X, Download, Trash, Eye, UploadCloud, Lock, FileArchive, Search, Folder, Flame, Star, Tag, Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 type FileMetadata = {
@@ -33,6 +33,8 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
   const [burnUploads, setBurnUploads] = useState(false);
   const [previewFile, setPreviewFile] = useState<FileMetadata | null>(null);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [previewLoading, setPreviewLoading] = useState<string | null>(null);
+  const [downloadingFileId, setDownloadingFileId] = useState<string | null>(null);
 
   useEffect(() => {
     const q = query(collection(db, "files"), where("padId", "==", slug));
@@ -138,13 +140,18 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
       if (!confirm("This is a Burn After Read file. Viewing it will delete it permanently. Continue?")) return;
     }
     
-    let previewUrl = file.downloadUrl;
-    if (file.chunkCount || file.fileType === "application/pdf") {
-      previewUrl = await fetchFileBlob(file);
+    setPreviewLoading(file.fileId);
+    try {
+      let previewUrl = file.downloadUrl;
+      if (file.chunkCount || file.fileType === "application/pdf") {
+        previewUrl = await fetchFileBlob(file);
+      }
+      
+      setPreviewFile({ ...file, downloadUrl: previewUrl });
+      await setDoc(doc(db, "files", file.fileId), { ...file, totalViews: (file.totalViews || 0) + 1 });
+    } finally {
+      setPreviewLoading(null);
     }
-    
-    setPreviewFile({ ...file, downloadUrl: previewUrl });
-    await setDoc(doc(db, "files", file.fileId), { ...file, totalViews: (file.totalViews || 0) + 1 });
   };
 
   const handleDownload = async (file: FileMetadata) => {
@@ -152,6 +159,7 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
       if (!confirm("This is a Burn After Read file. Downloading it will delete it permanently. Continue?")) return;
     }
     
+    setDownloadingFileId(file.fileId);
     try {
       let url = file.downloadUrl;
       if (file.chunkCount) {
@@ -167,9 +175,11 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
       a.download = file.fileName;
       document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(url);
+      setTimeout(() => window.URL.revokeObjectURL(url), 1000);
     } catch(e) {
       window.open(file.downloadUrl, "_blank");
+    } finally {
+      setDownloadingFileId(null);
     }
 
     await setDoc(doc(db, "files", file.fileId), { ...file, totalDownloads: (file.totalDownloads || 0) + 1 });
@@ -253,9 +263,14 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
                 {(f.fileSize / 1024 / 1024).toFixed(2)} MB • {formatDistanceToNow(new Date(f.uploadedAt))} ago
               </p>
               <div className="mt-auto flex items-center gap-2 pt-3 border-t border-border">
-                <button onClick={() => handlePreview(f)} className="flex-1 py-1.5 bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400 rounded-lg text-xs font-semibold flex justify-center items-center gap-1 hover:bg-blue-200 transition-colors"><Eye size={14} /> View</button>
+                <button onClick={() => handlePreview(f)} disabled={previewLoading === f.fileId} className="flex-1 py-1.5 bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400 rounded-lg text-xs font-semibold flex justify-center items-center gap-1 hover:bg-blue-200 transition-colors disabled:opacity-50">
+                  {previewLoading === f.fileId ? <Loader2 size={14} className="animate-spin" /> : <Eye size={14} />} 
+                  {previewLoading === f.fileId ? "Wait" : "View"}
+                </button>
                 <button onClick={() => addTag(f)} className="p-1.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 transition-colors" title="Add Tag"><Tag size={14} /></button>
-                <button onClick={() => handleDownload(f)} className="p-1.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 transition-colors"><Download size={14} /></button>
+                <button onClick={() => handleDownload(f)} disabled={downloadingFileId === f.fileId} className="p-1.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50">
+                  {downloadingFileId === f.fileId ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+                </button>
                 <button onClick={() => deleteFile(f)} className="p-1.5 bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400 rounded-lg hover:bg-red-200 transition-colors"><Trash size={14} /></button>
               </div>
             </div>
