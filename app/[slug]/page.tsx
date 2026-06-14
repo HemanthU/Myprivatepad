@@ -373,7 +373,7 @@ export default function NotePage() {
           🔥 Burn After Read active: This pad has been deleted from the server. It will vanish forever when you leave this page.
         </div>
       )}
-      <header className="w-full max-w-[1100px] flex items-center justify-between p-4 sm:p-6 mb-2">
+      <header className="w-full max-w-[1400px] flex items-center justify-between p-4 sm:p-8 mb-2">
         <h1 
           onClick={() => router.push("/")}
           className="text-2xl font-extrabold cursor-pointer hover:opacity-80 transition-opacity"
@@ -388,8 +388,8 @@ export default function NotePage() {
         </div>
       </header>
 
-      <main className="w-full max-w-[1100px] px-4 sm:px-6 flex-1 flex flex-col">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+      <main className="w-full max-w-[1400px] px-4 sm:px-8 flex-1 flex flex-col">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 dark:text-gray-200">
             # {slug} {isDecoyMode && <span className="text-sm font-normal text-gray-500">(Decoy)</span>}
           </h2>
@@ -410,7 +410,7 @@ export default function NotePage() {
         </div>
 
         {activeTab === "notes" ? (
-          <div className="flex-1 w-full bg-card shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] border border-border rounded-3xl p-6 sm:p-10 mb-8 flex flex-col transition-all duration-300">
+          <div className="flex-1 w-full min-h-[70vh] bg-card shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] border border-border rounded-3xl p-6 sm:p-12 mb-8 flex flex-col transition-all duration-300 hover:shadow-[0_8px_40px_rgb(0,0,0,0.08)] dark:hover:shadow-[0_8px_40px_rgb(0,0,0,0.5)]">
             <textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
