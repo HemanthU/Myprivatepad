@@ -87,9 +87,6 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
       };
       reader.readAsDataURL(file);
     });
-
-      // Legacy Cloudinary logic removed.
-    });
   }, [slug, encryptUploads, burnUploads]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
