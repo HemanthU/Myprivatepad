@@ -56,6 +56,12 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
           const CHUNK_SIZE = 800 * 1024; // 800KB chunks
           const totalChunks = Math.ceil(base64Data.length / CHUNK_SIZE);
           
+          for (let i = 0; i < totalChunks; i++) {
+            const chunkData = base64Data.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+            await setDoc(doc(db, "files", fileId, "chunks", i.toString()), { data: chunkData });
+            setUploadingFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress: ((i + 1) / totalChunks) * 100 } : f));
+          }
+
           const metadata: FileMetadata = {
             fileId,
             padId: slug,
@@ -74,15 +80,10 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
           
           await setDoc(doc(db, "files", fileId), metadata);
           
-          for (let i = 0; i < totalChunks; i++) {
-            const chunkData = base64Data.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
-            await setDoc(doc(db, "files", fileId, "chunks", i.toString()), { data: chunkData });
-            setUploadingFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress: ((i + 1) / totalChunks) * 100 } : f));
-          }
-          
           setUploadingFiles(prev => prev.filter(f => f.id !== fileId));
-        } catch (error) {
+        } catch (error: any) {
           console.error("Upload failed", error);
+          alert("Upload failed: " + error.message);
           setUploadingFiles(prev => prev.filter(f => f.id !== fileId));
         }
       };
