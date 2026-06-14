@@ -8,7 +8,9 @@ import { db } from "@/lib/firebase";
 import ThemeToggle from "@/components/ThemeToggle";
 import PadFiles from "@/components/PadFiles";
 import { usePrompt } from "@/hooks/usePrompt";
+import { useToast } from "@/hooks/useToast";
 import PromptModal from "@/components/ui/PromptModal";
+import CommandPalette from "@/components/ui/CommandPalette";
 
 export default function NotePage() {
   const params = useParams();
@@ -22,9 +24,11 @@ export default function NotePage() {
   const [isDecoyMode, setIsDecoyMode] = useState(false);
   const [unlockDate, setUnlockDate] = useState<string | null>(null);
   const [isBurned, setIsBurned] = useState(false);
+  const [showPalette, setShowPalette] = useState(false);
   const firstLoad = useRef(true);
 
   const { prompt, confirm, alert: promptAlert, isOpen, config, handleClose } = usePrompt();
+  const { toast } = useToast();
 
   useEffect(() => {
     const loadPad = async () => {
@@ -205,20 +209,22 @@ export default function NotePage() {
             });
           }
           setStatus("Saved");
+          toast("Note saved successfully", "success");
         } catch {
           setStatus("Sync Error");
+          toast("Failed to save note", "error");
         }
       }
 
       if (e.ctrlKey && e.code === "Space") {
         e.preventDefault();
-        const nextPad = await prompt({ title: "Quick Switch", placeholder: "Enter pad keyword..." });
-        if (nextPad) router.push(`/${nextPad}`);
+        setShowPalette(true);
       }
 
       if (e.ctrlKey && e.key.toLowerCase() === "d") {
         e.preventDefault();
         navigator.clipboard.writeText(text);
+        toast("Copied to clipboard", "success");
       }
 
       if (e.ctrlKey && e.key === "/") {
@@ -327,7 +333,7 @@ export default function NotePage() {
         });
         const url = `${window.location.origin}/o/${id}`;
         navigator.clipboard.writeText(url);
-        alert(`One-time link copied to clipboard:\n${url}`);
+        toast("One-time link copied to clipboard!", "success");
       }
 
       if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "m") {
@@ -372,8 +378,9 @@ export default function NotePage() {
   const [activeTab, setActiveTab] = useState<"notes" | "files">("notes");
 
   return (
-    <div className="min-h-screen bg-background text-foreground transition-colors duration-300 flex flex-col items-center font-sans relative">
+    <div className="min-h-screen bg-transparent text-foreground transition-colors duration-300 flex flex-col items-center font-sans relative">
       <PromptModal isOpen={isOpen} config={config} onClose={handleClose} />
+      <CommandPalette isOpen={showPalette} onClose={() => setShowPalette(false)} currentSlug={slug} />
       {isBurned && (
         <div className="w-full bg-red-600 text-white py-2 text-center text-sm font-semibold z-50 shadow-md">
           🔥 Burn After Read active: This pad has been deleted from the server. It will vanish forever when you leave this page.

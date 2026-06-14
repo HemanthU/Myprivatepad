@@ -6,6 +6,8 @@ export const metadata: Metadata = {
   description: "Personal cloud textpad",
 };
 
+import { ToastProvider } from "@/hooks/useToast";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -28,7 +30,10 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <div className="bg-mesh-overlay" />
+        <ToastProvider>{children}</ToastProvider>
+      </body>
     </html>
   );
 }
