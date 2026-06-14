@@ -3,9 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { doc, onSnapshot, setDoc, getDoc, deleteDoc } from "firebase/firestore";
+import { FileText, Unlock, Lock, EyeOff, Save, Key, User, ArrowLeft, Trash, Eye, Ghost, Database, Settings } from "lucide-react";
 import { db } from "@/lib/firebase";
 import ThemeToggle from "@/components/ThemeToggle";
 import PadFiles from "@/components/PadFiles";
+import { usePrompt } from "@/hooks/usePrompt";
+import PromptModal from "@/components/ui/PromptModal";
 
 export default function NotePage() {
   const params = useParams();
@@ -20,6 +23,8 @@ export default function NotePage() {
   const [unlockDate, setUnlockDate] = useState<string | null>(null);
   const [isBurned, setIsBurned] = useState(false);
   const firstLoad = useRef(true);
+
+  const { prompt, confirm, alert: promptAlert, isOpen, config, handleClose } = usePrompt();
 
   useEffect(() => {
     const loadPad = async () => {
@@ -207,7 +212,7 @@ export default function NotePage() {
 
       if (e.ctrlKey && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        const nextPad = prompt("Enter pad keyword:");
+        const nextPad = await prompt({ title: "Quick Switch", placeholder: "Enter pad keyword..." });
         if (nextPad) router.push(`/${nextPad}`);
       }
 
@@ -223,7 +228,7 @@ export default function NotePage() {
 
       if (e.ctrlKey && e.key.toLowerCase() === "l") {
         e.preventDefault();
-        const password = prompt("Set a password for this pad:");
+        const password = await prompt({ title: "Lock Pad", placeholder: "Set a secure password..." });
         if (!password) return;
 
         const snap = await getDoc(doc(db, "padSettings", slug));
@@ -232,13 +237,13 @@ export default function NotePage() {
           locked: true,
           password,
         });
-        alert("Pad locked successfully.");
+        await promptAlert({ title: "Success", message: "Pad locked successfully." });
       }
 
       if (e.ctrlKey && e.key.toLowerCase() === "x" && !e.shiftKey) {
         e.preventDefault();
-        const minutes = prompt("Delete this pad after how many minutes?");
-        if (!minutes) return;
+        const minutes = await prompt({ title: "Self Destruct", placeholder: "Minutes until deletion..." });
+        if (!minutes || isNaN(Number(minutes))) return;
 
         const deleteAt = new Date(Date.now() + Number(minutes) * 60000);
         const snap = await getDoc(doc(db, "padSettings", slug));
@@ -248,7 +253,7 @@ export default function NotePage() {
           selfDelete: true,
           deleteAt: deleteAt.toISOString(),
         });
-        alert("Self-delete timer set successfully.");
+        await promptAlert({ title: "Timer Set", message: `Pad will self-delete in ${minutes} minutes.` });
       }
 
       if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "w") {
@@ -257,28 +262,28 @@ export default function NotePage() {
         const data = snap.exists() ? snap.data() : {};
         if (data.timeLocked) {
           await setDoc(doc(db, "padSettings", slug), { ...data, timeLocked: false, unlockAt: "" });
-          alert("Time lock removed.");
+          await promptAlert({ title: "Unlocked", message: "Time lock removed." });
         } else {
-          const hours = prompt("Lock for how many hours?");
-          if (!hours) return;
+          const hours = await prompt({ title: "Time Lock", placeholder: "Lock for how many hours?" });
+          if (!hours || isNaN(Number(hours))) return;
           const unlockAt = new Date(Date.now() + Number(hours) * 3600000).toISOString();
           await setDoc(doc(db, "padSettings", slug), { ...data, timeLocked: true, unlockAt });
-          alert("Time lock set.");
+          await promptAlert({ title: "Locked", message: `Time lock set for ${hours} hours.` });
         }
       }
 
       if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "p") {
         e.preventDefault();
         const snap = await getDoc(doc(db, "padSettings", slug));
-        const decoyPassword = prompt("Enter decoy password:");
+        const decoyPassword = await prompt({ title: "Decoy Setup (1/2)", placeholder: "Enter decoy password:" });
         if (!decoyPassword) return;
-        const decoyContent = prompt("Enter fake content to show:");
+        const decoyContent = await prompt({ title: "Decoy Setup (2/2)", placeholder: "Enter fake content to show:" });
         await setDoc(doc(db, "padSettings", slug), {
           ...(snap.exists() ? snap.data() : {}),
           decoyPassword,
           decoyContent
         });
-        alert("Decoy password and content set.");
+        await promptAlert({ title: "Decoy Active", message: "Decoy password and content set." });
       }
 
       if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "g") {
@@ -286,7 +291,7 @@ export default function NotePage() {
         const snap = await getDoc(doc(db, "padSettings", slug));
         const data = snap.exists() ? snap.data() : {};
         await setDoc(doc(db, "padSettings", slug), { ...data, ghostMode: !data.ghostMode });
-        alert(data.ghostMode ? "Ghost mode disabled." : "Ghost mode enabled.");
+        await promptAlert({ title: "Ghost Mode", message: data.ghostMode ? "Ghost mode disabled." : "Ghost mode enabled." });
       }
 
       if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "h") {
@@ -295,12 +300,12 @@ export default function NotePage() {
         const data = snap.exists() ? snap.data() : {};
         if (data.shadowMode) {
           await setDoc(doc(db, "padSettings", slug), { ...data, shadowMode: false, shadowKey: "" });
-          alert("Shadow mode disabled.");
+          await promptAlert({ title: "Shadow Mode", message: "Shadow mode disabled." });
         } else {
-          const key = prompt("Enter secret shadow key:");
+          const key = await prompt({ title: "Shadow Mode", placeholder: "Enter secret shadow key:" });
           if (!key) return;
           await setDoc(doc(db, "padSettings", slug), { ...data, shadowMode: true, shadowKey: key });
-          alert("Shadow mode enabled. Access via ?shadow=" + key);
+          await promptAlert({ title: "Shadow Mode", message: "Shadow mode enabled. Access via ?shadow=" + key });
         }
       }
 
@@ -309,7 +314,7 @@ export default function NotePage() {
         const snap = await getDoc(doc(db, "padSettings", slug));
         const data = snap.exists() ? snap.data() : {};
         await setDoc(doc(db, "padSettings", slug), { ...data, burnAfterRead: !data.burnAfterRead });
-        alert(data.burnAfterRead ? "Burn After Read disabled." : "Burn After Read enabled.");
+        await promptAlert({ title: "Burn After Read", message: data.burnAfterRead ? "Burn After Read disabled." : "Burn After Read enabled." });
       }
 
       if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "u") {
@@ -327,7 +332,7 @@ export default function NotePage() {
 
       if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "m") {
         e.preventDefault();
-        const confirmTrash = confirm("Move this pad to trash?");
+        const confirmTrash = await confirm({ title: "Move to Trash", message: "Move this pad to trash?" });
         if (!confirmTrash) return;
         const snap = await getDoc(doc(db, "padSettings", slug));
         await setDoc(doc(db, "padSettings", slug), {
@@ -368,6 +373,7 @@ export default function NotePage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-300 flex flex-col items-center font-sans relative">
+      <PromptModal isOpen={isOpen} config={config} onClose={handleClose} />
       {isBurned && (
         <div className="w-full bg-red-600 text-white py-2 text-center text-sm font-semibold z-50 shadow-md">
           🔥 Burn After Read active: This pad has been deleted from the server. It will vanish forever when you leave this page.

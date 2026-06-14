@@ -6,6 +6,8 @@ import { collection, query, where, onSnapshot, doc, setDoc, deleteDoc, getDoc } 
 import { db } from "@/lib/firebase";
 import { FileText, Image as ImageIcon, Archive, File as FileIcon, X, Download, Trash, Eye, UploadCloud, Lock, FileArchive, Search, Folder, Flame, Star, Tag, Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { usePrompt } from "@/hooks/usePrompt";
+import PromptModal from "@/components/ui/PromptModal";
 
 type FileMetadata = {
   fileId: string;
@@ -35,6 +37,8 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [previewLoading, setPreviewLoading] = useState<string | null>(null);
   const [downloadingFileId, setDownloadingFileId] = useState<string | null>(null);
+  
+  const { prompt, confirm, isOpen, config, handleClose } = usePrompt();
 
   useEffect(() => {
     const q = query(collection(db, "files"), where("padId", "==", slug));
@@ -96,7 +100,8 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
 
   const deleteFile = async (file: FileMetadata) => {
-    if (!confirm(`Delete ${file.fileName} permanently?`)) return;
+    const confirmed = await confirm({ title: "Delete File", message: `Delete ${file.fileName} permanently?` });
+    if (!confirmed) return;
     
     if (file.chunkCount) {
       for (let i = 0; i < file.chunkCount; i++) {
@@ -137,7 +142,8 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
 
   const handlePreview = async (file: FileMetadata) => {
     if (file.isBurnAfterRead) {
-      if (!confirm("This is a Burn After Read file. Viewing it will delete it permanently. Continue?")) return;
+      const confirmed = await confirm({ title: "Burn After Read", message: "Viewing this file will delete it permanently. Continue?" });
+      if (!confirmed) return;
     }
     
     setPreviewLoading(file.fileId);
@@ -156,7 +162,8 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
 
   const handleDownload = async (file: FileMetadata) => {
     if (file.isBurnAfterRead) {
-      if (!confirm("This is a Burn After Read file. Downloading it will delete it permanently. Continue?")) return;
+      const confirmed = await confirm({ title: "Burn After Read", message: "Downloading this file will delete it permanently. Continue?" });
+      if (!confirmed) return;
     }
     
     setDownloadingFileId(file.fileId);
@@ -201,7 +208,7 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
   };
 
   const addTag = async (file: FileMetadata) => {
-    const tag = prompt("Enter a tag (e.g. urgent, draft):");
+    const tag = await prompt({ title: "Add Tag", placeholder: "Enter a tag (e.g. urgent, draft)" });
     if (!tag) return;
     const currentTags = file.tags || [];
     if (!currentTags.includes(tag.toLowerCase())) {
@@ -282,6 +289,7 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
 
   return (
     <div className="w-full flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <PromptModal isOpen={isOpen} config={config} onClose={handleClose} />
       <div 
         {...getRootProps()} 
         className={`w-full border-2 border-dashed rounded-3xl p-8 sm:p-12 text-center cursor-pointer transition-all ${isDragActive ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600 bg-card hover:bg-gray-50 dark:hover:bg-gray-800/50'}`}

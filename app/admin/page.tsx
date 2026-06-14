@@ -14,6 +14,8 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Lock, Unlock, Trash, Clock, ExternalLink, Settings, Home, Search, FileText, EyeOff, Flame, Link as LinkIcon, RefreshCw, Ghost, Database, Archive, File as FileIcon, Image as ImageIcon } from "lucide-react";
+import { usePrompt } from "@/hooks/usePrompt";
+import PromptModal from "@/components/ui/PromptModal";
 
 type PadData = {
   name: string;
@@ -53,6 +55,8 @@ export default function AdminPage() {
   const [search, setSearch] = useState("");
   const [showTrash, setShowTrash] = useState(false);
   const [auth, setAuth] = useState(false);
+  
+  const { prompt, confirm, alert: promptAlert, isOpen, config, handleClose } = usePrompt();
 
   useEffect(() => {
     const loadPads = async () => {
@@ -121,7 +125,7 @@ export default function AdminPage() {
   };
 
   const lockPad = async (padName: string) => {
-    const password = prompt(`Set password for "${padName}":`);
+    const password = await prompt({ title: "Lock Pad", placeholder: `Set password for "${padName}"` });
     if (!password) return;
     await setDoc(doc(db, "padSettings", padName), {
       ...(await getDoc(doc(db, "padSettings", padName))).data(),
@@ -129,7 +133,7 @@ export default function AdminPage() {
       password,
     });
     setPads(prev => prev.map(p => p.name === padName ? { ...p, locked: true } : p));
-    alert("Pad locked successfully.");
+    await promptAlert({ title: "Success", message: "Pad locked successfully." });
   };
 
   const unlockPad = async (padName: string) => {
@@ -141,14 +145,14 @@ export default function AdminPage() {
       password: "",
     });
     setPads(prev => prev.map(p => p.name === padName ? { ...p, locked: false } : p));
-    alert("Pad unlocked successfully.");
+    await promptAlert({ title: "Success", message: "Pad unlocked successfully." });
   };
 
   const selfDeleteControls = async (padName: string) => {
-    const action = prompt("Type:\nset → Set self-delete timer\nremove → Remove self-delete");
+    const action = await prompt({ title: "Self Delete Options", placeholder: "Type 'set' or 'remove'..." });
     if (action === "set") {
-      const minutes = prompt("Delete after how many minutes?");
-      if (!minutes) return;
+      const minutes = await prompt({ title: "Self Delete", placeholder: "Delete after how many minutes?" });
+      if (!minutes || isNaN(Number(minutes))) return;
       const deleteAt = new Date(Date.now() + Number(minutes) * 60000);
       await setDoc(doc(db, "padSettings", padName), {
         ...(await getDoc(doc(db, "padSettings", padName))).data(),
@@ -156,7 +160,7 @@ export default function AdminPage() {
         deleteAt: deleteAt.toISOString(),
       });
       setPads(prev => prev.map(p => p.name === padName ? { ...p, selfDelete: true, deleteAt: deleteAt.toISOString() } : p));
-      alert("Self-delete timer updated.");
+      await promptAlert({ title: "Timer Set", message: "Self-delete timer updated." });
     }
     if (action === "remove") {
       const settingsSnap = await getDoc(doc(db, "padSettings", padName));
@@ -167,13 +171,13 @@ export default function AdminPage() {
         deleteAt: "",
       });
       setPads(prev => prev.map(p => p.name === padName ? { ...p, selfDelete: false, deleteAt: undefined } : p));
-      alert("Self-delete removed.");
+      await promptAlert({ title: "Timer Removed", message: "Self-delete removed." });
     }
   };
 
   const deletePad = async (padName: string, permanent: boolean = false) => {
     if (permanent) {
-      const confirmDelete = confirm(`Delete "${padName}" permanently?`);
+      const confirmDelete = await confirm({ title: "Delete Forever", message: `Delete "${padName}" permanently? This cannot be undone.` });
       if (!confirmDelete) return;
 
       const q = query(collection(db, "files"), where("padId", "==", padName));
@@ -212,7 +216,7 @@ export default function AdminPage() {
   };
 
   const advancedControls = async (padName: string) => {
-    const action = prompt("Type action:\nshadow -> Toggle shadow mode\nghost -> Toggle ghost mode\ntime -> Set time lock\ndecoy -> Set decoy password\nburn -> Toggle burn after read");
+    const action = await prompt({ title: "Advanced Controls", placeholder: "Type: shadow, ghost, time, decoy, burn" });
     const snap = await getDoc(doc(db, "padSettings", padName));
     const data = snap.exists() ? snap.data() : {};
 
@@ -220,7 +224,7 @@ export default function AdminPage() {
        if (data.shadowMode) {
           await setDoc(doc(db, "padSettings", padName), { ...data, shadowMode: false, shadowKey: "" });
        } else {
-          const key = prompt("Enter secret shadow key:");
+          const key = await prompt({ title: "Shadow Mode", placeholder: "Enter secret shadow key:" });
           if (!key) return;
           await setDoc(doc(db, "padSettings", padName), { ...data, shadowMode: true, shadowKey: key });
        }
@@ -230,20 +234,21 @@ export default function AdminPage() {
        if (data.timeLocked) {
           await setDoc(doc(db, "padSettings", padName), { ...data, timeLocked: false, unlockAt: "" });
        } else {
-          const hours = prompt("Lock for how many hours?");
-          if (!hours) return;
+          const hours = await prompt({ title: "Time Lock", placeholder: "Lock for how many hours?" });
+          if (!hours || isNaN(Number(hours))) return;
           const unlockAt = new Date(Date.now() + Number(hours) * 3600000).toISOString();
           await setDoc(doc(db, "padSettings", padName), { ...data, timeLocked: true, unlockAt });
        }
     } else if (action === "decoy") {
-       const decoyPassword = prompt("Enter decoy password:");
+       const decoyPassword = await prompt({ title: "Decoy Password", placeholder: "Enter decoy password:" });
        if (!decoyPassword) return;
-       const decoyContent = prompt("Enter fake content to show:");
+       const decoyContent = await prompt({ title: "Decoy Content", placeholder: "Enter fake content to show:" });
        await setDoc(doc(db, "padSettings", padName), { ...data, decoyPassword, decoyContent });
     } else if (action === "burn") {
        await setDoc(doc(db, "padSettings", padName), { ...data, burnAfterRead: !data.burnAfterRead });
     }
-    location.reload();
+    
+    await promptAlert({ title: "Success", message: "Advanced settings updated. Please refresh the page to see all changes." });
   };
 
   const createOneTimeUrl = async (padName: string) => {
@@ -253,7 +258,7 @@ export default function AdminPage() {
       used: false,
       createdAt: new Date().toISOString()
     });
-    alert(`One-time link generated:\n\n${window.location.origin}/o/${id}\n\n(Copy this now, it won't be shown again)`);
+    await promptAlert({ title: "One-Time Link", message: `Generated:\n\n${window.location.origin}/o/${id}\n\n(Copy this now, it won't be shown again)` });
   };
 
   const StatCard = ({ icon: Icon, title, count, color }: any) => (
@@ -267,8 +272,9 @@ export default function AdminPage() {
   );
 
   return (
-    <div className="min-h-screen bg-background text-foreground transition-colors duration-300 font-sans pb-12">
-      <header className="w-full border-b border-border bg-card/50 backdrop-blur-md sticky top-0 z-10 px-6 py-4 flex items-center justify-between">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-foreground transition-colors duration-300 font-sans">
+      <PromptModal isOpen={isOpen} config={config} onClose={handleClose} />
+      <header className="w-full bg-white dark:bg-black border-b border-border sticky top-0 z-10 shadow-sm px-6 py-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">Admin Dashboard</h1>
         <div className="flex items-center gap-4">
           <button
