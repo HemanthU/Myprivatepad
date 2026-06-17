@@ -10,7 +10,14 @@ const LANGUAGE_MAP: Record<string, string> = {
 
 export async function POST(req: Request) {
   try {
-    const { code, language } = await req.json();
+    let { code, language } = await req.json();
+
+    if (language === 'java') {
+      // Paiza writes code to Main.java implicitly. If a user writes "public class MyClass",
+      // Java will error saying the file should be named MyClass.java.
+      // We strip the "public " modifier from the class definition to fix this.
+      code = code.replace(/public\s+class\s+([a-zA-Z0-9_]+)/g, "class $1");
+    }
 
     if (!code || !language) {
       return NextResponse.json({ error: 'Code and language are required' }, { status: 400 });

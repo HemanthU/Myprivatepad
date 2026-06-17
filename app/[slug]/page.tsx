@@ -29,7 +29,7 @@ export default function NotePage() {
   const [wordCount, setWordCount] = useState(0);
   const [charCount, setCharCount] = useState(0);
   const [language, setLanguage] = useState("plaintext");
-  const [editorMode, setEditorMode] = useState<"code" | "rich">("rich");
+  const [editorMode, setEditorMode] = useState<"code" | "rich">("code");
   const [terminalOutput, setTerminalOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [showTerminal, setShowTerminal] = useState(false);
