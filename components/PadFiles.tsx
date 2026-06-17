@@ -39,6 +39,8 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
   const [previewLoading, setPreviewLoading] = useState<string | null>(null);
   const [downloadingFileId, setDownloadingFileId] = useState<string | null>(null);
   const [ocrLoading, setOcrLoading] = useState(false);
+  const [ocrResultText, setOcrResultText] = useState<string | null>(null);
+  const [copyingOcr, setCopyingOcr] = useState(false);
   
   const { prompt, confirm, alert: promptAlert, isOpen, config, handleClose } = usePrompt();
 
@@ -213,7 +215,11 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
         logger: m => console.log(m)
       });
       setOcrLoading(false);
-      await promptAlert({ title: "Scanned Text", message: text || "No text found in image." });
+      if (text) {
+        setOcrResultText(text);
+      } else {
+        await promptAlert({ title: "Scanned Text", message: "No text found in image." });
+      }
     } catch (e) {
       setOcrLoading(false);
       await promptAlert({ title: "OCR Failed", message: "Failed to scan text from image." });
@@ -453,6 +459,40 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
               )}
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {ocrResultText !== null && (
+        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 sm:p-8 animate-in fade-in duration-200">
+          <div className="w-full max-w-6xl h-auto max-h-[90vh] bg-card rounded-3xl shadow-2xl flex flex-col overflow-hidden relative">
+            <div className="p-4 sm:p-6 border-b border-border flex items-center justify-between shrink-0 bg-gray-50 dark:bg-gray-900">
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <ScanText className="text-indigo-500" /> Extracted Text
+              </h2>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => {
+                    navigator.clipboard.writeText(ocrResultText);
+                    setCopyingOcr(true);
+                    setTimeout(() => setCopyingOcr(false), 2000);
+                  }} 
+                  className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors flex items-center gap-2"
+                >
+                  <Copy size={18} /> {copyingOcr ? "✓ Copied Properly" : "Copy"}
+                </button>
+                <button onClick={() => setOcrResultText(null)} className="p-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-xl transition-colors">
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 p-6 overflow-y-auto bg-white dark:bg-black">
+              <textarea 
+                value={ocrResultText} 
+                readOnly 
+                className="w-full h-full min-h-[400px] p-4 bg-transparent border-none outline-none resize-none text-lg leading-relaxed font-mono"
+              />
+            </div>
           </div>
         </div>
       )}

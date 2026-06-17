@@ -17,8 +17,6 @@ import dynamic from "next/dynamic";
 
 const RichTextEditor = dynamic(() => import("@/components/RichTextEditor"), { ssr: false });
 const CanvasBoard = dynamic(() => import("@/components/CanvasBoard"), { ssr: false });
-const CallOverlay = dynamic(() => import("@/components/CallOverlay"), { ssr: false });
-const VersionHistory = dynamic(() => import("@/components/VersionHistory"), { ssr: false });
 
 export default function NotePage() {
   const params = useParams();
@@ -69,8 +67,28 @@ export default function NotePage() {
   const [isBurned, setIsBurned] = useState(false);
   const [showPalette, setShowPalette] = useState(false);
   const [activeTab, setActiveTab] = useState<"notes" | "files" | "canvas">("notes");
-  const [callActive, setCallActive] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
+
+  const textRef = useRef(localText);
+  useEffect(() => {
+    textRef.current = localText;
+  }, [localText]);
+
+  useEffect(() => {
+    const handleUnload = () => {
+      if (isBurned || isDecoyMode || !textRef.current) return;
+      const id = Date.now().toString();
+      const content = textRef.current;
+      import("firebase/firestore").then(({ setDoc, doc }) => {
+        setDoc(doc(db, "padVersions", slug as string, "snapshots", id), {
+          text: content,
+          createdAt: new Date().toISOString(),
+          autoSaved: true
+        }).catch(console.error);
+      });
+    };
+    window.addEventListener("beforeunload", handleUnload);
+    return () => window.removeEventListener("beforeunload", handleUnload);
+  }, [slug, isBurned, isDecoyMode]);
 
   const { prompt, confirm, alert: promptAlert, isOpen, config, handleClose } = usePrompt();
   const { toast } = useToast();
@@ -403,12 +421,6 @@ export default function NotePage() {
           PadX
         </h1>
         <div className="flex items-center gap-3 sm:gap-4">
-          <button
-            onClick={() => setCallActive(!callActive)}
-            className={`px-3 py-1.5 rounded-full text-sm font-semibold transition-all shadow-sm border border-transparent ${callActive ? 'bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.5)]' : 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400 dark:border-indigo-800/30 hover:bg-indigo-200 dark:hover:bg-indigo-800/50'}`}
-          >
-            {callActive ? "End Call" : "Join Call"}
-          </button>
           <span className={`text-sm font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5 ${status === 'Saved' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : status === 'Saving...' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'}`}>
             {isBurned ? "🔥 Burned" : status === "Saved" ? "✓ Saved" : status === "Saving..." ? "⟳ Saving..." : "⚠ Sync Error"}
           </span>
@@ -501,13 +513,6 @@ export default function NotePage() {
               <option value="md">.MD</option>
               <option value="pdf">.PDF</option>
             </select>
-            <div className="border-l border-gray-300 dark:border-gray-700 mx-1"></div>
-            <button
-              onClick={() => setShowHistory(true)}
-              className="px-4 py-2 rounded-lg font-semibold text-sm transition-all text-gray-500 hover:text-black dark:hover:text-white"
-            >
-              Time Machine
-            </button>
           </div>
         </div>
 
@@ -542,24 +547,11 @@ export default function NotePage() {
         ) : activeTab === "files" ? (
           <PadFiles slug={slug} isLocked={!!sessionStorage.getItem(`unlocked-${slug}`)} />
         ) : (
-          <div className="flex-1 w-full min-h-[70vh] bg-card shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] border border-border rounded-3xl p-6 sm:p-12 mb-8 flex flex-col transition-all duration-300 hover:shadow-[0_8px_40px_rgb(0,0,0,0.08)] dark:hover:shadow-[0_8px_40px_rgb(0,0,0,0.5)]">
+          <div className="flex-1 w-full min-h-[70vh] bg-card shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] border border-border rounded-3xl mb-8 flex flex-col transition-all duration-300 relative overflow-hidden">
              <CanvasBoard slug={slug} isBurned={isBurned} />
           </div>
         )}
       </main>
-      <CallOverlay slug={slug} isEnabled={callActive} onClose={() => setCallActive(false)} />
-      {showHistory && (
-        <VersionHistory 
-          slug={slug} 
-          currentText={localText} 
-          onClose={() => setShowHistory(false)} 
-          onRestore={async (text) => {
-            setLocalText(text);
-            const { setDoc, doc } = await import("firebase/firestore");
-            await setDoc(doc(db, "notes", slug), { content: text, updatedAt: new Date() });
-          }} 
-        />
-      )}
     </div>
   );
 }

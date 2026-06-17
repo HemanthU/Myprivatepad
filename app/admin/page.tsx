@@ -70,6 +70,7 @@ export default function AdminPage() {
   const [showTrash, setShowTrash] = useState(false);
   const [auth, setAuth] = useState(false);
   const [historyPad, setHistoryPad] = useState<string | null>(null);
+  const [adminTab, setAdminTab] = useState<"dashboard" | "pads">("dashboard");
   
   const { prompt, confirm, alert: promptAlert, isOpen, config, handleClose } = usePrompt();
   const { toast } = useToast();
@@ -296,129 +297,42 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-foreground transition-colors duration-300 font-sans">
+    <div className="min-h-screen bg-[#030712] text-gray-100 font-sans relative overflow-hidden">
+      {/* Premium Background Mesh */}
+      <div className="absolute inset-0 z-0 pointer-events-none opacity-20 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-indigo-900 via-[#030712] to-[#030712]" />
+      <div className="absolute inset-0 z-0 pointer-events-none opacity-20 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-purple-900 via-[#030712] to-[#030712]" />
+
       <PromptModal isOpen={isOpen} config={config} onClose={handleClose} />
-      <header className="w-full bg-white dark:bg-black border-b border-border sticky top-0 z-10 shadow-sm px-6 py-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">Admin Dashboard</h1>
+      
+      <header className="w-full bg-white/5 backdrop-blur-xl border-b border-white/10 sticky top-0 z-10 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+          PadX Core Operations
+        </h1>
+        <div className="flex items-center gap-2 bg-black/40 p-1 rounded-xl border border-white/10">
+          <button 
+            onClick={() => setAdminTab("dashboard")} 
+            className={`px-6 py-2 rounded-lg font-semibold text-sm transition-all ${adminTab === 'dashboard' ? 'bg-indigo-600 text-white shadow-[0_0_15px_rgba(79,70,229,0.5)]' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+          >
+            Dashboard
+          </button>
+          <button 
+            onClick={() => setAdminTab("pads")} 
+            className={`px-6 py-2 rounded-lg font-semibold text-sm transition-all ${adminTab === 'pads' ? 'bg-purple-600 text-white shadow-[0_0_15px_rgba(147,51,234,0.5)]' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+          >
+            Pad Manager
+          </button>
+        </div>
         <div className="flex items-center gap-4">
           <button
             onClick={() => router.push("/")}
-            className="flex items-center gap-2 px-4 py-2 rounded-full bg-black text-white dark:bg-white dark:text-black font-medium hover:opacity-90 transition-opacity shadow-sm"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 text-white font-medium hover:bg-white/20 transition-all border border-white/5"
           >
             <Home size={18} />
-            <span>Home</span>
+            <span className="hidden sm:inline">Home</span>
           </button>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-6 pt-8">
-        <div className="mb-8">
-          <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Database size={20} /> Storage Dashboard</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-            <StatCard icon={FileIcon} title="Total Files" count={fileStats.totalFiles} color="blue" />
-            <StatCard icon={Database} title="Storage Used" count={`${(fileStats.storageUsed / 1024 / 1024).toFixed(2)} MB`} color="green" />
-            <StatCard icon={FileText} title="PDFs" count={fileStats.pdfs} color="red" />
-            <StatCard icon={ImageIcon} title="Images" count={fileStats.images} color="orange" />
-            <StatCard icon={FileText} title="Documents" count={fileStats.documents} color="indigo" />
-            <StatCard icon={Archive} title="Archives" count={fileStats.archives} color="yellow" />
-          </div>
-        </div>
-
-        <div className="mb-8">
-          <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><FileText size={20} /> Pad Statistics</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard icon={FileText} title="Total Normal Pads" count={totalPads} color="gray" />
-            <StatCard icon={Lock} title="Locked Pads" count={lockedPads} color="blue" />
-            <StatCard icon={Clock} title="Self-Delete Active" count={selfDeletePads} color="yellow" />
-            <StatCard icon={Trash} title="Trash Count" count={trashCount} color="red" />
-            <StatCard icon={Ghost} title="Ghost Pads" count={ghostPadsCount} color="purple" />
-            <StatCard icon={EyeOff} title="Shadow Pads" count={shadowPadsCount} color="indigo" />
-            <StatCard icon={Clock} title="Time Locked" count={timeLockedPadsCount} color="orange" />
-          </div>
-        </div>
-
-        <div className="mb-12">
-          <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><FileText size={20} /> File Access Logs</h2>
-          <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-gray-50 dark:bg-gray-800 border-b border-border text-sm text-gray-500">
-                    <th className="p-4 font-semibold">File Name</th>
-                    <th className="p-4 font-semibold">Pad</th>
-                    <th className="p-4 font-semibold">Views</th>
-                    <th className="p-4 font-semibold">Downloads</th>
-                    <th className="p-4 font-semibold">Size</th>
-                    <th className="p-4 font-semibold">Uploaded</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {allFiles.slice(0, 50).map((file, i) => (
-                    <tr key={i} className="border-b border-border last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-sm">
-                      <td className="p-4 font-medium max-w-[200px] truncate" title={file.fileName}>
-                        {file.fileName}
-                        {file.isBurnAfterRead && <span title="Burn After Read"><Flame size={12} className="inline ml-2 text-orange-500" /></span>}
-                        {file.isEncrypted && <span title="Vault Mode"><Lock size={12} className="inline ml-2 text-red-500" /></span>}
-                      </td>
-                      <td className="p-4 text-gray-500">{file.padId}</td>
-                      <td className="p-4 font-semibold text-blue-600">{file.totalViews || 0}</td>
-                      <td className="p-4 font-semibold text-green-600">{file.totalDownloads || 0}</td>
-                      <td className="p-4 text-gray-500">{(file.fileSize / 1024 / 1024).toFixed(2)} MB</td>
-                      <td className="p-4 text-gray-500">{new Date(file.uploadedAt).toLocaleString()}</td>
-                    </tr>
-                  ))}
-                  {allFiles.length === 0 && (
-                    <tr>
-                      <td colSpan={6} className="p-8 text-center text-gray-500">No files uploaded yet.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
-          <div className="relative w-full max-w-md">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search or reveal secret pads..."
-              className="w-full pl-12 pr-4 py-4 rounded-2xl bg-card border border-border focus:border-gray-400 dark:focus:border-gray-500 outline-none shadow-sm transition-all text-lg"
-            />
-          </div>
-
-          <button
-            onClick={() => setShowTrash(!showTrash)}
-            className={`flex items-center gap-2 px-6 py-4 rounded-2xl font-semibold transition-all shadow-sm ${showTrash ? 'bg-red-600 text-white' : 'bg-card border border-border hover:bg-gray-100 dark:hover:bg-gray-800'}`}
-          >
-            <Trash size={20} />
-            {showTrash ? "Exit Trash" : "View Trash"}
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {filteredPads.length === 0 && (
-            <p className="text-gray-500 dark:text-gray-400 col-span-full text-center py-12 text-lg">No pads found in this view.</p>
-          )}
-
-          {filteredPads.map((pad) => (
-            <div
-              key={pad.name}
-              className={`bg-card border rounded-3xl p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col ${pad.isTrashed ? 'border-red-500/50 opacity-80' : 'border-border'}`}
-            >
-              <div className="flex items-start justify-between mb-2">
-                <h2 className="text-2xl font-bold break-all flex-1 pr-4 line-clamp-1">
-                  {pad.name}
-                </h2>
-                <div className="flex flex-col gap-2 shrink-0">
-                  {pad.locked && (
-                    <span className="text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 px-2 py-1 rounded-md flex items-center gap-1 w-max">
-                      <Lock size={12} /> Locked
-                    </span>
-                  )}
-                  {pad.ghostMode && (
                     <span className="text-xs font-semibold bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 px-2 py-1 rounded-md flex items-center gap-1 w-max">
                       <Ghost size={12} /> Ghost
                     </span>
@@ -444,18 +358,18 @@ export default function AdminPage() {
               <div className="mt-auto pt-4 border-t border-border flex flex-wrap gap-2">
                 {!pad.isTrashed ? (
                   <>
-                    <button onClick={() => managePad(pad.name)} className="p-2 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors" title="Open Pad"><ExternalLink size={20} /></button>
-                    <button onClick={() => setHistoryPad(pad.name)} className="p-2 rounded-xl bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-900/40 dark:text-indigo-400 transition-colors" title="Time Machine"><Clock size={20} /></button>
-                    <button onClick={() => pad.locked ? unlockPad(pad.name) : lockPad(pad.name)} className="p-2 rounded-xl bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-400 transition-colors" title="Lock/Unlock"><Lock size={20} /></button>
-                    <button onClick={() => selfDeleteControls(pad.name)} className="p-2 rounded-xl bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-900/40 dark:text-yellow-400 transition-colors" title="Self Delete"><Trash size={20} /></button>
-                    <button onClick={() => deletePad(pad.name, false)} className="p-2 rounded-xl bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/40 dark:text-red-400 transition-colors ml-auto" title="Move to Trash"><Trash size={20} /></button>
+                    <button onClick={() => managePad(pad.name)} className="p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors text-gray-300 hover:text-white border border-white/5" title="Open Pad"><ExternalLink size={20} /></button>
+                    <button onClick={() => setHistoryPad(pad.name)} className="p-2 rounded-xl bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/40 transition-colors border border-indigo-500/20" title="Time Machine"><Clock size={20} /></button>
+                    <button onClick={() => pad.locked ? unlockPad(pad.name) : lockPad(pad.name)} className="p-2 rounded-xl bg-blue-500/20 text-blue-400 hover:bg-blue-500/40 transition-colors border border-blue-500/20" title="Lock/Unlock"><Lock size={20} /></button>
+                    <button onClick={() => selfDeleteControls(pad.name)} className="p-2 rounded-xl bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/40 transition-colors border border-yellow-500/20" title="Self Delete"><Trash size={20} /></button>
+                    <button onClick={() => deletePad(pad.name, false)} className="p-2 rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500/40 transition-colors ml-auto border border-red-500/20" title="Move to Trash"><Trash size={20} /></button>
                   </>
                 ) : (
                   <>
-                    <button onClick={() => restorePad(pad.name)} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/40 dark:text-green-400 transition-colors" title="Restore Pad">
+                    <button onClick={() => restorePad(pad.name)} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-green-500/20 text-green-400 hover:bg-green-500/40 transition-colors border border-green-500/20" title="Restore Pad">
                       <RefreshCw size={18} /> Restore
                     </button>
-                    <button onClick={() => deletePad(pad.name, true)} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700 transition-colors ml-auto" title="Delete Forever">
+                    <button onClick={() => deletePad(pad.name, true)} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700 transition-colors ml-auto border border-red-500" title="Delete Forever">
                       <Trash size={18} /> Forever
                     </button>
                   </>
@@ -464,6 +378,7 @@ export default function AdminPage() {
             </div>
           ))}
         </div>
+        )}
       </main>
       {historyPad && (
         <VersionHistory 
