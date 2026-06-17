@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { collection, query, where, onSnapshot, doc, setDoc, deleteDoc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { FileText, Image as ImageIcon, Archive, File as FileIcon, X, Download, Trash, Eye, UploadCloud, Lock, FileArchive, Search, Folder, Flame, Star, Tag, Loader2, ScanText, Copy } from "lucide-react";
+import { FileText, Image as ImageIcon, Archive, File as FileIcon, X, Download, Trash, Eye, UploadCloud, Lock, FileArchive, Search, Folder, Flame, Star, Tag, Loader2, ScanText, Copy, ChevronLeft } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { usePrompt } from "@/hooks/usePrompt";
 import PromptModal from "@/components/ui/PromptModal";
@@ -278,8 +278,12 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
           {items.map((f: FileMetadata) => (
             <div key={f.fileId} className="bg-card border border-border rounded-2xl p-4 flex flex-col hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
               <div className="flex items-start justify-between mb-3">
-                <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-xl">
-                  {getFileIcon(f.fileType)}
+                <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden flex items-center justify-center">
+                  {!f.isEncrypted && !f.isBurnAfterRead && f.fileType.startsWith("image/") ? (
+                    <img src={f.downloadUrl === 'firestore' ? (f.chunkCount ? 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=' : f.downloadUrl) : f.downloadUrl} alt={f.fileName} className="w-8 h-8 object-cover rounded-md" />
+                  ) : (
+                    getFileIcon(f.fileType)
+                  )}
                 </div>
                 <div className="flex gap-1 items-center">
                   {f.isEncrypted && <Lock size={14} className="text-red-500" />}
@@ -399,12 +403,15 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
       </div>
 
       {previewFile && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 sm:p-8 animate-in fade-in duration-200">
-          <div className="w-full max-w-5xl h-full max-h-[90vh] bg-card rounded-3xl shadow-2xl flex flex-col overflow-hidden relative">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-0 sm:p-8 animate-in fade-in duration-200">
+          <div className="w-full max-w-5xl h-full sm:max-h-[90vh] bg-card sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden relative">
             
-            <div className="p-4 sm:p-6 border-b border-border flex items-center justify-between shrink-0">
+            <div className="p-4 sm:p-6 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between shrink-0 gap-4">
               <div className="flex items-center gap-4">
-                <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-xl">
+                <button onClick={handleClosePreview} className="p-2 -ml-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors flex items-center gap-1 font-semibold text-gray-700 dark:text-gray-300">
+                  <ChevronLeft size={24} /> <span className="hidden sm:inline">Back</span>
+                </button>
+                <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-xl hidden sm:block">
                   {getFileIcon(previewFile.fileType)}
                 </div>
                 <div>
@@ -414,7 +421,7 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-hide">
                 <button onClick={async () => {
                   const id = Math.random().toString(36).substring(2, 10);
                   await setDoc(doc(db, "oneTimeFileLinks", id), {
@@ -434,10 +441,7 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
                   </button>
                 )}
                 <button onClick={() => handleDownload(previewFile)} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors flex items-center gap-2">
-                  <Download size={16} /> <span className="hidden sm:inline">Download</span>
-                </button>
-                <button onClick={handleClosePreview} className="p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-xl transition-colors">
-                  <X size={20} />
+                  <Download size={16} /> <span className="inline">Download</span>
                 </button>
               </div>
             </div>
@@ -475,13 +479,17 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
       )}
 
       {ocrResultText !== null && (
-        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 sm:p-8 animate-in fade-in duration-200">
-          <div className="w-full max-w-6xl h-auto max-h-[90vh] bg-card rounded-3xl shadow-2xl flex flex-col overflow-hidden relative">
+        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-0 sm:p-8 animate-in fade-in duration-200">
+          <div className="w-full max-w-6xl h-full sm:h-auto sm:max-h-[90vh] bg-card sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden relative">
             <div className="p-4 sm:p-6 border-b border-border flex items-center justify-between shrink-0 bg-gray-50 dark:bg-gray-900">
-              <h2 className="text-2xl font-bold flex items-center gap-2">
-                <ScanText className="text-indigo-500" /> Extracted Text
-              </h2>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
+                <button onClick={() => setOcrResultText(null)} className="p-2 -ml-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors flex items-center gap-1 font-semibold text-gray-700 dark:text-gray-300">
+                  <ChevronLeft size={24} /> <span className="hidden sm:inline">Back</span>
+                </button>
+                <ScanText className="text-indigo-600 hidden sm:block" size={24} />
+                <h2 className="text-xl font-bold">Text Extraction Preview</h2>
+              </div>
+              <div className="flex gap-2">
                 <button 
                   onClick={() => {
                     navigator.clipboard.writeText(ocrResultText);
@@ -490,10 +498,7 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
                   }} 
                   className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors flex items-center gap-2"
                 >
-                  <Copy size={18} /> {copyingOcr ? "✓ Copied Properly" : "Copy"}
-                </button>
-                <button onClick={() => setOcrResultText(null)} className="p-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-xl transition-colors">
-                  <X size={20} />
+                  <Copy size={18} /> <span className="hidden sm:inline">Copy Text</span>
                 </button>
               </div>
             </div>

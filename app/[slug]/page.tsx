@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { doc, onSnapshot, setDoc, getDoc, deleteDoc } from "firebase/firestore";
-import { FileText, Unlock, Lock, EyeOff, Save, Key, User, ArrowLeft, Trash, Eye, Ghost, Database, Settings } from "lucide-react";
+import { FileText, Unlock, Lock, EyeOff, Save, Key, User, ArrowLeft, Trash, Eye, Ghost, Database, Settings, PenTool, ChevronLeft } from "lucide-react";
 import { db, storage } from "@/lib/firebase";
 import ThemeToggle from "@/components/ThemeToggle";
 import PadFiles from "@/components/PadFiles";
@@ -474,12 +474,21 @@ export default function NotePage() {
       )}
       {!distractionFree && (
       <header className="w-full max-w-[1400px] flex items-center justify-between p-4 sm:p-8 mb-2">
-        <h1 
-          onClick={() => router.push("/")}
-          className="text-2xl font-extrabold cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-4"
-        >
-          PadX
-        </h1>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => router.push("/")}
+            className="p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            title="Back to Home"
+          >
+            <ChevronLeft size={24} />
+          </button>
+          <h1 
+            onClick={() => router.push("/")}
+            className="text-2xl font-extrabold cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-2"
+          >
+            PadX
+          </h1>
+        </div>
         <div className="flex items-center gap-3 sm:gap-4">
           <button 
             onClick={handleSwitchPad}
@@ -502,7 +511,7 @@ export default function NotePage() {
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 dark:text-gray-200">
             # {slug} {isDecoyMode && <span className="text-sm font-normal text-gray-500">(Decoy)</span>}
           </h2>
-          <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl w-max">
+          <div className="hidden sm:flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl w-max">
             <button
               onClick={() => setActiveTab("notes")}
               className={`px-6 py-2 rounded-lg font-semibold text-sm transition-all ${activeTab === 'notes' ? 'bg-white dark:bg-black shadow-sm text-black dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
@@ -625,6 +634,33 @@ export default function NotePage() {
           </div>
         )}
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      {!distractionFree && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 flex sm:hidden bg-card/90 backdrop-blur-xl border-t border-border p-2 pb-4 justify-around shadow-[0_-8px_30px_rgb(0,0,0,0.12)]">
+          <button
+            onClick={() => setActiveTab("notes")}
+            className={`flex-1 py-2 flex flex-col items-center justify-center gap-1 rounded-xl font-semibold text-xs transition-all ${activeTab === 'notes' ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30' : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-200'}`}
+          >
+            <FileText size={20} />
+            Notes
+          </button>
+          <button
+            onClick={() => setActiveTab("files")}
+            className={`flex-1 py-2 flex flex-col items-center justify-center gap-1 rounded-xl font-semibold text-xs transition-all ${activeTab === 'files' ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30' : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-200'}`}
+          >
+            <Database size={20} />
+            Files
+          </button>
+          <button
+            onClick={() => setActiveTab("canvas")}
+            className={`flex-1 py-2 flex flex-col items-center justify-center gap-1 rounded-xl font-semibold text-xs transition-all ${activeTab === 'canvas' ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30' : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-200'}`}
+          >
+            <PenTool size={20} />
+            Canvas
+          </button>
+        </div>
+      )}
     </div>
   );
 }
