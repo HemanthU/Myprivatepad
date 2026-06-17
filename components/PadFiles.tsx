@@ -403,10 +403,10 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
       </div>
 
       {previewFile && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-0 sm:p-8 animate-in fade-in duration-200">
-          <div className="w-full max-w-5xl h-full sm:max-h-[90vh] bg-card sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden relative">
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-md flex flex-col items-center justify-center p-0 sm:p-8 animate-in fade-in duration-200">
+          <div className="w-full max-w-5xl h-full sm:max-h-[90vh] bg-card/90 backdrop-blur-3xl border border-white/20 dark:border-white/10 sm:rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden relative">
             
-            <div className="p-4 sm:p-6 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between shrink-0 gap-4">
+            <div className="p-4 sm:p-6 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between shrink-0 gap-4 bg-transparent">
               <div className="flex items-center gap-4">
                 <button onClick={handleClosePreview} className="p-2 -ml-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors flex items-center gap-1 font-semibold text-gray-700 dark:text-gray-300">
                   <ChevronLeft size={24} /> <span className="hidden sm:inline">Back</span>
@@ -479,9 +479,9 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
       )}
 
       {ocrResultText !== null && (
-        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-0 sm:p-8 animate-in fade-in duration-200">
-          <div className="w-full max-w-6xl h-full sm:h-auto sm:max-h-[90vh] bg-card sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden relative">
-            <div className="p-4 sm:p-6 border-b border-border flex items-center justify-between shrink-0 bg-gray-50 dark:bg-gray-900">
+        <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-md flex flex-col items-center justify-center p-0 sm:p-8 animate-in fade-in duration-200">
+          <div className="w-full max-w-6xl h-full sm:h-auto sm:max-h-[90vh] bg-card/90 backdrop-blur-3xl border border-white/20 dark:border-white/10 sm:rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden relative">
+            <div className="p-4 sm:p-6 border-b border-border flex items-center justify-between shrink-0 bg-transparent">
               <div className="flex items-center gap-3">
                 <button onClick={() => setOcrResultText(null)} className="p-2 -ml-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors flex items-center gap-1 font-semibold text-gray-700 dark:text-gray-300">
                   <ChevronLeft size={24} /> <span className="hidden sm:inline">Back</span>

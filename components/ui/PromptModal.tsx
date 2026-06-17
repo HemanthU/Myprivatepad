@@ -39,8 +39,8 @@ export default function PromptModal({ isOpen, config, onClose }: PromptModalProp
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-card border border-border w-full max-w-md rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7)] p-6 sm:p-8 animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-md animate-in fade-in duration-200">
+      <div className="bg-card/90 backdrop-blur-3xl border border-white/20 dark:border-white/10 w-full max-w-md rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] p-6 sm:p-8 animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
         <h3 className="text-2xl font-bold mb-2 text-gray-900 dark:text-gray-100">{config.title}</h3>
         {config.message && <p className="text-gray-500 dark:text-gray-400 mb-6">{config.message}</p>}
         

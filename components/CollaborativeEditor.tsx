@@ -80,6 +80,18 @@ export default function CollaborativeEditor({ slug, isBurned, isDecoyMode, initi
       onStatsChange(words, currentText.length, currentText);
 
       if (transaction.local && !isBurned) {
+        if (!initRef.current) return;
+        
+        // Auto-snapshot on first edit
+        if (!sessionStorage.getItem(`snapshot-${slug}`)) {
+          sessionStorage.setItem(`snapshot-${slug}`, 'true');
+          setDoc(doc(db, "padVersions", slug, "snapshots", Date.now().toString()), {
+            text: currentText,
+            createdAt: new Date().toISOString(),
+            auto: true
+          }).catch(console.error);
+        }
+
         clearTimeout(timeout);
         timeout = setTimeout(async () => {
           try {

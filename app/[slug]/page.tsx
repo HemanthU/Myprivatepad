@@ -191,7 +191,7 @@ export default function NotePage() {
           const unlocked = sessionStorage.getItem(`unlocked-${slug}`);
           const decoyUnlocked = sessionStorage.getItem(`decoy-unlocked-${slug}`);
 
-          if (!unlocked && !decoyUnlocked) {
+          if (!unlocked && !decoyUnlocked && sessionStorage.getItem("adminAuth") !== "true") {
             router.push(`/locked/${slug}`);
             return;
           }

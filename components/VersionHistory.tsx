@@ -48,9 +48,9 @@ export default function VersionHistory({ slug, currentText, onClose, onRestore }
   };
 
   return (
-    <div className="fixed inset-0 z-[999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[80vh]">
-        <div className="p-6 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-gray-950">
+    <div className="fixed inset-0 z-[999] bg-black/50 backdrop-blur-md flex items-center justify-center p-4">
+      <div className="bg-card/90 backdrop-blur-3xl border border-white/20 dark:border-white/10 rounded-3xl w-full max-w-2xl overflow-hidden shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] flex flex-col max-h-[80vh]">
+        <div className="p-6 border-b border-border flex justify-between items-center bg-transparent">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400 rounded-xl">
               <Clock size={24} />
@@ -62,7 +62,7 @@ export default function VersionHistory({ slug, currentText, onClose, onRestore }
           </button>
         </div>
 
-        <div className="p-6 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-black">
+        <div className="p-6 border-b border-border bg-transparent">
           <button onClick={saveCurrentVersion} className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-colors">
             Snapshot Current Pad
           </button>

@@ -154,7 +154,22 @@ export default function AdminPage() {
   const trashCount = pads.filter(p => p.isTrashed).length;
 
   const managePad = async (padName: string) => {
+    sessionStorage.setItem("adminAuth", "true");
     router.push(`/${padName}`);
+  };
+
+  const deleteGlobalFile = async (file: any) => {
+    const confirmed = await confirm({ title: "Delete File", message: `Delete ${file.fileName} permanently?` });
+    if (!confirmed) return;
+    
+    if (file.chunkCount) {
+      for (let i = 0; i < file.chunkCount; i++) {
+        await deleteDoc(doc(db, "files", file.fileId, "chunks", i.toString()));
+      }
+    }
+    await deleteDoc(doc(db, "files", file.fileId));
+    setAllFiles(prev => prev.filter(f => f.fileId !== file.fileId));
+    toast("File deleted permanently", "success");
   };
 
   const lockPad = async (padName: string) => {
@@ -364,6 +379,7 @@ export default function AdminPage() {
                       <th className="p-4 font-semibold">Size</th>
                       <th className="p-4 font-semibold">Uploaded</th>
                       <th className="p-4 font-semibold">Views</th>
+                      <th className="p-4 font-semibold">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
@@ -373,11 +389,19 @@ export default function AdminPage() {
                           <div className="p-2 bg-white/5 rounded-lg text-gray-400">{getFileIcon(file.fileType)}</div>
                           <span className="font-medium truncate max-w-[200px]" title={file.fileName}>{file.fileName}</span>
                         </td>
-                        <td className="p-4 text-indigo-300 cursor-pointer hover:underline" onClick={() => router.push(`/${file.padId}`)}>{file.padId}</td>
+                        <td className="p-4 text-indigo-300 cursor-pointer hover:underline" onClick={() => managePad(file.padId)}>{file.padId}</td>
                         <td className="p-4 text-gray-400 text-sm">{file.fileType.split('/')[1] || file.fileType}</td>
                         <td className="p-4 text-gray-400 text-sm">{(file.fileSize / 1024 / 1024).toFixed(2)} MB</td>
                         <td className="p-4 text-gray-400 text-sm">{new Date(file.uploadedAt).toLocaleDateString()}</td>
                         <td className="p-4 text-gray-400 text-sm">{file.totalViews || 0}</td>
+                        <td className="p-4">
+                          <button onClick={() => managePad(file.padId)} className="p-2 text-indigo-400 hover:bg-indigo-500/20 rounded-lg transition-colors mr-2" title="Jump to Pad to View">
+                            <ExternalLink size={18} />
+                          </button>
+                          <button onClick={() => deleteGlobalFile(file)} className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors" title="Delete File">
+                            <Trash size={18} />
+                          </button>
+                        </td>
                       </tr>
                     ))}
                     {allFiles.length === 0 && (

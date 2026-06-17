@@ -36,9 +36,9 @@ export default function CommandPalette({ isOpen, onClose, currentSlug }: { isOpe
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-start justify-center pt-[15vh] bg-black/40 backdrop-blur-md animate-in fade-in duration-200" onClick={onClose}>
+    <div className="fixed inset-0 z-[200] flex items-start justify-center pt-[15vh] bg-black/50 backdrop-blur-md animate-in fade-in duration-200" onClick={onClose}>
       <div 
-        className="bg-card border border-border w-full max-w-2xl rounded-2xl shadow-[0_30px_100px_-15px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col animate-in zoom-in-95 slide-in-from-top-8 duration-200"
+        className="bg-card/90 backdrop-blur-3xl border border-white/20 dark:border-white/10 w-full max-w-2xl rounded-2xl shadow-[0_30px_100px_-15px_rgba(0,0,0,0.5)] dark:shadow-[0_30px_100px_-15px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col animate-in zoom-in-95 slide-in-from-top-8 duration-200"
         onClick={e => e.stopPropagation()}
       >
         <form onSubmit={handleSubmit} className="relative border-b border-border flex items-center px-4">
