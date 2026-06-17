@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 
-const LANGUAGE_MAP: Record<string, number> = {
-  javascript: 93,
-  python: 71,
-  cpp: 54,
-  c: 50,
-  java: 62,
+const LANGUAGE_MAP: Record<string, string> = {
+  javascript: 'javascript',
+  python: 'python3',
+  cpp: 'cpp',
+  c: 'c',
+  java: 'java',
 };
 
 export async function POST(req: Request) {
@@ -16,53 +16,65 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Code and language are required' }, { status: 400 });
     }
 
-    const languageId = LANGUAGE_MAP[language];
-    if (!languageId) {
+    const paizaLang = LANGUAGE_MAP[language];
+    if (!paizaLang) {
       return NextResponse.json({ error: 'Unsupported language' }, { status: 400 });
     }
 
-    const apiKey = process.env.RAPIDAPI_KEY;
-    if (!apiKey) {
-      return NextResponse.json({ 
-        error: 'RAPIDAPI_KEY is not configured in environment variables. Please add it to your .env.local file. You can get one from rapidapi.com/judge0-official/api/judge0-ce/'
-      }, { status: 500 });
-    }
-
-    const response = await fetch('https://judge0-ce.p.rapidapi.com/submissions?base64_encoded=false&wait=true', {
+    // 1. Create a runner session on Paiza (Completely free, no API key needed)
+    const createRes = await fetch('https://api.paiza.io/runners/create', {
       method: 'POST',
       headers: {
-        'content-type': 'application/json',
-        'X-RapidAPI-Key': apiKey,
-        'X-RapidAPI-Host': 'judge0-ce.p.rapidapi.com'
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         source_code: code,
-        language_id: languageId,
+        language: paizaLang,
+        api_key: 'guest'
       })
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Judge0 API Error:", response.status, errorText);
-      return NextResponse.json({ error: 'Failed to execute code with Judge0 API' }, { status: response.status });
+    if (!createRes.ok) {
+      return NextResponse.json({ error: 'Failed to initialize compilation engine.' }, { status: createRes.status });
     }
 
-    const result = await response.json();
-    
-    // Determine the output to show
-    let output = result.stdout || '';
-    if (result.stderr) {
-      output += (output ? '\n' : '') + result.stderr;
-    }
-    if (result.compile_output) {
-      output += (output ? '\n' : '') + result.compile_output;
-    }
-    
-    if (!output && result.status?.description) {
-      output = result.status.description;
+    const { id } = await createRes.json();
+    if (!id) {
+      return NextResponse.json({ error: 'Execution engine failed to provide a session ID.' }, { status: 500 });
     }
 
-    return NextResponse.json({ output });
+    // 2. Poll for the execution details until completed
+    let attempts = 0;
+    while (attempts < 15) {
+      // Wait 1 second between polls
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const detailsRes = await fetch(`https://api.paiza.io/runners/get_details?id=${id}&api_key=guest`);
+      if (!detailsRes.ok) {
+        return NextResponse.json({ error: 'Failed to fetch execution status.' }, { status: detailsRes.status });
+      }
+
+      const details = await detailsRes.json();
+      
+      if (details.status === 'completed') {
+        // Build the output
+        let output = '';
+        if (details.build_stderr) output += details.build_stderr + '\n';
+        if (details.build_stdout) output += details.build_stdout + '\n';
+        if (details.stderr) output += details.stderr + '\n';
+        if (details.stdout) output += details.stdout;
+        
+        if (!output && details.build_exit_code !== '0') {
+          output = `Build Failed with exit code ${details.build_exit_code}`;
+        }
+        
+        return NextResponse.json({ output: output.trim() || 'Program finished with no output.' });
+      }
+
+      attempts++;
+    }
+
+    return NextResponse.json({ error: 'Execution timed out.' }, { status: 504 });
 
   } catch (error) {
     console.error('Execution error:', error);
