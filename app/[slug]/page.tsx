@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { doc, onSnapshot, setDoc, getDoc, deleteDoc } from "firebase/firestore";
-import { FileText, Unlock, Lock, EyeOff, Save, Key, User, ArrowLeft, Trash, Eye, Ghost, Database, Settings, PenTool, ChevronLeft } from "lucide-react";
+import { FileText, Unlock, Lock, EyeOff, Save, Key, User, ArrowLeft, Trash, Eye, Ghost, Database, Settings, PenTool, ChevronLeft, Play, X, Terminal } from "lucide-react";
 import { db, storage } from "@/lib/firebase";
 import ThemeToggle from "@/components/ThemeToggle";
 import PadFiles from "@/components/PadFiles";
@@ -13,6 +13,7 @@ import PromptModal from "@/components/ui/PromptModal";
 import CommandPalette from "@/components/ui/CommandPalette";
 import CollaborativeEditor from "@/components/CollaborativeEditor";
 import TabBar from "@/components/TabBar";
+import CustomSelect from "@/components/ui/CustomSelect";
 import dynamic from "next/dynamic";
 
 const RichTextEditor = dynamic(() => import("@/components/RichTextEditor"), { ssr: false });
@@ -27,7 +28,10 @@ export default function NotePage() {
   const [wordCount, setWordCount] = useState(0);
   const [charCount, setCharCount] = useState(0);
   const [language, setLanguage] = useState("plaintext");
-  const [editorMode, setEditorMode] = useState<"code" | "rich">("code");
+  const [editorMode, setEditorMode] = useState<"code" | "rich">("rich");
+  const [terminalOutput, setTerminalOutput] = useState("");
+  const [isRunning, setIsRunning] = useState(false);
+  const [showTerminal, setShowTerminal] = useState(false);
 
   const handleExport = async (format: string) => {
     if (format === "txt") {
@@ -220,6 +224,36 @@ export default function NotePage() {
     });
     if (newPad && newPad.trim() !== "") {
       router.push(`/${newPad.trim()}`);
+    }
+  };
+
+  const handleRunCode = async () => {
+    if (!localText.trim() || language === "plaintext" || language === "markdown" || language === "json" || language === "html" || language === "css") {
+      toast("Select a valid programming language to run code.", "error");
+      return;
+    }
+    
+    setIsRunning(true);
+    setShowTerminal(true);
+    setTerminalOutput("Compiling and running code in the cloud...");
+    
+    try {
+      const res = await fetch("/api/execute", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: localText, language })
+      });
+      
+      const data = await res.json();
+      if (!res.ok) {
+        setTerminalOutput(`Execution Error:\n${data.error || "Unknown error occurred"}`);
+      } else {
+        setTerminalOutput(data.output || "Program finished with no output.");
+      }
+    } catch (err) {
+      setTerminalOutput(`Network Error: Could not reach execution engine.`);
+    } finally {
+      setIsRunning(false);
     }
   };
 
@@ -536,64 +570,75 @@ export default function NotePage() {
             {activeTab === "notes" && (
               <>
                 <div className="border-l border-gray-300 dark:border-gray-700 mx-1"></div>
-                <select
+                <CustomSelect
                   value={editorMode}
-                  onChange={async (e) => {
-                    const newMode = e.target.value as "code" | "rich";
-                    setEditorMode(newMode);
+                  onChange={async (newMode) => {
+                    setEditorMode(newMode as "code" | "rich");
                     if (!isBurned && !isDecoyMode) {
                       const { setDoc, doc } = await import("firebase/firestore");
                       await setDoc(doc(db, "padSettings", slug), { editorMode: newMode }, { merge: true });
                     }
                   }}
-                  className="px-4 py-2 rounded-lg bg-transparent hover:bg-white dark:hover:bg-black text-gray-500 hover:text-black dark:hover:text-white transition-all outline-none font-semibold text-sm cursor-pointer border-none"
-                >
-                  <option value="code">Code / Text</option>
-                  <option value="rich">Rich Text (Notion)</option>
-                </select>
+                  options={[
+                    { value: "rich", label: "Rich Text (Notion)" },
+                    { value: "code", label: "Code / Text" }
+                  ]}
+                  className="w-44"
+                />
                 {editorMode === "code" && (
                   <>
                     <div className="border-l border-gray-300 dark:border-gray-700 mx-1"></div>
-                    <select
+                    <CustomSelect
                       value={language}
-                      onChange={async (e) => {
-                        const newLang = e.target.value;
+                      onChange={async (newLang) => {
                         setLanguage(newLang);
                         if (!isBurned && !isDecoyMode) {
                           const { setDoc, doc } = await import("firebase/firestore");
                           await setDoc(doc(db, "padSettings", slug), { language: newLang }, { merge: true });
                         }
                       }}
-                      className="px-4 py-2 rounded-lg bg-transparent hover:bg-white dark:hover:bg-black text-gray-500 hover:text-black dark:hover:text-white transition-all outline-none font-semibold text-sm cursor-pointer border-none"
-                    >
-                      <option value="plaintext">Text</option>
-                      <option value="markdown">Markdown</option>
-                      <option value="javascript">JavaScript</option>
-                      <option value="python">Python</option>
-                      <option value="cpp">C++</option>
-                      <option value="html">HTML</option>
-                      <option value="css">CSS</option>
-                      <option value="json">JSON</option>
-                    </select>
+                      options={[
+                        { value: "plaintext", label: "Text" },
+                        { value: "markdown", label: "Markdown" },
+                        { value: "javascript", label: "JavaScript" },
+                        { value: "python", label: "Python" },
+                        { value: "cpp", label: "C++" },
+                        { value: "c", label: "C" },
+                        { value: "java", label: "Java" },
+                        { value: "html", label: "HTML" },
+                        { value: "css", label: "CSS" },
+                        { value: "json", label: "JSON" }
+                      ]}
+                      className="w-36"
+                    />
+                    {language !== "plaintext" && language !== "markdown" && language !== "html" && language !== "css" && language !== "json" && (
+                      <button
+                        onClick={handleRunCode}
+                        disabled={isRunning}
+                        className="px-4 py-2 rounded-lg bg-green-500/10 text-green-600 hover:bg-green-500/20 dark:bg-green-500/20 dark:text-green-400 dark:hover:bg-green-500/30 transition-all font-semibold flex items-center gap-2"
+                      >
+                        {isRunning ? <div className="animate-spin rounded-full h-4 w-4 border-2 border-green-500 border-t-transparent" /> : <Play size={16} />}
+                        Run
+                      </button>
+                    )}
                   </>
                 )}
               </>
             )}
             <div className="border-l border-gray-300 dark:border-gray-700 mx-1"></div>
-            <select
+            <CustomSelect
               value=""
-              onChange={(e) => {
-                const format = e.target.value;
+              placeholder="Export"
+              onChange={(format) => {
                 if (format) handleExport(format);
-                e.target.value = "";
               }}
-              className="px-4 py-2 rounded-lg bg-transparent hover:bg-white dark:hover:bg-black text-gray-500 hover:text-black dark:hover:text-white transition-all outline-none font-semibold text-sm cursor-pointer border-none"
-            >
-              <option value="" disabled>Export</option>
-              <option value="txt">.TXT</option>
-              <option value="md">.MD</option>
-              <option value="pdf">.PDF</option>
-            </select>
+              options={[
+                { value: "txt", label: ".TXT" },
+                { value: "md", label: ".MD" },
+                { value: "pdf", label: ".PDF" }
+              ]}
+              className="w-28"
+            />
           </div>
         </div>
         )}
@@ -601,18 +646,37 @@ export default function NotePage() {
         {activeTab === "notes" ? (
           <div className="flex-1 w-full flex flex-col min-h-[600px] bg-card shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] border border-border rounded-3xl p-6 sm:p-12 mb-8 flex flex-col transition-all duration-300 hover:shadow-[0_8px_40px_rgb(0,0,0,0.08)] dark:hover:shadow-[0_8px_40px_rgb(0,0,0,0.5)]">
             {editorMode === "code" ? (
-              <CollaborativeEditor 
-                slug={slug} 
-                isBurned={isBurned} 
-                isDecoyMode={isDecoyMode}
-                initialText={isBurned ? localText : undefined}
-                language={language}
-                onStatsChange={(words, chars, text) => {
-                  setWordCount(words);
-                  setCharCount(chars);
-                  setLocalText(text);
-                }}
-              />
+              <div className="flex-1 flex flex-col min-h-0 relative">
+                <CollaborativeEditor 
+                  slug={slug} 
+                  isBurned={isBurned} 
+                  isDecoyMode={isDecoyMode}
+                  initialText={isBurned ? localText : undefined}
+                  language={language}
+                  onStatsChange={(words, chars, text) => {
+                    setWordCount(words);
+                    setCharCount(chars);
+                    setLocalText(text);
+                  }}
+                />
+                
+                {showTerminal && (
+                  <div className="h-64 shrink-0 bg-[#0d0d0d] border-t border-[#333] rounded-b-3xl -mx-6 sm:-mx-12 -mb-6 sm:-mb-12 mt-4 flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 fade-in duration-300">
+                    <div className="px-4 py-2 bg-[#1a1a1a] border-b border-[#333] flex items-center justify-between shrink-0">
+                      <div className="flex items-center gap-2 text-gray-400 font-mono text-sm">
+                        <Terminal size={14} /> Execution Terminal
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => setTerminalOutput("")} className="text-xs px-2 py-1 bg-white/5 hover:bg-white/10 rounded text-gray-300 transition-colors">Clear</button>
+                        <button onClick={() => setShowTerminal(false)} className="text-gray-500 hover:text-white transition-colors p-1"><X size={16} /></button>
+                      </div>
+                    </div>
+                    <div className="flex-1 p-4 overflow-y-auto font-mono text-sm text-green-400 bg-transparent selection:bg-green-500/30 whitespace-pre-wrap">
+                      {terminalOutput}
+                    </div>
+                  </div>
+                )}
+              </div>
             ) : (
               <RichTextEditor 
                 slug={slug}
