@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { doc, onSnapshot, setDoc, getDoc, deleteDoc } from "firebase/firestore";
-import { FileText, Unlock, Lock, EyeOff, Save, Key, User, ArrowLeft, Trash, Eye, Ghost, Database, Settings, PenTool, ChevronLeft, Play, X, Terminal } from "lucide-react";
+import { FileText, Unlock, Lock, EyeOff, Save, Key, User, ArrowLeft, Trash, Eye, Ghost, Database, Settings, PenTool, ChevronLeft, Play, X, Terminal, Share2 } from "lucide-react";
 import { db, storage } from "@/lib/firebase";
 import ThemeToggle from "@/components/ThemeToggle";
 import PadFiles from "@/components/PadFiles";
@@ -14,6 +14,7 @@ import CommandPalette from "@/components/ui/CommandPalette";
 import CollaborativeEditor from "@/components/CollaborativeEditor";
 import TabBar from "@/components/TabBar";
 import CustomSelect from "@/components/ui/CustomSelect";
+import ShareModal from "@/components/ui/ShareModal";
 import dynamic from "next/dynamic";
 
 const RichTextEditor = dynamic(() => import("@/components/RichTextEditor"), { ssr: false });
@@ -32,6 +33,7 @@ export default function NotePage() {
   const [terminalOutput, setTerminalOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [showTerminal, setShowTerminal] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   const handleExport = async (format: string) => {
     if (format === "txt") {
@@ -531,7 +533,14 @@ export default function NotePage() {
           >
             Switch Pad
           </button>
-          <span className={`text-sm font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5 ${status === 'Saved' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : status === 'Saving...' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'}`}>
+          <button
+            onClick={() => setIsShareModalOpen(true)}
+            className="p-2 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-200 dark:hover:bg-indigo-900/50 transition-colors"
+            title="Share Pad"
+          >
+            <Share2 size={18} />
+          </button>
+          <span className={`hidden sm:flex text-sm font-semibold px-3 py-1.5 rounded-full items-center gap-1.5 ${status === 'Saved' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : status === 'Saving...' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'}`}>
             {isBurned ? "🔥 Burned" : status === "Saved" ? "✓ Saved" : status === "Saving..." ? "⟳ Saving..." : "⚠ Sync Error"}
           </span>
           <ThemeToggle />
@@ -725,6 +734,8 @@ export default function NotePage() {
           </button>
         </div>
       )}
+
+      <ShareModal slug={slug} isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} />
     </div>
   );
 }
