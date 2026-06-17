@@ -101,7 +101,18 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
     });
   }, [slug, encryptUploads, burnUploads]);
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
+  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({ onDrop, noClick: false });
+
+  useEffect(() => {
+    const handleShortcut = (e: KeyboardEvent) => {
+      if (e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === "u") {
+        e.preventDefault();
+        open();
+      }
+    };
+    window.addEventListener("keydown", handleShortcut);
+    return () => window.removeEventListener("keydown", handleShortcut);
+  }, [open]);
 
   const deleteFile = async (file: FileMetadata) => {
     const confirmed = await confirm({ title: "Delete File", message: `Delete ${file.fileName} permanently?` });

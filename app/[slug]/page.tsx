@@ -66,6 +66,7 @@ export default function NotePage() {
   const [unlockDate, setUnlockDate] = useState<string | null>(null);
   const [isBurned, setIsBurned] = useState(false);
   const [showPalette, setShowPalette] = useState(false);
+  const [distractionFree, setDistractionFree] = useState(false);
   const [activeTab, setActiveTab] = useState<"notes" | "files" | "canvas">("notes");
 
   const textRef = useRef(localText);
@@ -239,13 +240,39 @@ export default function NotePage() {
       }
 
       // Switch Pad
-      if (e.ctrlKey && e.key.toLowerCase() === "k") {
+      if (e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === "k") {
         e.preventDefault();
         handleSwitchPad();
       }
+
+      // Copy Link
+      if (e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === "d") {
+        e.preventDefault();
+        navigator.clipboard.writeText(window.location.href);
+        toast("Pad link copied to clipboard!", "success");
+      }
+
+      // Distraction-Free Mode
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "f") {
+        e.preventDefault();
+        setDistractionFree(prev => !prev);
+      }
+
+      // Toggle Theme
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "l") {
+        e.preventDefault();
+        const root = document.documentElement;
+        if (root.classList.contains("dark")) {
+          root.classList.remove("dark");
+          localStorage.setItem("theme", "light");
+        } else {
+          root.classList.add("dark");
+          localStorage.setItem("theme", "dark");
+        }
+      }
       
       // Save
-      if (e.ctrlKey && e.key.toLowerCase() === "s") {
+      if (e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === "s") {
         e.preventDefault();
         if (isBurned) return;
 
@@ -439,12 +466,13 @@ export default function NotePage() {
     <div className="min-h-screen bg-transparent text-foreground transition-colors duration-300 flex flex-col items-center font-sans relative">
       <PromptModal isOpen={isOpen} config={config} onClose={handleClose} />
       <CommandPalette isOpen={showPalette} onClose={() => setShowPalette(false)} currentSlug={slug} />
-      <TabBar currentSlug={slug} />
+      {!distractionFree && <TabBar currentSlug={slug} />}
       {isBurned && (
         <div className="w-full bg-red-600 text-white py-2 text-center text-sm font-semibold z-50 shadow-md">
           🔥 Burn After Read active: This pad has been deleted from the server. It will vanish forever when you leave this page.
         </div>
       )}
+      {!distractionFree && (
       <header className="w-full max-w-[1400px] flex items-center justify-between p-4 sm:p-8 mb-2">
         <h1 
           onClick={() => router.push("/")}
@@ -466,8 +494,10 @@ export default function NotePage() {
           <ThemeToggle />
         </div>
       </header>
+      )}
 
       <main className="w-full max-w-[1400px] px-4 sm:px-8 flex-1 flex flex-col">
+        {!distractionFree && (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 dark:text-gray-200">
             # {slug} {isDecoyMode && <span className="text-sm font-normal text-gray-500">(Decoy)</span>}
@@ -557,9 +587,10 @@ export default function NotePage() {
             </select>
           </div>
         </div>
+        )}
 
         {activeTab === "notes" ? (
-          <div className="flex-1 w-full min-h-[70vh] bg-card shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] border border-border rounded-3xl p-6 sm:p-12 mb-8 flex flex-col transition-all duration-300 hover:shadow-[0_8px_40px_rgb(0,0,0,0.08)] dark:hover:shadow-[0_8px_40px_rgb(0,0,0,0.5)]">
+          <div className="flex-1 w-full flex flex-col min-h-[600px] bg-card shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] border border-border rounded-3xl p-6 sm:p-12 mb-8 flex flex-col transition-all duration-300 hover:shadow-[0_8px_40px_rgb(0,0,0,0.08)] dark:hover:shadow-[0_8px_40px_rgb(0,0,0,0.5)]">
             {editorMode === "code" ? (
               <CollaborativeEditor 
                 slug={slug} 
