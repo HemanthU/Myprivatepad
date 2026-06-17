@@ -211,8 +211,40 @@ export default function NotePage() {
     loadPad();
   }, [slug, router]);
 
+  const handleSwitchPad = async () => {
+    const newPad = await prompt({
+      title: "Jump to Pad",
+      message: "Enter the code/name of the pad you want to jump to:",
+      defaultValue: ""
+    });
+    if (newPad && newPad.trim() !== "") {
+      router.push(`/${newPad.trim()}`);
+    }
+  };
+
   useEffect(() => {
     const handleShortcuts = async (e: KeyboardEvent) => {
+      // Tab Switching
+      if (e.altKey && e.key === "1") {
+        e.preventDefault();
+        setActiveTab("notes");
+      }
+      if (e.altKey && e.key === "2") {
+        e.preventDefault();
+        setActiveTab("files");
+      }
+      if (e.altKey && e.key === "3") {
+        e.preventDefault();
+        setActiveTab("canvas");
+      }
+
+      // Switch Pad
+      if (e.ctrlKey && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        handleSwitchPad();
+      }
+      
+      // Save
       if (e.ctrlKey && e.key.toLowerCase() === "s") {
         e.preventDefault();
         if (isBurned) return;
@@ -421,6 +453,13 @@ export default function NotePage() {
           PadX
         </h1>
         <div className="flex items-center gap-3 sm:gap-4">
+          <button 
+            onClick={handleSwitchPad}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-sm font-semibold hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors border border-transparent shadow-sm"
+            title="Switch Pad (Ctrl+K)"
+          >
+            Switch Pad
+          </button>
           <span className={`text-sm font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5 ${status === 'Saved' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : status === 'Saving...' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'}`}>
             {isBurned ? "🔥 Burned" : status === "Saved" ? "✓ Saved" : status === "Saving..." ? "⟳ Saving..." : "⚠ Sync Error"}
           </span>
@@ -437,18 +476,21 @@ export default function NotePage() {
             <button
               onClick={() => setActiveTab("notes")}
               className={`px-6 py-2 rounded-lg font-semibold text-sm transition-all ${activeTab === 'notes' ? 'bg-white dark:bg-black shadow-sm text-black dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+              title="Notes (Alt+1)"
             >
               Notes
             </button>
             <button
               onClick={() => setActiveTab("files")}
               className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${activeTab === 'files' ? 'bg-white text-black shadow-sm dark:bg-black dark:text-white' : 'text-gray-500 hover:text-black dark:hover:text-white'}`}
+              title="Files (Alt+2)"
             >
               Files
             </button>
             <button
               onClick={() => setActiveTab("canvas")}
               className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${activeTab === 'canvas' ? 'bg-white text-black shadow-sm dark:bg-black dark:text-white' : 'text-gray-500 hover:text-black dark:hover:text-white'}`}
+              title="Canvas (Alt+3)"
             >
               Canvas
             </button>
