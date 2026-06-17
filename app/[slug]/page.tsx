@@ -4,20 +4,63 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { doc, onSnapshot, setDoc, getDoc, deleteDoc } from "firebase/firestore";
 import { FileText, Unlock, Lock, EyeOff, Save, Key, User, ArrowLeft, Trash, Eye, Ghost, Database, Settings } from "lucide-react";
-import { db } from "@/lib/firebase";
+import { db, storage } from "@/lib/firebase";
 import ThemeToggle from "@/components/ThemeToggle";
 import PadFiles from "@/components/PadFiles";
 import { usePrompt } from "@/hooks/usePrompt";
 import { useToast } from "@/hooks/useToast";
 import PromptModal from "@/components/ui/PromptModal";
 import CommandPalette from "@/components/ui/CommandPalette";
+import CollaborativeEditor from "@/components/CollaborativeEditor";
+import TabBar from "@/components/TabBar";
+import dynamic from "next/dynamic";
+
+const RichTextEditor = dynamic(() => import("@/components/RichTextEditor"), { ssr: false });
+const CanvasBoard = dynamic(() => import("@/components/CanvasBoard"), { ssr: false });
+const CallOverlay = dynamic(() => import("@/components/CallOverlay"), { ssr: false });
+const VersionHistory = dynamic(() => import("@/components/VersionHistory"), { ssr: false });
 
 export default function NotePage() {
   const params = useParams();
   const router = useRouter();
   const slug = params.slug as string;
 
-  const [text, setText] = useState("");
+  const [localText, setLocalText] = useState("");
+  const [wordCount, setWordCount] = useState(0);
+  const [charCount, setCharCount] = useState(0);
+  const [language, setLanguage] = useState("plaintext");
+  const [editorMode, setEditorMode] = useState<"code" | "rich">("code");
+
+  const handleExport = async (format: string) => {
+    if (format === "txt") {
+      const blob = new Blob([localText], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${slug}-export.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else if (format === "md") {
+      const blob = new Blob([localText], { type: "text/markdown" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${slug}-export.md`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else if (format === "pdf") {
+      const html2pdf = (await import("html2pdf.js")).default;
+      const element = document.createElement("div");
+      element.innerHTML = `<h1 style="font-family: sans-serif; text-align: center; color: #333;">PadX: ${slug}</h1><hr/><pre style="white-space: pre-wrap; font-family: monospace; font-size: 14px; padding: 20px; line-height: 1.5; color: #000;">${localText.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</pre>`;
+      html2pdf().set({
+        margin: 15,
+        filename: `${slug}-export.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      }).from(element).save();
+    }
+  };
   const [loaded, setLoaded] = useState(false);
   const [status, setStatus] = useState("Saved");
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
@@ -25,7 +68,9 @@ export default function NotePage() {
   const [unlockDate, setUnlockDate] = useState<string | null>(null);
   const [isBurned, setIsBurned] = useState(false);
   const [showPalette, setShowPalette] = useState(false);
-  const firstLoad = useRef(true);
+  const [activeTab, setActiveTab] = useState<"notes" | "files" | "canvas">("notes");
+  const [callActive, setCallActive] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
 
   const { prompt, confirm, alert: promptAlert, isOpen, config, handleClose } = usePrompt();
   const { toast } = useToast();
@@ -37,6 +82,8 @@ export default function NotePage() {
 
       if (settingsSnap.exists()) {
         const settings = settingsSnap.data();
+        setLanguage(settings.language || "plaintext");
+        setEditorMode(settings.editorMode || "code");
 
         if (settings.isTrashed) {
           router.push("/");
@@ -68,12 +115,22 @@ export default function NotePage() {
 
         if (settings.burnAfterRead && currentOpens >= 1) {
           const noteSnap = await getDoc(doc(db, "notes", slug));
-          if (noteSnap.exists()) setText(noteSnap.data().content || "");
+          if (noteSnap.exists()) setLocalText(noteSnap.data().content || "");
           
           const { collection, query, where, getDocs } = await import("firebase/firestore");
           const q = query(collection(db, "files"), where("padId", "==", slug));
           const filesSnap = await getDocs(q);
           for (const fileDoc of filesSnap.docs) {
+            const fileData = fileDoc.data();
+            if (fileData.fileUrl) {
+              try {
+                const { ref, deleteObject } = await import("firebase/storage");
+                const fileRef = ref(storage, fileData.fileUrl);
+                await deleteObject(fileRef);
+              } catch(e) {
+                console.error("Failed to delete from storage:", e);
+              }
+            }
             await deleteDoc(fileDoc.ref);
           }
 
@@ -81,7 +138,6 @@ export default function NotePage() {
           await deleteDoc(doc(db, "padSettings", slug));
           setIsBurned(true);
           setLoaded(true);
-          firstLoad.current = false;
           setInitialLoadComplete(true);
           return;
         }
@@ -92,6 +148,16 @@ export default function NotePage() {
             const q = query(collection(db, "files"), where("padId", "==", slug));
             const filesSnap = await getDocs(q);
             for (const fileDoc of filesSnap.docs) {
+              const fileData = fileDoc.data();
+              if (fileData.fileUrl) {
+                try {
+                  const { ref, deleteObject } = await import("firebase/storage");
+                  const fileRef = ref(storage, fileData.fileUrl);
+                  await deleteObject(fileRef);
+                } catch(e) {
+                  console.error("Failed to delete from storage:", e);
+                }
+              }
               await deleteDoc(fileDoc.ref);
             }
 
@@ -113,77 +179,19 @@ export default function NotePage() {
 
           if (decoyUnlocked) {
             setIsDecoyMode(true);
-            setText(settings.decoyContent || "");
             setLoaded(true);
-            firstLoad.current = false;
             setInitialLoadComplete(true);
             return;
           }
         }
       }
 
-      const ref = doc(db, "notes", slug);
-
-      const unsubscribe = onSnapshot(ref, (snap) => {
-        if (snap.exists()) {
-          const savedText = snap.data().content || "";
-
-          if (firstLoad.current) {
-            setText(savedText);
-            firstLoad.current = false;
-            setInitialLoadComplete(true);
-          }
-        } else {
-          firstLoad.current = false;
-          setInitialLoadComplete(true);
-        }
-
-        setLoaded(true);
-      });
-
-      return unsubscribe;
+      setLoaded(true);
+      setInitialLoadComplete(true);
     };
 
-    let unsubscribe: (() => void) | undefined;
-
-    loadPad().then((cleanup) => {
-      unsubscribe = cleanup;
-    });
-
-    return () => {
-      if (unsubscribe) unsubscribe();
-    };
+    loadPad();
   }, [slug, router]);
-
-  useEffect(() => {
-    if (!loaded || firstLoad.current || !initialLoadComplete || isBurned) return;
-
-    setStatus("Saving...");
-
-    const timeout = setTimeout(async () => {
-      try {
-        if (isDecoyMode) {
-          const settingsSnap = await getDoc(doc(db, "padSettings", slug));
-          if (settingsSnap.exists()) {
-            await setDoc(doc(db, "padSettings", slug), {
-              ...settingsSnap.data(),
-              decoyContent: text
-            });
-          }
-        } else {
-          await setDoc(doc(db, "notes", slug), {
-            content: text,
-            updatedAt: new Date(),
-          });
-        }
-        setStatus("Saved");
-      } catch {
-        setStatus("Sync Error");
-      }
-    }, 500);
-
-    return () => clearTimeout(timeout);
-  }, [text, slug, loaded, initialLoadComplete, isDecoyMode, isBurned]);
 
   useEffect(() => {
     const handleShortcuts = async (e: KeyboardEvent) => {
@@ -199,14 +207,22 @@ export default function NotePage() {
             if (settingsSnap.exists()) {
               await setDoc(doc(db, "padSettings", slug), {
                 ...settingsSnap.data(),
-                decoyContent: text
+                decoyContent: localText
               });
             }
           } else {
             await setDoc(doc(db, "notes", slug), {
-              content: text,
+              content: localText,
               updatedAt: new Date(),
             });
+            const settingsSnap = await getDoc(doc(db, "padSettings", slug));
+            if (settingsSnap.exists() && settingsSnap.data().webhookUrl) {
+               fetch(settingsSnap.data().webhookUrl, {
+                 method: 'POST',
+                 headers: { 'Content-Type': 'application/json' },
+                 body: JSON.stringify({ pad: slug, event: 'saved', content: localText, timestamp: new Date().toISOString() })
+               }).catch(console.error);
+            }
           }
           setStatus("Saved");
           toast("Note saved successfully", "success");
@@ -223,14 +239,10 @@ export default function NotePage() {
 
       if (e.ctrlKey && e.key.toLowerCase() === "d") {
         e.preventDefault();
-        navigator.clipboard.writeText(text);
+        navigator.clipboard.writeText(localText);
         toast("Copied to clipboard", "success");
       }
 
-      if (e.ctrlKey && e.key === "/") {
-        e.preventDefault();
-        router.push("/admin");
-      }
 
       if (e.ctrlKey && e.key.toLowerCase() === "l") {
         e.preventDefault();
@@ -352,7 +364,8 @@ export default function NotePage() {
 
     window.addEventListener("keydown", handleShortcuts);
     return () => window.removeEventListener("keydown", handleShortcuts);
-  }, [text, router, slug, isDecoyMode, isBurned]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localText, router, slug, isDecoyMode, isBurned]);
 
   if (unlockDate) {
     return (
@@ -372,15 +385,11 @@ export default function NotePage() {
     );
   }
 
-  const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
-  const charCount = text.length;
-
-  const [activeTab, setActiveTab] = useState<"notes" | "files">("notes");
-
   return (
     <div className="min-h-screen bg-transparent text-foreground transition-colors duration-300 flex flex-col items-center font-sans relative">
       <PromptModal isOpen={isOpen} config={config} onClose={handleClose} />
       <CommandPalette isOpen={showPalette} onClose={() => setShowPalette(false)} currentSlug={slug} />
+      <TabBar currentSlug={slug} />
       {isBurned && (
         <div className="w-full bg-red-600 text-white py-2 text-center text-sm font-semibold z-50 shadow-md">
           🔥 Burn After Read active: This pad has been deleted from the server. It will vanish forever when you leave this page.
@@ -389,11 +398,17 @@ export default function NotePage() {
       <header className="w-full max-w-[1400px] flex items-center justify-between p-4 sm:p-8 mb-2">
         <h1 
           onClick={() => router.push("/")}
-          className="text-2xl font-extrabold cursor-pointer hover:opacity-80 transition-opacity"
+          className="text-2xl font-extrabold cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-4"
         >
           PadX
         </h1>
         <div className="flex items-center gap-3 sm:gap-4">
+          <button
+            onClick={() => setCallActive(!callActive)}
+            className={`px-3 py-1.5 rounded-full text-sm font-semibold transition-all shadow-sm border border-transparent ${callActive ? 'bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.5)]' : 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400 dark:border-indigo-800/30 hover:bg-indigo-200 dark:hover:bg-indigo-800/50'}`}
+          >
+            {callActive ? "End Call" : "Join Call"}
+          </button>
           <span className={`text-sm font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5 ${status === 'Saved' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : status === 'Saving...' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'}`}>
             {isBurned ? "🔥 Burned" : status === "Saved" ? "✓ Saved" : status === "Saving..." ? "⟳ Saving..." : "⚠ Sync Error"}
           </span>
@@ -415,30 +430,136 @@ export default function NotePage() {
             </button>
             <button
               onClick={() => setActiveTab("files")}
-              className={`px-6 py-2 rounded-lg font-semibold text-sm transition-all ${activeTab === 'files' ? 'bg-white dark:bg-black shadow-sm text-black dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+              className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${activeTab === 'files' ? 'bg-white text-black shadow-sm dark:bg-black dark:text-white' : 'text-gray-500 hover:text-black dark:hover:text-white'}`}
             >
               Files
+            </button>
+            <button
+              onClick={() => setActiveTab("canvas")}
+              className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${activeTab === 'canvas' ? 'bg-white text-black shadow-sm dark:bg-black dark:text-white' : 'text-gray-500 hover:text-black dark:hover:text-white'}`}
+            >
+              Canvas
+            </button>
+            {activeTab === "notes" && (
+              <>
+                <div className="border-l border-gray-300 dark:border-gray-700 mx-1"></div>
+                <select
+                  value={editorMode}
+                  onChange={async (e) => {
+                    const newMode = e.target.value as "code" | "rich";
+                    setEditorMode(newMode);
+                    if (!isBurned && !isDecoyMode) {
+                      const { setDoc, doc } = await import("firebase/firestore");
+                      await setDoc(doc(db, "padSettings", slug), { editorMode: newMode }, { merge: true });
+                    }
+                  }}
+                  className="px-4 py-2 rounded-lg bg-transparent hover:bg-white dark:hover:bg-black text-gray-500 hover:text-black dark:hover:text-white transition-all outline-none font-semibold text-sm cursor-pointer border-none"
+                >
+                  <option value="code">Code / Text</option>
+                  <option value="rich">Rich Text (Notion)</option>
+                </select>
+                {editorMode === "code" && (
+                  <>
+                    <div className="border-l border-gray-300 dark:border-gray-700 mx-1"></div>
+                    <select
+                      value={language}
+                      onChange={async (e) => {
+                        const newLang = e.target.value;
+                        setLanguage(newLang);
+                        if (!isBurned && !isDecoyMode) {
+                          const { setDoc, doc } = await import("firebase/firestore");
+                          await setDoc(doc(db, "padSettings", slug), { language: newLang }, { merge: true });
+                        }
+                      }}
+                      className="px-4 py-2 rounded-lg bg-transparent hover:bg-white dark:hover:bg-black text-gray-500 hover:text-black dark:hover:text-white transition-all outline-none font-semibold text-sm cursor-pointer border-none"
+                    >
+                      <option value="plaintext">Text</option>
+                      <option value="markdown">Markdown</option>
+                      <option value="javascript">JavaScript</option>
+                      <option value="python">Python</option>
+                      <option value="cpp">C++</option>
+                      <option value="html">HTML</option>
+                      <option value="css">CSS</option>
+                      <option value="json">JSON</option>
+                    </select>
+                  </>
+                )}
+              </>
+            )}
+            <div className="border-l border-gray-300 dark:border-gray-700 mx-1"></div>
+            <select
+              value=""
+              onChange={(e) => {
+                const format = e.target.value;
+                if (format) handleExport(format);
+                e.target.value = "";
+              }}
+              className="px-4 py-2 rounded-lg bg-transparent hover:bg-white dark:hover:bg-black text-gray-500 hover:text-black dark:hover:text-white transition-all outline-none font-semibold text-sm cursor-pointer border-none"
+            >
+              <option value="" disabled>Export</option>
+              <option value="txt">.TXT</option>
+              <option value="md">.MD</option>
+              <option value="pdf">.PDF</option>
+            </select>
+            <div className="border-l border-gray-300 dark:border-gray-700 mx-1"></div>
+            <button
+              onClick={() => setShowHistory(true)}
+              className="px-4 py-2 rounded-lg font-semibold text-sm transition-all text-gray-500 hover:text-black dark:hover:text-white"
+            >
+              Time Machine
             </button>
           </div>
         </div>
 
         {activeTab === "notes" ? (
           <div className="flex-1 w-full min-h-[70vh] bg-card shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] border border-border rounded-3xl p-6 sm:p-12 mb-8 flex flex-col transition-all duration-300 hover:shadow-[0_8px_40px_rgb(0,0,0,0.08)] dark:hover:shadow-[0_8px_40px_rgb(0,0,0,0.5)]">
-            <textarea
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder="Start typing..."
-              readOnly={isBurned}
-              className="w-full flex-1 bg-transparent outline-none text-lg sm:text-xl leading-relaxed resize-none"
-            />
-            <div className="mt-6 pt-4 border-t border-border flex justify-end text-sm font-medium text-gray-500 dark:text-gray-400">
-              {wordCount} words • {charCount} chars
-            </div>
+            {editorMode === "code" ? (
+              <CollaborativeEditor 
+                slug={slug} 
+                isBurned={isBurned} 
+                isDecoyMode={isDecoyMode}
+                initialText={isBurned ? localText : undefined}
+                language={language}
+                onStatsChange={(words, chars, text) => {
+                  setWordCount(words);
+                  setCharCount(chars);
+                  setLocalText(text);
+                }}
+              />
+            ) : (
+              <RichTextEditor 
+                slug={slug}
+                isBurned={isBurned}
+                isDecoyMode={isDecoyMode}
+              />
+            )}
+            {editorMode === "code" && (
+              <div className="mt-6 pt-4 border-t border-border flex justify-end text-sm font-medium text-gray-500 dark:text-gray-400">
+                {wordCount} words • {charCount} chars
+              </div>
+            )}
           </div>
-        ) : (
+        ) : activeTab === "files" ? (
           <PadFiles slug={slug} isLocked={!!sessionStorage.getItem(`unlocked-${slug}`)} />
+        ) : (
+          <div className="flex-1 w-full min-h-[70vh] bg-card shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] border border-border rounded-3xl p-6 sm:p-12 mb-8 flex flex-col transition-all duration-300 hover:shadow-[0_8px_40px_rgb(0,0,0,0.08)] dark:hover:shadow-[0_8px_40px_rgb(0,0,0,0.5)]">
+             <CanvasBoard slug={slug} isBurned={isBurned} />
+          </div>
         )}
       </main>
+      <CallOverlay slug={slug} isEnabled={callActive} onClose={() => setCallActive(false)} />
+      {showHistory && (
+        <VersionHistory 
+          slug={slug} 
+          currentText={localText} 
+          onClose={() => setShowHistory(false)} 
+          onRestore={async (text) => {
+            setLocalText(text);
+            const { setDoc, doc } = await import("firebase/firestore");
+            await setDoc(doc(db, "notes", slug), { content: text, updatedAt: new Date() });
+          }} 
+        />
+      )}
     </div>
   );
 }

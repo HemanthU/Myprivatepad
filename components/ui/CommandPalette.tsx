@@ -21,7 +21,6 @@ export default function CommandPalette({ isOpen, onClose, currentSlug }: { isOpe
   const handleAction = (action: string) => {
     onClose();
     if (action === "home") router.push("/");
-    if (action === "admin") router.push("/admin");
     if (action === "new") {
       const newSlug = Math.random().toString(36).substring(2, 10);
       router.push(`/${newSlug}`);
@@ -79,10 +78,7 @@ export default function CommandPalette({ isOpen, onClose, currentSlug }: { isOpe
                 <div className="font-medium text-foreground">Home Page</div>
               </button>
               
-              <button onClick={() => handleAction("admin")} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 text-left transition-colors group">
-                <div className="bg-gray-100 dark:bg-gray-800 group-hover:bg-white dark:group-hover:bg-gray-700 p-2 rounded-lg text-gray-600 dark:text-gray-300 transition-colors"><Shield size={18} /></div>
-                <div className="font-medium text-foreground">Admin Dashboard</div>
-              </button>
+
             </>
           )}
         </div>

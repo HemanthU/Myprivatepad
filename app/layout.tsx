@@ -7,6 +7,7 @@ export const metadata: Metadata = {
 };
 
 import { ToastProvider } from "@/hooks/useToast";
+import GlobalShortcuts from "@/components/GlobalShortcuts";
 
 export default function RootLayout({
   children,
@@ -16,6 +17,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#000000" />
+        <link rel="apple-touch-icon" href="/icon.png" />
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -31,6 +35,7 @@ export default function RootLayout({
         />
       </head>
       <body>
+        <GlobalShortcuts />
         <div className="bg-mesh-overlay" />
         <ToastProvider>{children}</ToastProvider>
       </body>

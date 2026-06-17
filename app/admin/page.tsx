@@ -13,9 +13,23 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { Lock, Unlock, Trash, Clock, ExternalLink, Settings, Home, Search, FileText, EyeOff, Flame, Link as LinkIcon, RefreshCw, Ghost, Database, Archive, File as FileIcon, Image as ImageIcon } from "lucide-react";
+import { Lock, Shield, Unlock, Trash, Clock, ExternalLink, Settings, Home, Search, FileText, EyeOff, Flame, Link as LinkIcon, RefreshCw, Ghost, Database, Archive, File as FileIcon, Image as ImageIcon } from "lucide-react";
 import { usePrompt } from "@/hooks/usePrompt";
+import { ToastProvider, useToast } from "@/hooks/useToast";
+import dynamic from "next/dynamic";
+
+const VersionHistory = dynamic(() => import("@/components/VersionHistory"), { ssr: false });
 import PromptModal from "@/components/ui/PromptModal";
+
+const StatCard = ({ icon: Icon, title, count, color }: { icon: any, title: string, count: string | number, color: string }) => (
+  <div className="bg-card border border-border rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+    <div className={`flex items-center gap-3 mb-2 text-${color}-500 dark:text-${color}-400`}>
+      <Icon size={20} />
+      <h3 className="font-medium">{title}</h3>
+    </div>
+    <p className="text-4xl font-bold">{count}</p>
+  </div>
+);
 
 type PadData = {
   name: string;
@@ -55,10 +69,21 @@ export default function AdminPage() {
   const [search, setSearch] = useState("");
   const [showTrash, setShowTrash] = useState(false);
   const [auth, setAuth] = useState(false);
+  const [historyPad, setHistoryPad] = useState<string | null>(null);
   
   const { prompt, confirm, alert: promptAlert, isOpen, config, handleClose } = usePrompt();
+  const { toast } = useToast();
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (sessionStorage.getItem("adminAuth") === "true") {
+        setAuth(true);
+      } else {
+        router.push("/");
+        return;
+      }
+    }
+
     const loadPads = async () => {
       const snapshot = await getDocs(collection(db, "notes"));
       const filesSnap = await getDocs(collection(db, "files"));
@@ -216,11 +241,16 @@ export default function AdminPage() {
   };
 
   const advancedControls = async (padName: string) => {
-    const action = await prompt({ title: "Advanced Controls", placeholder: "Type: shadow, ghost, time, decoy, burn" });
-    const snap = await getDoc(doc(db, "padSettings", padName));
-    const data = snap.exists() ? snap.data() : {};
+        const action = await prompt({ title: "Advanced Controls", placeholder: "Type: shadow, ghost, time, decoy, burn, webhook" });
+        const snap = await getDoc(doc(db, "padSettings", padName));
+        const data = snap.exists() ? snap.data() : {};
 
-    if (action === "shadow") {
+        if (action === "webhook") {
+           const url = await prompt({ title: "Webhook URL", placeholder: "https://..." });
+           if (!url) return;
+           await setDoc(doc(db, "padSettings", padName), { ...data, webhookUrl: url });
+           await promptAlert({ title: "Webhook Set", message: "Webhook will fire on pad updates." });
+        } else if (action === "shadow") {
        if (data.shadowMode) {
           await setDoc(doc(db, "padSettings", padName), { ...data, shadowMode: false, shadowKey: "" });
        } else {
@@ -261,15 +291,9 @@ export default function AdminPage() {
     await promptAlert({ title: "One-Time Link", message: `Generated:\n\n${window.location.origin}/o/${id}\n\n(Copy this now, it won't be shown again)` });
   };
 
-  const StatCard = ({ icon: Icon, title, count, color }: any) => (
-    <div className="bg-card border border-border rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
-      <div className={`flex items-center gap-3 mb-2 text-${color}-500 dark:text-${color}-400`}>
-        <Icon size={20} />
-        <h3 className="font-medium">{title}</h3>
-      </div>
-      <p className="text-4xl font-bold">{count}</p>
-    </div>
-  );
+  if (!auth) {
+    return <div className="min-h-screen bg-gray-50 dark:bg-gray-900" />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-foreground transition-colors duration-300 font-sans">
@@ -421,8 +445,9 @@ export default function AdminPage() {
                 {!pad.isTrashed ? (
                   <>
                     <button onClick={() => managePad(pad.name)} className="p-2 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors" title="Open Pad"><ExternalLink size={20} /></button>
+                    <button onClick={() => setHistoryPad(pad.name)} className="p-2 rounded-xl bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-900/40 dark:text-indigo-400 transition-colors" title="Time Machine"><Clock size={20} /></button>
                     <button onClick={() => pad.locked ? unlockPad(pad.name) : lockPad(pad.name)} className="p-2 rounded-xl bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-400 transition-colors" title="Lock/Unlock"><Lock size={20} /></button>
-                    <button onClick={() => selfDeleteControls(pad.name)} className="p-2 rounded-xl bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-900/40 dark:text-yellow-400 transition-colors" title="Self Delete"><Clock size={20} /></button>
+                    <button onClick={() => selfDeleteControls(pad.name)} className="p-2 rounded-xl bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-900/40 dark:text-yellow-400 transition-colors" title="Self Delete"><Trash size={20} /></button>
                     <button onClick={() => deletePad(pad.name, false)} className="p-2 rounded-xl bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/40 dark:text-red-400 transition-colors ml-auto" title="Move to Trash"><Trash size={20} /></button>
                   </>
                 ) : (
@@ -440,6 +465,17 @@ export default function AdminPage() {
           ))}
         </div>
       </main>
+      {historyPad && (
+        <VersionHistory 
+          slug={historyPad} 
+          currentText="" 
+          onClose={() => setHistoryPad(null)} 
+          onRestore={async (text) => {
+            await setDoc(doc(db, "notes", historyPad), { content: text, updatedAt: new Date() });
+            toast("Pad restored to previous snapshot", "success");
+          }} 
+        />
+      )}
     </div>
   );
 }

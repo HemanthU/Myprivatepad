@@ -4,10 +4,11 @@ import { useState, useEffect, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { collection, query, where, onSnapshot, doc, setDoc, deleteDoc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { FileText, Image as ImageIcon, Archive, File as FileIcon, X, Download, Trash, Eye, UploadCloud, Lock, FileArchive, Search, Folder, Flame, Star, Tag, Loader2 } from "lucide-react";
+import { FileText, Image as ImageIcon, Archive, File as FileIcon, X, Download, Trash, Eye, UploadCloud, Lock, FileArchive, Search, Folder, Flame, Star, Tag, Loader2, ScanText } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { usePrompt } from "@/hooks/usePrompt";
 import PromptModal from "@/components/ui/PromptModal";
+import Tesseract from "tesseract.js";
 
 type FileMetadata = {
   fileId: string;
@@ -37,8 +38,9 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [previewLoading, setPreviewLoading] = useState<string | null>(null);
   const [downloadingFileId, setDownloadingFileId] = useState<string | null>(null);
+  const [ocrLoading, setOcrLoading] = useState(false);
   
-  const { prompt, confirm, isOpen, config, handleClose } = usePrompt();
+  const { prompt, confirm, alert: promptAlert, isOpen, config, handleClose } = usePrompt();
 
   useEffect(() => {
     const q = query(collection(db, "files"), where("padId", "==", slug));
@@ -196,11 +198,26 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
     }
   };
 
-  const handleClosePreview = async () => {
+  const handleClosePreview = () => {
     if (previewFile?.isBurnAfterRead) {
-      await deleteFile(previewFile);
+      deleteFile(previewFile);
     }
     setPreviewFile(null);
+  };
+
+  const handleScanText = async (file: FileMetadata) => {
+    try {
+      setOcrLoading(true);
+      const url = await fetchFileBlob(file);
+      const { data: { text } } = await Tesseract.recognize(url, 'eng', {
+        logger: m => console.log(m)
+      });
+      setOcrLoading(false);
+      await promptAlert({ title: "Scanned Text", message: text || "No text found in image." });
+    } catch (e) {
+      setOcrLoading(false);
+      await promptAlert({ title: "OCR Failed", message: "Failed to scan text from image." });
+    }
   };
 
   const toggleFavorite = async (file: FileMetadata) => {
@@ -394,6 +411,11 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
                 }} className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl transition-colors flex items-center gap-2">
                   <Download size={16} /> <span className="hidden sm:inline">Share 1-Time</span>
                 </button>
+                {previewFile.fileType.startsWith("image/") && (
+                  <button onClick={() => handleScanText(previewFile)} disabled={ocrLoading} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors flex items-center gap-2">
+                    <ScanText size={16} /> <span className="hidden sm:inline">{ocrLoading ? "Scanning..." : "Scan Text"}</span>
+                  </button>
+                )}
                 <button onClick={() => handleDownload(previewFile)} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors flex items-center gap-2">
                   <Download size={16} /> <span className="hidden sm:inline">Download</span>
                 </button>
