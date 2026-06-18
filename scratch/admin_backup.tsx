@@ -22,13 +22,12 @@ const VersionHistory = dynamic(() => import("@/components/VersionHistory"), { ss
 import PromptModal from "@/components/ui/PromptModal";
 
 const StatCard = ({ icon: Icon, title, count, color }: { icon: any, title: string, count: string | number, color: string }) => (
-  <div className="bg-white/5 dark:bg-slate-900/40 backdrop-blur-3xl border border-white/10 dark:border-white/5 rounded-3xl p-6 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_40px_-12px_rgba(0,0,0,0.5)] transition-all duration-500 hover:-translate-y-1 group relative overflow-hidden">
-    <div className={`absolute top-0 right-0 w-32 h-32 bg-${color}-500/10 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-${color}-500/20 transition-all duration-500`} />
-    <div className={`flex items-center gap-3 mb-3 text-${color}-400 dark:text-${color}-400`}>
-      <Icon size={22} strokeWidth={1.5} />
-      <h3 className="font-semibold tracking-wide text-sm uppercase text-slate-400">{title}</h3>
+  <div className="bg-card border border-border rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+    <div className={`flex items-center gap-3 mb-2 text-${color}-500 dark:text-${color}-400`}>
+      <Icon size={20} />
+      <h3 className="font-medium">{title}</h3>
     </div>
-    <p className="text-4xl font-extrabold text-white tracking-tight">{count}</p>
+    <p className="text-4xl font-bold">{count}</p>
   </div>
 );
 
@@ -320,37 +319,34 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans relative overflow-hidden transition-colors duration-500">
-      {/* Deep premium background gradients */}
-      <div className="absolute top-0 left-0 w-[50%] h-[50%] bg-indigo-600/10 blur-[150px] rounded-full pointer-events-none animate-pulse-glow" />
-      <div className="absolute bottom-0 right-0 w-[50%] h-[50%] bg-purple-600/10 blur-[150px] rounded-full pointer-events-none animate-pulse-glow" style={{ animationDelay: "2s" }} />
+    <div className="min-h-screen bg-[#030712] text-gray-100 font-sans relative overflow-hidden">
+      <div className="absolute inset-0 z-0 pointer-events-none opacity-20 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-indigo-900 via-[#030712] to-[#030712]" />
+      <div className="absolute inset-0 z-0 pointer-events-none opacity-20 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-purple-900 via-[#030712] to-[#030712]" />
 
       <PromptModal isOpen={isOpen} config={config} onClose={handleClose} />
       
-      <header className="w-full bg-slate-900/50 backdrop-blur-3xl border-b border-white/5 sticky top-0 z-50 px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
-        <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent flex items-center gap-3">
-          <Shield className="text-indigo-400" size={30} /> Command Center
+      <header className="w-full bg-white/5 backdrop-blur-xl border-b border-white/10 sticky top-0 z-10 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+          PadX Core Operations
         </h1>
-        
-        <div className="flex items-center gap-2 bg-black/40 p-1.5 rounded-2xl border border-white/5 shadow-inner">
+        <div className="flex items-center gap-2 bg-black/40 p-1 rounded-xl border border-white/10">
           <button 
             onClick={() => setAdminTab("dashboard")} 
-            className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all duration-300 ${adminTab === 'dashboard' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25 scale-100' : 'text-slate-400 hover:text-white hover:bg-white/5 scale-95 hover:scale-100'}`}
+            className={`px-6 py-2 rounded-lg font-semibold text-sm transition-all ${adminTab === 'dashboard' ? 'bg-indigo-600 text-white shadow-[0_0_15px_rgba(79,70,229,0.5)]' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
           >
             Dashboard
           </button>
           <button 
             onClick={() => setAdminTab("pads")} 
-            className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all duration-300 ${adminTab === 'pads' ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/25 scale-100' : 'text-slate-400 hover:text-white hover:bg-white/5 scale-95 hover:scale-100'}`}
+            className={`px-6 py-2 rounded-lg font-semibold text-sm transition-all ${adminTab === 'pads' ? 'bg-purple-600 text-white shadow-[0_0_15px_rgba(147,51,234,0.5)]' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
           >
             Pad Manager
           </button>
         </div>
-        
         <div className="flex items-center gap-4">
           <button
             onClick={() => router.push("/")}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/5 text-slate-300 font-semibold hover:bg-white/10 hover:text-white transition-all border border-white/5 hover:border-white/10"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 text-white font-medium hover:bg-white/20 transition-all border border-white/5"
           >
             <Home size={18} />
             <span className="hidden sm:inline">Home</span>
@@ -371,38 +367,38 @@ export default function AdminPage() {
               <StatCard icon={Archive} title="Archives" count={fileStats.archives} color="orange" />
             </div>
 
-            <h2 className="text-2xl font-extrabold mb-6 flex items-center gap-3 text-purple-400 tracking-tight mt-16"><Database size={26} /> Global File Index</h2>
-            <div className="bg-slate-900/40 backdrop-blur-3xl border border-white/10 rounded-[2rem] overflow-hidden shadow-2xl">
+            <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-purple-400"><Database size={24} /> Global File Index</h2>
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="bg-black/40 text-slate-400 text-xs uppercase tracking-widest">
-                      <th className="p-5 font-bold">Name</th>
-                      <th className="p-5 font-bold">Pad</th>
-                      <th className="p-5 font-bold">Type</th>
-                      <th className="p-5 font-bold">Size</th>
-                      <th className="p-5 font-bold">Uploaded</th>
-                      <th className="p-5 font-bold">Views</th>
-                      <th className="p-5 font-bold text-right pr-8">Actions</th>
+                    <tr className="bg-white/5 text-gray-300 text-sm uppercase tracking-wider">
+                      <th className="p-4 font-semibold">Name</th>
+                      <th className="p-4 font-semibold">Pad</th>
+                      <th className="p-4 font-semibold">Type</th>
+                      <th className="p-4 font-semibold">Size</th>
+                      <th className="p-4 font-semibold">Uploaded</th>
+                      <th className="p-4 font-semibold">Views</th>
+                      <th className="p-4 font-semibold">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
                     {allFiles.slice(0, 50).map(file => (
-                      <tr key={file.fileId} className="hover:bg-white/5 transition-colors group">
-                        <td className="p-5 flex items-center gap-4">
-                          <div className="p-2.5 bg-white/5 rounded-xl text-indigo-300 group-hover:scale-110 group-hover:bg-indigo-500/20 transition-all">{getFileIcon(file.fileType)}</div>
-                          <span className="font-semibold text-slate-200 truncate max-w-[200px]" title={file.fileName}>{file.fileName}</span>
+                      <tr key={file.fileId} className="hover:bg-white/5 transition-colors">
+                        <td className="p-4 flex items-center gap-3">
+                          <div className="p-2 bg-white/5 rounded-lg text-gray-400">{getFileIcon(file.fileType)}</div>
+                          <span className="font-medium truncate max-w-[200px]" title={file.fileName}>{file.fileName}</span>
                         </td>
-                        <td className="p-5 text-indigo-400 font-mono text-sm cursor-pointer hover:text-indigo-300 transition-colors" onClick={() => managePad(file.padId)}>{file.padId}</td>
-                        <td className="p-5 text-slate-400 text-sm">{file.fileType.split('/')[1] || file.fileType}</td>
-                        <td className="p-5 text-slate-400 font-mono text-sm">{(file.fileSize / 1024 / 1024).toFixed(2)} MB</td>
-                        <td className="p-5 text-slate-400 text-sm">{new Date(file.uploadedAt).toLocaleDateString()}</td>
-                        <td className="p-5 text-slate-400 font-mono text-sm">{file.totalViews || 0}</td>
-                        <td className="p-5 text-right pr-6">
-                          <button onClick={() => managePad(file.padId)} className="p-2 text-indigo-400 hover:bg-indigo-500/20 rounded-xl transition-colors mr-2" title="Jump to Pad to View">
+                        <td className="p-4 text-indigo-300 cursor-pointer hover:underline" onClick={() => managePad(file.padId)}>{file.padId}</td>
+                        <td className="p-4 text-gray-400 text-sm">{file.fileType.split('/')[1] || file.fileType}</td>
+                        <td className="p-4 text-gray-400 text-sm">{(file.fileSize / 1024 / 1024).toFixed(2)} MB</td>
+                        <td className="p-4 text-gray-400 text-sm">{new Date(file.uploadedAt).toLocaleDateString()}</td>
+                        <td className="p-4 text-gray-400 text-sm">{file.totalViews || 0}</td>
+                        <td className="p-4">
+                          <button onClick={() => managePad(file.padId)} className="p-2 text-indigo-400 hover:bg-indigo-500/20 rounded-lg transition-colors mr-2" title="Jump to Pad to View">
                             <ExternalLink size={18} />
                           </button>
-                          <button onClick={() => deleteGlobalFile(file)} className="p-2 text-rose-400 hover:bg-rose-500/20 rounded-xl transition-colors" title="Delete File">
+                          <button onClick={() => deleteGlobalFile(file)} className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors" title="Delete File">
                             <Trash size={18} />
                           </button>
                         </td>
@@ -410,7 +406,7 @@ export default function AdminPage() {
                     ))}
                     {allFiles.length === 0 && (
                       <tr>
-                        <td colSpan={7} className="p-12 text-center text-slate-500 font-medium">No files uploaded yet.</td>
+                        <td colSpan={6} className="p-8 text-center text-gray-500">No files uploaded yet.</td>
                       </tr>
                     )}
                   </tbody>
@@ -424,12 +420,12 @@ export default function AdminPage() {
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
               <div className="relative w-full max-w-md group">
-                <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-400 transition-colors" size={20} />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-400 transition-colors" size={20} />
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search network matrix..."
-                  className="w-full pl-14 pr-5 py-4 rounded-2xl bg-black/20 border border-white/10 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all text-lg text-white placeholder-slate-500 shadow-inner backdrop-blur-md"
+                  className="w-full pl-12 pr-4 py-4 rounded-2xl bg-white/5 border border-white/10 focus:border-indigo-500 focus:shadow-[0_0_15px_rgba(79,70,229,0.3)] outline-none transition-all text-lg text-white placeholder-gray-500"
                 />
               </div>
 
@@ -448,12 +444,10 @@ export default function AdminPage() {
               )}
 
               {filteredPads.map((pad) => (
-                  <div
+                <div
                   key={pad.name}
-                  className={`bg-slate-900/40 backdrop-blur-2xl border rounded-[2rem] p-8 shadow-xl hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)] hover:-translate-y-2 transition-all duration-500 flex flex-col group relative overflow-hidden ${pad.isTrashed ? 'border-rose-500/30 bg-rose-950/10' : 'border-white/10 hover:border-indigo-500/50'}`}
+                  className={`bg-white/5 backdrop-blur-xl border rounded-3xl p-6 shadow-xl hover:shadow-[0_0_30px_rgba(79,70,229,0.2)] hover:-translate-y-1 transition-all duration-300 flex flex-col group ${pad.isTrashed ? 'border-red-500/30' : 'border-white/10 hover:border-indigo-500/50'}`}
                 >
-                  {/* Glass highlight effect on hover */}
-                  <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
                   <div className="flex items-start justify-between mb-4">
                     <h2 className="text-2xl font-bold break-all flex-1 pr-4 line-clamp-1 text-white group-hover:text-indigo-300 transition-colors">
                       {pad.name}

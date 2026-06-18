@@ -28,50 +28,53 @@ export default function ShareModal({ slug, isOpen, onClose }: ShareModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 sm:p-0">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-xl p-4 sm:p-0 animate-in fade-in duration-300">
       <div 
-        className="w-full max-w-sm bg-white/90 dark:bg-[#1a1a1a]/90 backdrop-blur-3xl border border-gray-200 dark:border-white/10 rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+        className="w-full max-w-sm bg-white/70 dark:bg-slate-900/70 backdrop-blur-3xl border border-white/60 dark:border-white/10 rounded-[2rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] dark:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-500 ease-out relative"
       >
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-white/10">
-          <h2 className="text-xl font-bold flex items-center gap-2">
+        {/* Decorative ambient light */}
+        <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-indigo-500/10 to-transparent pointer-events-none" />
+
+        <div className="flex items-center justify-between p-6 border-b border-slate-200/50 dark:border-white/5 relative z-10">
+          <h2 className="text-xl font-extrabold flex items-center gap-2 text-slate-900 dark:text-slate-100 tracking-tight">
             <Share2 className="text-indigo-500" /> Share Pad
           </h2>
           <button 
             onClick={onClose}
-            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-colors text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white"
+            className="p-2 rounded-full hover:bg-slate-200/50 dark:hover:bg-white/10 transition-colors text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
           >
             <X size={20} />
           </button>
         </div>
         
-        <div className="p-6 flex flex-col items-center gap-6">
-          <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200">
+        <div className="p-8 flex flex-col items-center gap-6 relative z-10">
+          <div className="bg-white p-5 rounded-3xl shadow-[0_8px_24px_-8px_rgba(0,0,0,0.1)] border border-slate-100 dark:border-white/10 transform hover:scale-105 transition-transform duration-500">
             <QRCodeSVG 
               value={shareUrl} 
               size={180} 
               bgColor={"#ffffff"} 
-              fgColor={"#000000"} 
-              level={"M"} 
+              fgColor={"#0f172a"} 
+              level={"Q"} 
               includeMargin={false}
             />
           </div>
           
           <div className="text-center space-y-1">
-            <p className="font-semibold text-lg text-gray-800 dark:text-gray-200">Scan to Open</p>
-            <p className="text-sm text-gray-500">Point your camera at the QR code to open this pad on your phone.</p>
+            <p className="font-bold text-lg text-slate-800 dark:text-slate-200 tracking-tight">Scan to Open</p>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Point your camera at the QR code to open this pad on your phone.</p>
           </div>
 
-          <div className="w-full relative group">
+          <div className="w-full relative group mt-2">
             <input 
               readOnly 
               value={shareUrl} 
-              className="w-full bg-gray-100 dark:bg-black/50 border border-gray-200 dark:border-white/10 rounded-xl py-3 px-4 text-sm font-mono text-gray-600 dark:text-gray-300 outline-none pr-12"
+              className="w-full bg-white/80 dark:bg-black/30 border border-slate-200/80 dark:border-slate-800 rounded-2xl py-4 px-4 text-sm font-mono text-slate-600 dark:text-slate-300 outline-none pr-12 shadow-inner backdrop-blur-md transition-all group-hover:border-indigo-500/50"
             />
             <button 
               onClick={handleCopy}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg bg-white dark:bg-[#2a2a2a] border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-[#3a3a3a] transition-all text-gray-600 dark:text-gray-300 shadow-sm"
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all text-slate-600 dark:text-slate-300 shadow-sm active:scale-95"
             >
-              {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
+              {copied ? <Check size={16} className="text-emerald-500" /> : <Copy size={16} />}
             </button>
           </div>
         </div>

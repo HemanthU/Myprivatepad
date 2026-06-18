@@ -1,6 +1,6 @@
-- `[x]` Install dependencies (`sockjs-client`, `@stomp/stompjs`, `xterm`, `@xterm/addon-fit`)
-- `[x]` Create `/api/jdoodle` backend route to securely fetch WebSocket tokens
-- `[x]` Create `components/InteractiveTerminal.tsx` component encapsulating `xterm` and `stompjs`
-- `[x]` Modify `app/[slug]/page.tsx` to mount `<InteractiveTerminal />` when running code
-- `[x]` Verify execution with step-by-step input
-- `[x]` Update walkthrough artifact
+- `[x]` Update `app/globals.css` to add Tailwind v4 `@theme` rules for custom animation keyframes (gradients, pulsing, floating) and deep colors, plus dynamic background mesh gradients.
+- `[x]` Overhaul `app/locked/[slug]/page.tsx` with a premium glassmorphic lock screen.
+- `[x]` Redesign `components/ui/PromptModal.tsx` and `ShareModal.tsx` with blurred backdrops and refined entry animations.
+- `[x]` Overhaul `app/admin/page.tsx` into a stunning command center dashboard.
+- `[x]` Verify changes across pages and check responsive behavior.
+- `[x]` Update walkthrough artifact.

@@ -1,30 +1,36 @@
-# Goal
-Implement true step-by-step interactive code execution using the JDoodle WebSocket API. The user provided valid JDoodle API credentials, so we can replace the static "batch" execution engine with a live, two-way terminal.
+# Global UI & Aesthetics Overhaul
+
+This plan outlines a massive design upgrade across the entire PadX application to make it feel premium, responsive, and state-of-the-art.
+
+## Open Questions
+> [!IMPORTANT]
+> The current theme uses a very basic Black/White minimal design. For this overhaul, would you prefer a **Dark-Mode First (Midnight & Neon)** vibe, or a **Soft Glassmorphism (Frosted Glass & Gradients)** vibe? This plan assumes a hybrid of dark mode with frosted glass cards.
 
 ## Proposed Changes
 
-### 1. Dependencies
-#### [NEW] Dependencies
-- Install `sockjs-client` and `@stomp/stompjs` to handle JDoodle's STOMP over SockJS protocol.
-- Install `xterm` and `@xterm/addon-fit` to provide a true interactive console UI in the browser that can capture keystrokes and stream text natively.
+### 1. Typography & Global Styles
+- **Font**: Implement a premium sans-serif font like `Inter` across the entire app for a cleaner, modern look.
+- **Micro-animations**: Add smooth transition durations (`duration-300`, `ease-out`) to all interactive elements (buttons, inputs, links) to make the app feel alive.
+- **Glassmorphism Base**: Introduce standard utility classes for frosted glass effects (`backdrop-blur-xl bg-black/40 border border-white/10`) to use on cards, modals, and headers.
 
-### 2. Backend Token Route
-#### [NEW] `app/api/jdoodle/route.ts`
-- Create a backend route to securely fetch the JDoodle authentication token. We will store the `clientId` and `clientSecret` securely in this route so they are never exposed to the client browser.
-- This route will POST to `https://api.jdoodle.com/v1/auth-token` and return the ephemeral STOMP token.
+### 2. Password Prompts & Modals
+#### [MODIFY] `app/locked/[slug]/page.tsx` (Lock Screen)
+- Completely redesign the lock screen. Instead of a basic white/gray card, we will use a stunning glassmorphic card over a subtle moving gradient background.
+- Add an animated pulsing glow effect around the lock icon.
+- Make the password input field sleek with floating labels or a soft inner shadow, expanding slightly when focused.
 
-### 3. Interactive Terminal UI
-#### [MODIFY] `app/[slug]/page.tsx`
-- Replace the static "Console Output" and "Standard Input" dual-pane boxes with a single, full-width `xterm.js` instance.
-- **Execution Flow**:
-  1. User clicks "Run".
-  2. Frontend fetches the STOMP token from `/api/jdoodle`.
-  3. Frontend initializes `SockJS` and `@stomp/stompjs`.
-  4. Frontend subscribes to `/user/queue/execute-i`.
-  5. Frontend sends the code payload to `/app/execute-ws-api-token`.
-  6. Any keystrokes typed into the `xterm` terminal are sent via STOMP to JDoodle as standard input.
-  7. Any standard output received from JDoodle is written directly to the `xterm` terminal.
+#### [MODIFY] `components/ui/PromptModal.tsx` & `components/ui/ShareModal.tsx`
+- Replace rigid solid-color modal backgrounds with deep blurred overlays.
+- Round the corners to `rounded-3xl` and add smooth entrance animations (`animate-in zoom-in-95`).
+- Redesign the Action buttons to use rich gradients (e.g., a vibrant "Confirm" button) instead of basic colors.
 
-## User Review Required
-> [!IMPORTANT]
-> Since this replaces the old "Standard Input" box with a live terminal (just like VS Code or IntelliJ), you will be able to type your inputs interactively *as the program asks for them*. Does this sound perfect? Let me know and I will begin the implementation!
+### 3. The Admin Panel
+#### [MODIFY] `app/admin/page.tsx`
+- Transform the basic Admin view into a true **Command Center Dashboard**.
+- **Stat Cards**: Add subtle gradient backgrounds to the Stat Cards (e.g., `bg-gradient-to-br from-blue-500/10 to-purple-500/10`) with glowing icons.
+- **Data Tables/Lists**: Redesign the pad lists into clean, separated rows with hover elevation (`hover:-translate-y-1 hover:shadow-lg`).
+- Add a sticky, glassmorphic navigation bar specifically for the Admin dashboard.
+
+## Verification Plan
+- Deploy the styling changes locally and provide screenshots/descriptions.
+- Ensure the app remains responsive on mobile devices despite the heavier glassmorphic rendering.
