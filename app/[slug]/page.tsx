@@ -15,6 +15,8 @@ import CollaborativeEditor from "@/components/CollaborativeEditor";
 import TabBar from "@/components/TabBar";
 import CustomSelect from "@/components/ui/CustomSelect";
 import ShareModal from "@/components/ui/ShareModal";
+import { QRCodeSVG } from "qrcode.react";
+import InteractiveTerminal from "@/components/InteractiveTerminal";
 import dynamic from "next/dynamic";
 
 const RichTextEditor = dynamic(() => import("@/components/RichTextEditor"), { ssr: false });
@@ -236,27 +238,12 @@ export default function NotePage() {
       return;
     }
     
-    setIsRunning(true);
-    setShowTerminal(true);
-    setTerminalOutput("Compiling and running code in the cloud...");
-    
-    try {
-      const res = await fetch("/api/execute", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: localText, language, input: stdInput })
-      });
-      
-      const data = await res.json();
-      if (!res.ok) {
-        setTerminalOutput(`Execution Error:\n${data.error || "Unknown error occurred"}`);
-      } else {
-        setTerminalOutput(data.output || "Program finished with no output.");
-      }
-    } catch (err) {
-      setTerminalOutput(`Network Error: Could not reach execution engine.`);
-    } finally {
-      setIsRunning(false);
+    // Close terminal first if it's open, to force remount of InteractiveTerminal
+    if (showTerminal) {
+      setShowTerminal(false);
+      setTimeout(() => setShowTerminal(true), 50);
+    } else {
+      setShowTerminal(true);
     }
   };
 
@@ -671,34 +658,11 @@ export default function NotePage() {
                 />
                 
                 {showTerminal && (
-                  <div className="h-64 shrink-0 bg-[#0d0d0d] border-t border-[#333] rounded-b-3xl -mx-6 sm:-mx-12 -mb-6 sm:-mb-12 mt-4 flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 fade-in duration-300">
-                    <div className="px-4 py-2 bg-[#1a1a1a] border-b border-[#333] flex items-center justify-between shrink-0">
-                      <div className="flex items-center gap-2 text-gray-400 font-mono text-sm">
-                        <Terminal size={14} /> Execution Terminal
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button onClick={() => { setTerminalOutput(""); setStdInput(""); }} className="text-xs px-2 py-1 bg-white/5 hover:bg-white/10 rounded text-gray-300 transition-colors">Clear All</button>
-                        <button onClick={() => setShowTerminal(false)} className="text-gray-500 hover:text-white transition-colors p-1"><X size={16} /></button>
-                      </div>
-                    </div>
-                    <div className="flex-1 flex overflow-hidden">
-                      <div className="flex-1 flex flex-col border-r border-[#333] overflow-hidden">
-                        <div className="px-4 py-1 text-xs text-gray-500 font-semibold uppercase tracking-wider bg-[#111]">Standard Input</div>
-                        <textarea 
-                          value={stdInput}
-                          onChange={(e) => setStdInput(e.target.value)}
-                          placeholder="Provide input for your code here..."
-                          className="flex-1 p-4 bg-transparent text-gray-300 font-mono text-sm outline-none resize-none placeholder-gray-700"
-                        />
-                      </div>
-                      <div className="flex-1 flex flex-col overflow-hidden">
-                        <div className="px-4 py-1 text-xs text-gray-500 font-semibold uppercase tracking-wider bg-[#111]">Console Output</div>
-                        <div className="flex-1 p-4 overflow-y-auto font-mono text-sm text-green-400 bg-transparent selection:bg-green-500/30 whitespace-pre-wrap">
-                          {terminalOutput}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  <InteractiveTerminal 
+                    code={localText}
+                    language={language}
+                    onClose={() => setShowTerminal(false)}
+                  />
                 )}
               </div>
             ) : (

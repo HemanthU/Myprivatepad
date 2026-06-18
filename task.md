@@ -1,0 +1,6 @@
+- `[x]` Install dependencies (`sockjs-client`, `@stomp/stompjs`, `xterm`, `@xterm/addon-fit`)
+- `[x]` Create `/api/jdoodle` backend route to securely fetch WebSocket tokens
+- `[x]` Create `components/InteractiveTerminal.tsx` component encapsulating `xterm` and `stompjs`
+- `[x]` Modify `app/[slug]/page.tsx` to mount `<InteractiveTerminal />` when running code
+- `[x]` Verify execution with step-by-step input
+- `[x]` Update walkthrough artifact
