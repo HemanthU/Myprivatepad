@@ -33,6 +33,7 @@ export default function NotePage() {
   const [terminalOutput, setTerminalOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [showTerminal, setShowTerminal] = useState(false);
+  const [stdInput, setStdInput] = useState("");
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   const handleExport = async (format: string) => {
@@ -243,7 +244,7 @@ export default function NotePage() {
       const res = await fetch("/api/execute", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: localText, language })
+        body: JSON.stringify({ code: localText, language, input: stdInput })
       });
       
       const data = await res.json();
@@ -676,12 +677,26 @@ export default function NotePage() {
                         <Terminal size={14} /> Execution Terminal
                       </div>
                       <div className="flex items-center gap-2">
-                        <button onClick={() => setTerminalOutput("")} className="text-xs px-2 py-1 bg-white/5 hover:bg-white/10 rounded text-gray-300 transition-colors">Clear</button>
+                        <button onClick={() => { setTerminalOutput(""); setStdInput(""); }} className="text-xs px-2 py-1 bg-white/5 hover:bg-white/10 rounded text-gray-300 transition-colors">Clear All</button>
                         <button onClick={() => setShowTerminal(false)} className="text-gray-500 hover:text-white transition-colors p-1"><X size={16} /></button>
                       </div>
                     </div>
-                    <div className="flex-1 p-4 overflow-y-auto font-mono text-sm text-green-400 bg-transparent selection:bg-green-500/30 whitespace-pre-wrap">
-                      {terminalOutput}
+                    <div className="flex-1 flex overflow-hidden">
+                      <div className="flex-1 flex flex-col border-r border-[#333] overflow-hidden">
+                        <div className="px-4 py-1 text-xs text-gray-500 font-semibold uppercase tracking-wider bg-[#111]">Standard Input</div>
+                        <textarea 
+                          value={stdInput}
+                          onChange={(e) => setStdInput(e.target.value)}
+                          placeholder="Provide input for your code here..."
+                          className="flex-1 p-4 bg-transparent text-gray-300 font-mono text-sm outline-none resize-none placeholder-gray-700"
+                        />
+                      </div>
+                      <div className="flex-1 flex flex-col overflow-hidden">
+                        <div className="px-4 py-1 text-xs text-gray-500 font-semibold uppercase tracking-wider bg-[#111]">Console Output</div>
+                        <div className="flex-1 p-4 overflow-y-auto font-mono text-sm text-green-400 bg-transparent selection:bg-green-500/30 whitespace-pre-wrap">
+                          {terminalOutput}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}

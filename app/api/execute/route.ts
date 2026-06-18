@@ -10,13 +10,13 @@ const LANGUAGE_MAP: Record<string, string> = {
 
 export async function POST(req: Request) {
   try {
-    let { code, language } = await req.json();
+    let { code, language, input } = await req.json();
 
     if (language === 'java') {
-      // Paiza writes code to Main.java implicitly. If a user writes "public class MyClass",
-      // Java will error saying the file should be named MyClass.java.
-      // We strip the "public " modifier from the class definition to fix this.
-      code = code.replace(/public\s+class\s+([a-zA-Z0-9_]+)/g, "class $1");
+      // Paiza executes 'java Main'. If the user names their class something else (like 'Dijkstra'), 
+      // it will compile but fail to run with ClassNotFoundException: Main.
+      // We automatically rename their public class to 'Main' to fix this.
+      code = code.replace(/public\s+class\s+[a-zA-Z0-9_]+/g, "public class Main");
     }
 
     if (!code || !language) {
@@ -37,6 +37,7 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         source_code: code,
         language: paizaLang,
+        input: input || "",
         api_key: 'guest'
       })
     });
