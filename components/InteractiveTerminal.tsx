@@ -70,6 +70,9 @@ export default function InteractiveTerminal({ code, language, onClose }: Interac
 
         const client = new Client({
           webSocketFactory: () => new SockJS("https://api.jdoodle.com/v1/stomp"),
+          connectHeaders: {
+            Authorization: "Bearer " + token
+          },
           debug: (str) => {
             // Optional: console.log(str);
           },
