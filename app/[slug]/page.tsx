@@ -640,51 +640,51 @@ export default function NotePage() {
         </div>
         )}
 
-        {activeTab === "notes" ? (
-          <div className="flex-1 w-full flex flex-col min-h-[600px] bg-card shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] border border-border rounded-3xl p-6 sm:p-12 mb-8 flex flex-col transition-all duration-300 hover:shadow-[0_8px_40px_rgb(0,0,0,0.08)] dark:hover:shadow-[0_8px_40px_rgb(0,0,0,0.5)]">
-            {editorMode === "code" ? (
-              <div className="flex-1 flex flex-col min-h-0 relative">
-                <CollaborativeEditor 
-                  slug={slug} 
-                  isBurned={isBurned} 
-                  isDecoyMode={isDecoyMode}
-                  initialText={isBurned ? localText : undefined}
-                  language={language}
-                  onStatsChange={(words, chars, text) => {
-                    setWordCount(words);
-                    setCharCount(chars);
-                    setLocalText(text);
-                  }}
-                />
-                
-                {showTerminal && (
-                  <InteractiveTerminal 
-                    code={localText}
-                    language={language}
-                    onClose={() => setShowTerminal(false)}
-                  />
-                )}
-              </div>
-            ) : (
-              <RichTextEditor 
-                slug={slug}
-                isBurned={isBurned}
+        <div className={`flex-1 w-full flex-col min-h-[600px] bg-card shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] border border-border rounded-3xl p-6 sm:p-12 mb-8 transition-all duration-300 hover:shadow-[0_8px_40px_rgb(0,0,0,0.08)] dark:hover:shadow-[0_8px_40px_rgb(0,0,0,0.5)] ${activeTab === 'notes' ? 'flex' : 'hidden'}`}>
+          {editorMode === "code" ? (
+            <div className="flex-1 flex flex-col min-h-0 relative">
+              <CollaborativeEditor 
+                slug={slug} 
+                isBurned={isBurned} 
                 isDecoyMode={isDecoyMode}
+                initialText={isBurned ? localText : undefined}
+                language={language}
+                onStatsChange={(words, chars, text) => {
+                  setWordCount(words);
+                  setCharCount(chars);
+                  setLocalText(text);
+                }}
               />
-            )}
-            {editorMode === "code" && (
-              <div className="mt-6 pt-4 border-t border-border flex justify-end text-sm font-medium text-gray-500 dark:text-gray-400">
-                {wordCount} words • {charCount} chars
-              </div>
-            )}
-          </div>
-        ) : activeTab === "files" ? (
+              
+              {showTerminal && (
+                <InteractiveTerminal 
+                  code={localText}
+                  language={language}
+                  onClose={() => setShowTerminal(false)}
+                />
+              )}
+            </div>
+          ) : (
+            <RichTextEditor 
+              slug={slug}
+              isBurned={isBurned}
+              isDecoyMode={isDecoyMode}
+            />
+          )}
+          {editorMode === "code" && (
+            <div className="mt-6 pt-4 border-t border-border flex justify-end text-sm font-medium text-gray-500 dark:text-gray-400">
+              {wordCount} words • {charCount} chars
+            </div>
+          )}
+        </div>
+
+        <div className={activeTab === 'files' ? 'block' : 'hidden'}>
           <PadFiles slug={slug} isLocked={!!sessionStorage.getItem(`unlocked-${slug}`)} />
-        ) : (
-          <div className="flex-1 w-full min-h-[70vh] bg-card shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] border border-border rounded-3xl mb-8 flex flex-col transition-all duration-300 relative overflow-hidden">
-             <CanvasBoard slug={slug} isBurned={isBurned} />
-          </div>
-        )}
+        </div>
+
+        <div className={`flex-1 w-full min-h-[70vh] bg-card shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] border border-border rounded-3xl mb-8 flex-col transition-all duration-300 relative overflow-hidden ${activeTab === 'canvas' ? 'flex' : 'hidden'}`}>
+           <CanvasBoard slug={slug} isBurned={isBurned} />
+        </div>
       </main>
 
       {/* Mobile Bottom Navigation */}

@@ -70,9 +70,6 @@ export default function InteractiveTerminal({ code, language, onClose }: Interac
 
         const client = new Client({
           webSocketFactory: () => new SockJS("https://api.jdoodle.com/v1/stomp"),
-          connectHeaders: {
-            Authorization: "Bearer " + token
-          },
           debug: (str) => {
             // Optional: console.log(str);
           },
@@ -108,11 +105,14 @@ export default function InteractiveTerminal({ code, language, onClose }: Interac
           // Send execution payload
           client.publish({
             destination: "/app/execute-ws-api-token",
+            headers: {
+              message_type: 'execute',
+              token: token
+            },
             body: JSON.stringify({
               script: finalCode,
               language: langConfig.id,
-              versionIndex: langConfig.version,
-              token: token
+              versionIndex: langConfig.version
             }),
           });
         };
@@ -142,11 +142,10 @@ export default function InteractiveTerminal({ code, language, onClose }: Interac
             // Send input to JDoodle
             stompClientRef.current.publish({
               destination: "/app/execute-ws-api-token",
-              body: JSON.stringify({ message: inputBuffer }) // JDoodle expects message field for stdin?
-              // JDoodle interactive actually expects raw string or JSON message.
-              // According to JDoodle STOMP API: body: inputBuffer 
-              // Wait, the official format for STOMP interactive is `{ message: inputStr }` or just sending raw text.
-              // We'll send standard JSON. If it fails, I'll update it.
+              headers: {
+                message_type: 'input'
+              },
+              body: inputBuffer
             });
             inputBuffer = "";
           }
