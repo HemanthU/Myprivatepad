@@ -682,7 +682,7 @@ export default function NotePage() {
           <PadFiles slug={slug} isLocked={!!sessionStorage.getItem(`unlocked-${slug}`)} />
         </div>
 
-        <div className={`flex-1 w-full min-h-[70vh] bg-card shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] border border-border rounded-3xl mb-8 flex-col transition-all duration-300 relative overflow-hidden ${activeTab === 'canvas' ? 'flex' : 'hidden'}`}>
+        <div className={`w-full min-h-[70vh] bg-card shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] border border-border rounded-3xl mb-8 flex-col transition-all duration-300 overflow-hidden ${activeTab === 'canvas' ? 'flex relative z-10 flex-1' : 'absolute opacity-0 pointer-events-none -z-10 invisible'}`}>
            <CanvasBoard slug={slug} isBurned={isBurned} />
         </div>
       </main>
