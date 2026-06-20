@@ -640,50 +640,55 @@ export default function NotePage() {
         </div>
         )}
 
-        <div className={`flex-1 w-full flex-col min-h-[600px] bg-card shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] border border-border rounded-3xl p-6 sm:p-12 mb-8 transition-all duration-300 hover:shadow-[0_8px_40px_rgb(0,0,0,0.08)] dark:hover:shadow-[0_8px_40px_rgb(0,0,0,0.5)] ${activeTab === 'notes' ? 'flex' : 'hidden'}`}>
-          {editorMode === "code" ? (
-            <div className="flex-1 flex flex-col min-h-0 relative">
-              <CollaborativeEditor 
-                slug={slug} 
-                isBurned={isBurned} 
-                isDecoyMode={isDecoyMode}
-                initialText={isBurned ? localText : undefined}
-                language={language}
-                onStatsChange={(words, chars, text) => {
-                  setWordCount(words);
-                  setCharCount(chars);
-                  setLocalText(text);
-                }}
-              />
-              
-              {showTerminal && (
-                <InteractiveTerminal 
-                  code={localText}
+        <div className="flex-1 w-full grid grid-cols-1 grid-rows-1 mb-8">
+          {/* Notes Tab */}
+          <div className={`col-start-1 row-start-1 w-full flex flex-col min-h-[600px] bg-card shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] border border-border rounded-3xl p-6 sm:p-12 transition-all duration-300 hover:shadow-[0_8px_40px_rgb(0,0,0,0.08)] dark:hover:shadow-[0_8px_40px_rgb(0,0,0,0.5)] ${activeTab === 'notes' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'}`}>
+            {editorMode === "code" ? (
+              <div className="flex-1 flex flex-col min-h-0 relative">
+                <CollaborativeEditor 
+                  slug={slug} 
+                  isBurned={isBurned} 
+                  isDecoyMode={isDecoyMode}
+                  initialText={isBurned ? localText : undefined}
                   language={language}
-                  onClose={() => setShowTerminal(false)}
+                  onStatsChange={(words, chars, text) => {
+                    setWordCount(words);
+                    setCharCount(chars);
+                    setLocalText(text);
+                  }}
                 />
-              )}
-            </div>
-          ) : (
-            <RichTextEditor 
-              slug={slug}
-              isBurned={isBurned}
-              isDecoyMode={isDecoyMode}
-            />
-          )}
-          {editorMode === "code" && (
-            <div className="mt-6 pt-4 border-t border-border flex justify-end text-sm font-medium text-gray-500 dark:text-gray-400">
-              {wordCount} words • {charCount} chars
-            </div>
-          )}
-        </div>
+                
+                {showTerminal && (
+                  <InteractiveTerminal 
+                    code={localText}
+                    language={language}
+                    onClose={() => setShowTerminal(false)}
+                  />
+                )}
+              </div>
+            ) : (
+              <RichTextEditor 
+                slug={slug}
+                isBurned={isBurned}
+                isDecoyMode={isDecoyMode}
+              />
+            )}
+            {editorMode === "code" && (
+              <div className="mt-6 pt-4 border-t border-border flex justify-end text-sm font-medium text-gray-500 dark:text-gray-400">
+                {wordCount} words • {charCount} chars
+              </div>
+            )}
+          </div>
 
-        <div className={activeTab === 'files' ? 'block' : 'hidden'}>
-          <PadFiles slug={slug} isLocked={!!sessionStorage.getItem(`unlocked-${slug}`)} />
-        </div>
+          {/* Files Tab */}
+          <div className={`col-start-1 row-start-1 w-full transition-all duration-300 ${activeTab === 'files' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'}`}>
+            <PadFiles slug={slug} isLocked={!!sessionStorage.getItem(`unlocked-${slug}`)} />
+          </div>
 
-        <div className={`w-full min-h-[70vh] bg-card shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] border border-border rounded-3xl mb-8 flex-col transition-all duration-300 overflow-hidden ${activeTab === 'canvas' ? 'flex relative z-10 flex-1' : 'absolute opacity-0 pointer-events-none -z-10 invisible'}`}>
-           <CanvasBoard slug={slug} isBurned={isBurned} />
+          {/* Canvas Tab */}
+          <div className={`col-start-1 row-start-1 w-full min-h-[70vh] bg-card shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] border border-border rounded-3xl flex flex-col transition-all duration-300 overflow-hidden ${activeTab === 'canvas' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'}`}>
+             <CanvasBoard slug={slug} isBurned={isBurned} />
+          </div>
         </div>
       </main>
 
