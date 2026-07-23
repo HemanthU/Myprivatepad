@@ -644,25 +644,44 @@ export default function NotePage() {
           {/* Notes Tab */}
           <div className={`col-start-1 row-start-1 w-full flex flex-col min-h-[600px] bg-card shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] border border-border rounded-3xl p-6 sm:p-12 transition-all duration-300 hover:shadow-[0_8px_40px_rgb(0,0,0,0.08)] dark:hover:shadow-[0_8px_40px_rgb(0,0,0,0.5)] ${activeTab === 'notes' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'}`}>
             {editorMode === "code" ? (
-              <div className="flex-1 flex flex-col min-h-0 relative">
-                <CollaborativeEditor 
-                  slug={slug} 
-                  isBurned={isBurned} 
-                  isDecoyMode={isDecoyMode}
-                  initialText={isBurned ? localText : undefined}
-                  language={language}
-                  onStatsChange={(words, chars, text) => {
-                    setWordCount(words);
-                    setCharCount(chars);
-                    setLocalText(text);
-                  }}
-                />
-                
-                {showTerminal && (
-                  <InteractiveTerminal 
-                    code={localText}
+              <div className="flex-1 flex flex-col min-h-[400px] relative overflow-hidden">
+                {showTerminal ? (
+                  <div className="w-full h-full">
+                    {/* Using dynamic import inside SplitPane can be tricky, but we just render them */}
+                    <div className="flex flex-col h-full">
+                      <div className="flex-1 min-h-[200px]">
+                        <CollaborativeEditor 
+                          slug={slug} 
+                          isBurned={isBurned} 
+                          isDecoyMode={isDecoyMode}
+                          initialText={isBurned ? localText : undefined}
+                          language={language}
+                          onStatsChange={(words, chars, text) => {
+                            setWordCount(words);
+                            setCharCount(chars);
+                            setLocalText(text);
+                          }}
+                        />
+                      </div>
+                      <InteractiveTerminal 
+                        code={localText}
+                        language={language}
+                        onClose={() => setShowTerminal(false)}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <CollaborativeEditor 
+                    slug={slug} 
+                    isBurned={isBurned} 
+                    isDecoyMode={isDecoyMode}
+                    initialText={isBurned ? localText : undefined}
                     language={language}
-                    onClose={() => setShowTerminal(false)}
+                    onStatsChange={(words, chars, text) => {
+                      setWordCount(words);
+                      setCharCount(chars);
+                      setLocalText(text);
+                    }}
                   />
                 )}
               </div>

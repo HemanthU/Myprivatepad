@@ -18,13 +18,95 @@
   --foreground: #0f172a;
   --card: rgba(255, 255, 255, 0.75);
   --border: rgba(226, 232, 240, 0.8);
+  --color-accent: #3b82f6;
 }
 
-.dark {
+html.dark, html[data-theme="dark"] {
   --background: #020617;
   --foreground: #f8fafc;
   --card: rgba(15, 23, 42, 0.65);
   --border: rgba(51, 65, 85, 0.4);
+}
+
+html[data-theme="amoled"] {
+  --background: #000000;
+  --foreground: #ffffff;
+  --card: rgba(0, 0, 0, 1);
+  --border: rgba(30, 30, 30, 1);
+}
+
+html[data-theme="nord"] {
+  --background: #2e3440;
+  --foreground: #d8dee9;
+  --card: rgba(59, 66, 82, 0.8);
+  --border: rgba(76, 86, 106, 0.8);
+}
+
+html[data-theme="dracula"] {
+  --background: #282a36;
+  --foreground: #f8f8f2;
+  --card: rgba(68, 71, 90, 0.8);
+  --border: rgba(98, 114, 164, 0.5);
+}
+
+html[data-theme="solarized"] {
+  --background: #fdf6e3;
+  --foreground: #657b83;
+  --card: rgba(238, 232, 213, 0.8);
+  --border: rgba(147, 161, 161, 0.3);
+}
+
+html[data-theme="catppuccin"] {
+  --background: #1e1e2e;
+  --foreground: #cdd6f4;
+  --card: rgba(24, 24, 37, 0.8);
+  --border: rgba(49, 50, 68, 0.8);
+}
+
+html[data-theme="cyberpunk"] {
+  --background: #0d0221;
+  --foreground: #00ff41;
+  --card: rgba(38, 20, 71, 0.8);
+  --border: rgba(255, 0, 60, 0.5);
+}
+
+html[data-theme="glass"] {
+  --background: transparent;
+  --card: rgba(255, 255, 255, 0.1);
+  --border: rgba(255, 255, 255, 0.2);
+}
+
+html.glass-mode .bg-card, html.glass-mode .backdrop-blur-xl {
+  backdrop-filter: blur(var(--glass-blur, 16px)) !important;
+  -webkit-backdrop-filter: blur(var(--glass-blur, 16px)) !important;
+  background-color: rgba(255, 255, 255, var(--glass-opacity, 0.65)) !important;
+}
+
+html.dark.glass-mode .bg-card, html.dark.glass-mode .backdrop-blur-xl {
+  background-color: rgba(15, 23, 42, var(--glass-opacity, 0.65)) !important;
+}
+
+/* Typography Overrides */
+body {
+  font-family: var(--font-writing, "Inter", sans-serif);
+  font-size: var(--app-font-size, 14px);
+  line-height: var(--app-line-height, 1.5);
+  letter-spacing: var(--app-letter-spacing, 0px);
+}
+
+code, pre, .cm-editor, .monaco-editor {
+  font-family: var(--font-code, "JetBrains Mono", monospace) !important;
+}
+
+/* Accent Color Utilities */
+.accent-bg { background-color: var(--color-accent) !important; }
+.accent-text { color: var(--color-accent) !important; }
+.accent-border { border-color: var(--color-accent) !important; }
+.accent-ring { --tw-ring-color: var(--color-accent) !important; }
+
+::selection {
+  background: var(--color-accent) !important;
+  color: #fff !important;
 }
 
 @keyframes float {

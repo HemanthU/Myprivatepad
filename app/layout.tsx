@@ -2,16 +2,13 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "My Private Pad",
-  description: "Personal cloud textpad",
+  title: "PadX Premium",
+  description: "Personal cloud code editor and notes",
 };
 
 import { ToastProvider } from "@/hooks/useToast";
 import GlobalShortcuts from "@/components/GlobalShortcuts";
-
-import { Inter } from "next/font/google";
-
-const inter = Inter({ subsets: ["latin"] });
+import ThemeProvider from "@/components/ThemeProvider";
 
 export default function RootLayout({
   children,
@@ -19,7 +16,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={inter.className}>
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#000000" />
@@ -28,7 +25,10 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               try {
-                if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                const settings = JSON.parse(localStorage.getItem('padx-settings') || '{}');
+                const theme = settings?.state?.theme || 'dark';
+                document.documentElement.setAttribute('data-theme', theme);
+                if (['dark', 'amoled', 'dracula', 'cyberpunk'].includes(theme)) {
                   document.documentElement.classList.add('dark');
                 } else {
                   document.documentElement.classList.remove('dark');
@@ -41,7 +41,9 @@ export default function RootLayout({
       <body>
         <GlobalShortcuts />
         <div className="bg-mesh-overlay" />
-        <ToastProvider>{children}</ToastProvider>
+        <ThemeProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

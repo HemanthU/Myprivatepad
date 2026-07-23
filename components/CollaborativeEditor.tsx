@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useState, useMemo, useRef } from "react";
-import CodeMirror from "@uiw/react-codemirror";
+import { useEffect, useState, useRef } from "react";
+import Editor, { useMonaco } from "@monaco-editor/react";
 import * as Y from "yjs";
 import { WebrtcProvider } from "y-webrtc";
-import { yCollab } from "y-codemirror.next";
+import { MonacoBinding } from "y-monaco";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { EditorView } from "@codemirror/view";
 import { useToast } from "@/hooks/useToast";
+import { useAppStore } from "@/lib/store";
 
 const getRandomColor = () => {
   const colors = ["#ef4444", "#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899", "#14b8a6"];
@@ -18,37 +18,40 @@ const getRandomColor = () => {
 export default function CollaborativeEditor({ slug, isBurned, isDecoyMode, initialText, language = "plaintext", onStatsChange }: { slug: string, isBurned: boolean, isDecoyMode: boolean, initialText?: string, language?: string, onStatsChange: (words: number, chars: number, text: string) => void }) {
   const [ydoc] = useState(() => new Y.Doc());
   const [provider, setProvider] = useState<WebrtcProvider>();
-  const [langExtension, setLangExtension] = useState<any>(null);
   const { toast } = useToast();
   const initRef = useRef(false);
+  const editorRef = useRef<any>(null);
+  const bindingRef = useRef<any>(null);
+  const monaco = useMonaco();
+  const { theme, codeFont, fontSize, lineHeight, letterSpacing } = useAppStore();
 
   useEffect(() => {
-    const loadLang = async () => {
-      if (language && language !== "plaintext") {
-        try {
-          const { langs } = await import("@uiw/codemirror-extensions-langs");
-          if ((langs as any)[language]) {
-            setLangExtension((langs as any)[language]());
-          } else {
-            setLangExtension(null);
-          }
-        } catch (e) {
-          console.error("Failed to load language extension", e);
+    // Map custom themes to Monaco themes
+    if (monaco) {
+      monaco.editor.defineTheme('padX-dark', {
+        base: 'vs-dark',
+        inherit: true,
+        rules: [],
+        colors: {
+          'editor.background': '#00000000', // transparent
         }
-      } else {
-        setLangExtension(null);
-      }
-    };
-    loadLang();
-  }, [language]);
+      });
+      monaco.editor.defineTheme('padX-light', {
+        base: 'vs',
+        inherit: true,
+        rules: [],
+        colors: {
+          'editor.background': '#00000000', // transparent
+        }
+      });
+    }
+  }, [monaco]);
 
   useEffect(() => {
-    // Serverless WebRTC room for this specific pad
     const webrtcProvider = new WebrtcProvider(`padX-secure-${slug}`, ydoc, {
       signaling: ['wss://signaling.yjs.dev', 'wss://y-webrtc-signaling-eu.herokuapp.com']
     });
     
-    // Assign a random color and name for the multiplayer cursor
     webrtcProvider.awareness.setLocalStateField('user', {
       name: 'Anonymous Ghost',
       color: getRandomColor(),
@@ -56,9 +59,8 @@ export default function CollaborativeEditor({ slug, isBurned, isDecoyMode, initi
 
     setProvider(webrtcProvider);
 
-    const ytext = ydoc.getText("codemirror");
+    const ytext = ydoc.getText("monaco");
 
-    // Load from Firebase initially if empty
     if (!initRef.current) {
       initRef.current = true;
       if (initialText) {
@@ -82,7 +84,6 @@ export default function CollaborativeEditor({ slug, isBurned, isDecoyMode, initi
       if (transaction.local && !isBurned) {
         if (!initRef.current) return;
         
-        // Auto-snapshot on first edit
         if (!sessionStorage.getItem(`snapshot-${slug}`)) {
           sessionStorage.setItem(`snapshot-${slug}`, 'true');
           setDoc(doc(db, "padVersions", slug, "snapshots", Date.now().toString()), {
@@ -119,42 +120,49 @@ export default function CollaborativeEditor({ slug, isBurned, isDecoyMode, initi
     return () => {
       ytext.unobserve(observer);
       webrtcProvider.destroy();
+      if (bindingRef.current) bindingRef.current.destroy();
     };
   }, [slug, isDecoyMode, isBurned]);
 
-  const extensions = useMemo(() => {
-    if (!provider) return [];
-    const baseExtensions = [
-      yCollab(ydoc.getText("codemirror"), provider.awareness),
-      EditorView.theme({
-        "&": { backgroundColor: "transparent", height: "100%", fontSize: "1.125rem", fontFamily: "inherit", outline: "none" },
-        ".cm-scroller": { fontFamily: "inherit", overflow: "auto" },
-        ".cm-content": { fontFamily: "inherit", padding: "0" },
-        "&.cm-focused": { outline: "none" },
-        ".cm-cursor": { borderLeftColor: "var(--foreground)" }
-      })
-    ];
-    if (langExtension) {
-      baseExtensions.push(langExtension);
+  const handleEditorDidMount = (editor: any, monaco: any) => {
+    editorRef.current = editor;
+    if (provider) {
+      const ytext = ydoc.getText("monaco");
+      bindingRef.current = new MonacoBinding(ytext, editor.getModel(), new Set([editor]), provider.awareness);
     }
-    return baseExtensions;
-  }, [provider, ydoc, langExtension]);
+  };
+
+  const monacoTheme = theme === 'light' ? 'padX-light' : 'padX-dark';
 
   if (!provider) return <div className="animate-pulse flex-1 bg-gray-100 dark:bg-gray-800 rounded-xl" />;
 
   return (
-    <CodeMirror
-      extensions={extensions}
-      readOnly={isBurned}
-      basicSetup={{ 
-        lineNumbers: false, 
-        foldGutter: false, 
-        highlightActiveLine: false,
-        highlightActiveLineGutter: false,
-        bracketMatching: false
-      }}
-      theme={typeof window !== 'undefined' && document.documentElement.classList.contains('dark') ? 'dark' : 'light'}
-      className="w-full flex-1 flex flex-col custom-cm-wrapper"
-    />
+    <div className="w-full flex-1 flex flex-col custom-monaco-wrapper">
+      <Editor
+        height="100%"
+        language={language === 'plaintext' ? 'text' : language}
+        theme={monacoTheme}
+        onMount={handleEditorDidMount}
+        options={{
+          readOnly: isBurned,
+          fontFamily: codeFont,
+          fontSize: fontSize,
+          lineHeight: lineHeight * fontSize,
+          letterSpacing: letterSpacing,
+          minimap: { enabled: true },
+          wordWrap: "on",
+          bracketPairColorization: { enabled: true },
+          autoClosingBrackets: "always",
+          cursorBlinking: "smooth",
+          smoothScrolling: true,
+          padding: { top: 16, bottom: 16 },
+          scrollbar: {
+            verticalScrollbarSize: 8,
+            horizontalScrollbarSize: 8
+          }
+        }}
+        className="w-full h-full rounded-b-xl overflow-hidden"
+      />
+    </div>
   );
 }

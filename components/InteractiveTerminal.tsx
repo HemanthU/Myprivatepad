@@ -12,12 +12,12 @@ interface InteractiveTerminalProps {
   onClose: () => void;
 }
 
-const JDOODLE_LANGUAGES: Record<string, { id: string, version: string }> = {
-  javascript: { id: "nodejs", version: "4" },
-  python: { id: "python3", version: "3" },
-  cpp: { id: "cpp17", version: "1" },
-  c: { id: "c", version: "5" },
-  java: { id: "java", version: "4" },
+const WANDBOX_COMPILERS: Record<string, string> = {
+  javascript: "nodejs-head",
+  python: "cpython-3.10.6",
+  cpp: "gcc-12.1.0-c++",
+  c: "gcc-12.1.0-c",
+  java: "openjdk-19",
 };
 
 export default function InteractiveTerminal({ code, language, onClose }: InteractiveTerminalProps) {
@@ -72,37 +72,29 @@ export default function InteractiveTerminal({ code, language, onClose }: Interac
     term.writeln("\x1b[33m[PadX] Sending to execution engine...\x1b[0m");
 
     try {
-      let finalCode = code;
-      if (language === 'java') {
-         finalCode = finalCode.replace(/public\s+class\s+[a-zA-Z0-9_]+/g, "public class Main");
-      }
-
-      const langConfig = JDOODLE_LANGUAGES[language] || { id: language, version: "0" };
-
-      const res = await fetch("/api/jdoodle/execute", {
+      const compiler = WANDBOX_COMPILERS[language] || "cpython-3.10.6";
+      
+      const res = await fetch("https://wandbox.org/api/compile.json", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          script: finalCode,
-          language: langConfig.id,
-          versionIndex: langConfig.version,
+          compiler,
+          code,
           stdin: stdin
         })
       });
 
       const data = await res.json();
 
-      if (data.error) {
-        term.writeln(`\n\x1b[31m[PadX] Error: ${data.error}\x1b[0m`);
-        if (data.statusCode === 429) term.writeln("\x1b[31mDaily API limit reached.\x1b[0m");
+      if (data.status !== "0" && !data.program_output) {
+        term.writeln(`\n\x1b[31m[PadX] Compiler Error:\x1b[0m\n${data.compiler_error || data.compiler_message || 'Unknown Error'}`);
         setStatus("Error");
         return;
       }
 
       term.writeln("\x1b[32m[PadX] Execution Completed:\x1b[0m\n");
-      term.write(data.output || "");
+      term.write((data.program_output || data.program_message || "").replace(/\n/g, "\r\n"));
       
-      term.writeln(`\n\x1b[90m--- CPU: ${data.cpuTime}s | Memory: ${data.memory}KB ---\x1b[0m`);
       setStatus("Finished");
 
     } catch (err: any) {
