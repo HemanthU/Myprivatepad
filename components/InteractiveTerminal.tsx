@@ -74,7 +74,7 @@ export default function InteractiveTerminal({ code, language, onClose }: Interac
     try {
       const compiler = WANDBOX_COMPILERS[language] || "cpython-3.10.6";
       
-      const res = await fetch("https://wandbox.org/api/compile.json", {
+      const res = await fetch("/api/execute", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -104,7 +104,7 @@ export default function InteractiveTerminal({ code, language, onClose }: Interac
   };
 
   return (
-    <div className="h-80 sm:h-96 shrink-0 bg-[#0d0d0d] border-t border-[#333] rounded-b-3xl -mx-6 sm:-mx-12 -mb-6 sm:-mb-12 mt-4 flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 fade-in duration-300">
+    <div className="w-full h-full bg-[#0d0d0d] border border-[#333] rounded-3xl flex flex-col overflow-hidden animate-in fade-in duration-300">
       <div className="px-4 py-2 bg-[#1a1a1a] border-b border-[#333] flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2 text-gray-400 font-mono text-sm">
           <TerminalIcon size={14} /> Execution Terminal

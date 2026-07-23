@@ -17,10 +17,7 @@ import CustomSelect from "@/components/ui/CustomSelect";
 import ShareModal from "@/components/ui/ShareModal";
 import { QRCodeSVG } from "qrcode.react";
 import InteractiveTerminal from "@/components/InteractiveTerminal";
-import dynamic from "next/dynamic";
-
-const RichTextEditor = dynamic(() => import("@/components/RichTextEditor"), { ssr: false });
-const CanvasBoard = dynamic(() => import("@/components/CanvasBoard"), { ssr: false });
+import SplitPane from "@/components/SplitPane";
 
 export default function NotePage() {
   const params = useParams();
@@ -31,7 +28,6 @@ export default function NotePage() {
   const [wordCount, setWordCount] = useState(0);
   const [charCount, setCharCount] = useState(0);
   const [language, setLanguage] = useState("plaintext");
-  const [editorMode, setEditorMode] = useState<"code" | "rich">("code");
   const [terminalOutput, setTerminalOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [showTerminal, setShowTerminal] = useState(false);
@@ -76,7 +72,7 @@ export default function NotePage() {
   const [isBurned, setIsBurned] = useState(false);
   const [showPalette, setShowPalette] = useState(false);
   const [distractionFree, setDistractionFree] = useState(false);
-  const [activeTab, setActiveTab] = useState<"notes" | "files" | "canvas">("notes");
+  const [activeTab, setActiveTab] = useState<"notes" | "files">("notes");
 
   const textRef = useRef(localText);
   useEffect(() => {
@@ -111,7 +107,6 @@ export default function NotePage() {
       if (settingsSnap.exists()) {
         const settings = settingsSnap.data();
         setLanguage(settings.language || "plaintext");
-        setEditorMode(settings.editorMode || "code");
 
         if (settings.isTrashed) {
           router.push("/");
@@ -257,10 +252,6 @@ export default function NotePage() {
       if (e.altKey && e.key === "2") {
         e.preventDefault();
         setActiveTab("files");
-      }
-      if (e.altKey && e.key === "3") {
-        e.preventDefault();
-        setActiveTab("canvas");
       }
 
       // Switch Pad
@@ -557,68 +548,41 @@ export default function NotePage() {
             >
               Files
             </button>
-            <button
-              onClick={() => setActiveTab("canvas")}
-              className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${activeTab === 'canvas' ? 'bg-white text-black shadow-sm dark:bg-black dark:text-white' : 'text-gray-500 hover:text-black dark:hover:text-white'}`}
-              title="Canvas (Alt+3)"
-            >
-              Canvas
-            </button>
             {activeTab === "notes" && (
               <>
                 <div className="border-l border-gray-300 dark:border-gray-700 mx-1"></div>
                 <CustomSelect
-                  value={editorMode}
-                  onChange={async (newMode) => {
-                    setEditorMode(newMode as "code" | "rich");
+                  value={language}
+                  onChange={async (newLang) => {
+                    setLanguage(newLang);
                     if (!isBurned && !isDecoyMode) {
                       const { setDoc, doc } = await import("firebase/firestore");
-                      await setDoc(doc(db, "padSettings", slug), { editorMode: newMode }, { merge: true });
+                      await setDoc(doc(db, "padSettings", slug), { language: newLang }, { merge: true });
                     }
                   }}
                   options={[
-                    { value: "rich", label: "Rich Text (Notion)" },
-                    { value: "code", label: "Code / Text" }
+                    { value: "plaintext", label: "Text" },
+                    { value: "markdown", label: "Markdown" },
+                    { value: "javascript", label: "JavaScript" },
+                    { value: "python", label: "Python" },
+                    { value: "cpp", label: "C++" },
+                    { value: "c", label: "C" },
+                    { value: "java", label: "Java" },
+                    { value: "html", label: "HTML" },
+                    { value: "css", label: "CSS" },
+                    { value: "json", label: "JSON" }
                   ]}
-                  className="w-44"
+                  className="w-36"
                 />
-                {editorMode === "code" && (
-                  <>
-                    <div className="border-l border-gray-300 dark:border-gray-700 mx-1"></div>
-                    <CustomSelect
-                      value={language}
-                      onChange={async (newLang) => {
-                        setLanguage(newLang);
-                        if (!isBurned && !isDecoyMode) {
-                          const { setDoc, doc } = await import("firebase/firestore");
-                          await setDoc(doc(db, "padSettings", slug), { language: newLang }, { merge: true });
-                        }
-                      }}
-                      options={[
-                        { value: "plaintext", label: "Text" },
-                        { value: "markdown", label: "Markdown" },
-                        { value: "javascript", label: "JavaScript" },
-                        { value: "python", label: "Python" },
-                        { value: "cpp", label: "C++" },
-                        { value: "c", label: "C" },
-                        { value: "java", label: "Java" },
-                        { value: "html", label: "HTML" },
-                        { value: "css", label: "CSS" },
-                        { value: "json", label: "JSON" }
-                      ]}
-                      className="w-36"
-                    />
-                    {language !== "plaintext" && language !== "markdown" && language !== "html" && language !== "css" && language !== "json" && (
-                      <button
-                        onClick={handleRunCode}
-                        disabled={isRunning}
-                        className="px-4 py-2 rounded-lg bg-green-500/10 text-green-600 hover:bg-green-500/20 dark:bg-green-500/20 dark:text-green-400 dark:hover:bg-green-500/30 transition-all font-semibold flex items-center gap-2"
-                      >
-                        {isRunning ? <div className="animate-spin rounded-full h-4 w-4 border-2 border-green-500 border-t-transparent" /> : <Play size={16} />}
-                        Run
-                      </button>
-                    )}
-                  </>
+                {language !== "plaintext" && language !== "markdown" && language !== "html" && language !== "css" && language !== "json" && (
+                  <button
+                    onClick={handleRunCode}
+                    disabled={isRunning}
+                    className="px-4 py-2 rounded-lg bg-green-500/10 text-green-600 hover:bg-green-500/20 dark:bg-green-500/20 dark:text-green-400 dark:hover:bg-green-500/30 transition-all font-semibold flex items-center gap-2"
+                  >
+                    {isRunning ? <div className="animate-spin rounded-full h-4 w-4 border-2 border-green-500 border-t-transparent" /> : <Play size={16} />}
+                    Run
+                  </button>
                 )}
               </>
             )}
@@ -643,33 +607,27 @@ export default function NotePage() {
         <div className="flex-1 w-full grid grid-cols-1 grid-rows-1 mb-8">
           {/* Notes Tab */}
           <div className={`col-start-1 row-start-1 w-full flex flex-col min-h-[600px] bg-card shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] border border-border rounded-3xl p-6 sm:p-12 transition-all duration-300 hover:shadow-[0_8px_40px_rgb(0,0,0,0.08)] dark:hover:shadow-[0_8px_40px_rgb(0,0,0,0.5)] ${activeTab === 'notes' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'}`}>
-            {editorMode === "code" ? (
               <div className="flex-1 flex flex-col min-h-[400px] relative overflow-hidden">
                 {showTerminal ? (
-                  <div className="w-full h-full">
-                    {/* Using dynamic import inside SplitPane can be tricky, but we just render them */}
-                    <div className="flex flex-col h-full">
-                      <div className="flex-1 min-h-[200px]">
-                        <CollaborativeEditor 
-                          slug={slug} 
-                          isBurned={isBurned} 
-                          isDecoyMode={isDecoyMode}
-                          initialText={isBurned ? localText : undefined}
-                          language={language}
-                          onStatsChange={(words, chars, text) => {
-                            setWordCount(words);
-                            setCharCount(chars);
-                            setLocalText(text);
-                          }}
-                        />
-                      </div>
-                      <InteractiveTerminal 
-                        code={localText}
-                        language={language}
-                        onClose={() => setShowTerminal(false)}
-                      />
-                    </div>
-                  </div>
+                  <SplitPane direction="vertical" defaultRatio={0.6} className="w-full h-full">
+                    <CollaborativeEditor 
+                      slug={slug} 
+                      isBurned={isBurned} 
+                      isDecoyMode={isDecoyMode}
+                      initialText={isBurned ? localText : undefined}
+                      language={language}
+                      onStatsChange={(words, chars, text) => {
+                        setWordCount(words);
+                        setCharCount(chars);
+                        setLocalText(text);
+                      }}
+                    />
+                    <InteractiveTerminal 
+                      code={localText}
+                      language={language}
+                      onClose={() => setShowTerminal(false)}
+                    />
+                  </SplitPane>
                 ) : (
                   <CollaborativeEditor 
                     slug={slug} 
@@ -685,33 +643,19 @@ export default function NotePage() {
                   />
                 )}
               </div>
-            ) : (
-              <RichTextEditor 
-                slug={slug}
-                isBurned={isBurned}
-                isDecoyMode={isDecoyMode}
-              />
-            )}
-            {editorMode === "code" && (
               <div className="mt-6 pt-4 border-t border-border flex justify-end text-sm font-medium text-gray-500 dark:text-gray-400">
                 {wordCount} words • {charCount} chars
               </div>
-            )}
           </div>
 
           {/* Files Tab */}
           <div className={`col-start-1 row-start-1 w-full transition-all duration-300 ${activeTab === 'files' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'}`}>
             <PadFiles slug={slug} isLocked={!!sessionStorage.getItem(`unlocked-${slug}`)} />
           </div>
-
-          {/* Canvas Tab */}
-          <div className={`col-start-1 row-start-1 w-full min-h-[70vh] bg-card shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] border border-border rounded-3xl flex flex-col transition-all duration-300 overflow-hidden ${activeTab === 'canvas' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'}`}>
-             <CanvasBoard slug={slug} isBurned={isBurned} />
-          </div>
         </div>
       </main>
 
-      {/* Mobile Bottom Navigation */}
+        {/* Mobile Bottom Navigation */}
       {!distractionFree && (
         <div className="fixed bottom-0 left-0 right-0 z-40 flex sm:hidden bg-card/90 backdrop-blur-xl border-t border-border p-2 pb-4 justify-around shadow-[0_-8px_30px_rgb(0,0,0,0.12)]">
           <button
@@ -727,13 +671,6 @@ export default function NotePage() {
           >
             <Database size={20} />
             Files
-          </button>
-          <button
-            onClick={() => setActiveTab("canvas")}
-            className={`flex-1 py-2 flex flex-col items-center justify-center gap-1 rounded-xl font-semibold text-xs transition-all ${activeTab === 'canvas' ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30' : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-200'}`}
-          >
-            <PenTool size={20} />
-            Canvas
           </button>
         </div>
       )}
