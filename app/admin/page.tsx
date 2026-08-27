@@ -13,7 +13,7 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { Lock, Shield, Unlock, Trash, Clock, ExternalLink, Settings, Home, Search, FileText, EyeOff, Flame, Link as LinkIcon, RefreshCw, Ghost, Database, Archive, File as FileIcon, Image as ImageIcon, Download, Activity, AlertTriangle, Check, Folder } from "lucide-react";
+import { Lock, Shield, Unlock, Trash, Clock, ExternalLink, Settings, Home, Search, FileText, EyeOff, Flame, Link as LinkIcon, RefreshCw, Ghost, Database, Archive, File as FileIcon, Image as ImageIcon, Download, Activity, AlertTriangle, Check, Folder, MoreVertical } from "lucide-react";
 import { usePrompt } from "@/hooks/usePrompt";
 import { ToastProvider, useToast } from "@/hooks/useToast";
 import dynamic from "next/dynamic";
@@ -21,6 +21,8 @@ import dynamic from "next/dynamic";
 const VersionHistory = dynamic(() => import("@/components/VersionHistory"), { ssr: false });
 import PromptModal from "@/components/ui/PromptModal";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import AdminPadDetails from "@/components/admin/AdminPadDetails";
+import AdvancedGlobalTools from "@/components/admin/AdvancedGlobalTools";
 
 const StatCard = ({ icon: Icon, title, count, color, onClick, active }: { icon: any, title: string, count: string | number, color: string, onClick?: () => void, active?: boolean }) => (
   <div 
@@ -85,6 +87,8 @@ export default function AdminPage() {
   const [auth, setAuth] = useState(false);
   const [historyPad, setHistoryPad] = useState<string | null>(null);
   const [adminTab, setAdminTab] = useState<"landing" | "dashboard" | "pads">("landing");
+  const [selectedAdminPad, setSelectedAdminPad] = useState<PadData | null>(null);
+  const [showAdvancedTools, setShowAdvancedTools] = useState(false);
   const [selectedPads, setSelectedPads] = useState<string[]>([]);
   const [filterMode, setFilterMode] = useState<"all" | "locked" | "ghost" | "shadow" | "burn">("all");
   const [sortMode, setSortMode] = useState<"recent" | "opens" | "name">("recent");
@@ -257,8 +261,12 @@ export default function AdminPage() {
   const deletePad = async (padName: string, permanent: boolean = false, skipConfirm: boolean = false) => {
     if (permanent) {
       if (!skipConfirm) {
-        const confirmDelete = await confirm({ title: "Delete Forever", message: `Delete "${padName}" permanently? This cannot be undone.` });
-        if (!confirmDelete) return;
+        const confirmDelete = await confirm({ 
+          title: "DELETE PERMANENTLY", 
+          message: `This action cannot be undone.\n\nType DELETE to permanently destroy "${padName}".`,
+          requiredConfirmText: "DELETE"
+        });
+        if (confirmDelete !== true) return;
       }
 
       const q = query(collection(db, "files"), where("padId", "==", padName));
@@ -362,8 +370,20 @@ export default function AdminPage() {
     
     if (action === "delete") {
       const isPermanent = showTrash;
-      const confirmed = await confirm({ title: `Bulk Delete (${selectedPads.length})`, message: `Are you sure you want to delete ${selectedPads.length} pads${isPermanent ? ' permanently' : ''}?` });
-      if (!confirmed) return;
+      const confirmPayload: any = { 
+        title: `Bulk Delete (${selectedPads.length})`, 
+        message: `Are you sure you want to delete ${selectedPads.length} pads${isPermanent ? ' permanently' : ''}?` 
+      };
+      
+      if (isPermanent) {
+        confirmPayload.title = "DELETE PERMANENTLY";
+        confirmPayload.message = `This action cannot be undone.\n\nAffected pads: ${selectedPads.length}\n\nType DELETE to confirm.`;
+        confirmPayload.requiredConfirmText = "DELETE";
+      }
+      
+      const confirmed = await confirm(confirmPayload);
+      if (isPermanent ? confirmed !== true : !confirmed) return;
+      
       for (const padName of selectedPads) {
         await deletePad(padName, isPermanent, true);
       }
@@ -397,7 +417,7 @@ export default function AdminPage() {
       const confirmed = await confirm({ title: `Bulk Archive (${selectedPads.length})`, message: "Move selected pads to trash?" });
       if (!confirmed) return;
       for (const padName of selectedPads) {
-        await deletePad(padName, false);
+        await deletePad(padName, false, true);
       }
       toast(`Archived ${selectedPads.length} pads`, "success");
     } else if (action === "export") {
@@ -463,6 +483,8 @@ export default function AdminPage() {
       <div className="absolute bottom-0 right-0 w-[50%] h-[50%] bg-purple-600/10 blur-[150px] rounded-full pointer-events-none animate-pulse-glow" style={{ animationDelay: "2s" }} />
 
       <PromptModal isOpen={isOpen} config={config} onClose={handleClose} />
+      {selectedAdminPad && <AdminPadDetails pad={selectedAdminPad} onClose={() => setSelectedAdminPad(null)} />}
+      {showAdvancedTools && <AdvancedGlobalTools onClose={() => setShowAdvancedTools(false)} />}
       
       <header className="w-full bg-slate-900/50 backdrop-blur-3xl border-b border-white/5 sticky top-0 z-50 px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
         <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent flex items-center gap-3">
@@ -506,7 +528,12 @@ export default function AdminPage() {
         {adminTab === "landing" && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-12">
             {/* 1. Header */}
-            <h1 className="text-3xl font-extrabold text-white tracking-tight">Hello SAM</h1>
+            <div className="flex items-center justify-between">
+              <h1 className="text-3xl font-extrabold text-white tracking-tight">Hello SAM</h1>
+              <button onClick={() => setShowAdvancedTools(true)} className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/30 transition-colors border border-indigo-500/30 font-semibold shadow-lg shadow-indigo-500/10">
+                <Settings size={18} /> Advanced Tools
+              </button>
+            </div>
 
             {/* 2. Counters (1 Row horizontally scrollable on mobile) */}
             <div className="flex flex-nowrap overflow-x-auto sm:overflow-visible sm:grid sm:grid-cols-4 lg:grid-cols-8 gap-4 pb-4 sm:pb-0 hide-scrollbar">
@@ -560,7 +587,7 @@ export default function AdminPage() {
                           </div>
                           <div>
                             <p className="text-sm text-slate-200"><span className="font-semibold text-slate-400">[{activity.type}]</span> {activity.label}</p>
-                            <p className="text-xs text-slate-500">{new Date(activity.time).toLocaleString()}</p>
+                            <p className="text-xs text-slate-500" suppressHydrationWarning>{new Date(activity.time).toLocaleString()}</p>
                           </div>
                         </div>
                       ))}
@@ -890,6 +917,7 @@ export default function AdminPage() {
                   <div className="mt-auto pt-4 border-t border-white/10 flex flex-wrap gap-2">
                     {!pad.isTrashed ? (
                       <>
+                        <button onClick={() => setSelectedAdminPad(pad)} className="p-2 rounded-xl bg-purple-500/20 text-purple-400 hover:bg-purple-500/40 transition-colors border border-purple-500/20" title="Admin Details"><MoreVertical size={20} /></button>
                         <button onClick={() => managePad(pad.name)} className="p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors text-gray-300 hover:text-white border border-white/5" title="Open Pad"><ExternalLink size={20} /></button>
                         <button onClick={() => setHistoryPad(pad.name)} className="p-2 rounded-xl bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/40 transition-colors border border-indigo-500/20" title="Time Machine"><Clock size={20} /></button>
                         <button onClick={() => pad.locked ? unlockPad(pad.name) : lockPad(pad.name)} className="p-2 rounded-xl bg-blue-500/20 text-blue-400 hover:bg-blue-500/40 transition-colors border border-blue-500/20" title="Lock/Unlock"><Lock size={20} /></button>
@@ -898,6 +926,7 @@ export default function AdminPage() {
                       </>
                     ) : (
                       <>
+                        <button onClick={() => setSelectedAdminPad(pad)} className="p-2 rounded-xl bg-purple-500/20 text-purple-400 hover:bg-purple-500/40 transition-colors border border-purple-500/20 mr-2" title="Admin Details"><MoreVertical size={20} /></button>
                         <button onClick={() => restorePad(pad.name)} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-green-500/20 text-green-400 hover:bg-green-500/40 transition-colors border border-green-500/20" title="Restore Pad">
                           <RefreshCw size={18} /> Restore
                         </button>

@@ -10,6 +10,7 @@ type PromptConfig = {
   defaultValue?: string;
   confirmText?: string;
   cancelText?: string;
+  requiredConfirmText?: string;
 };
 
 export function usePrompt() {
