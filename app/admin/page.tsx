@@ -22,8 +22,11 @@ const VersionHistory = dynamic(() => import("@/components/VersionHistory"), { ss
 import PromptModal from "@/components/ui/PromptModal";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
-const StatCard = ({ icon: Icon, title, count, color }: { icon: any, title: string, count: string | number, color: string }) => (
-  <div className="bg-white/5 dark:bg-slate-900/40 backdrop-blur-3xl border border-white/10 dark:border-white/5 rounded-3xl p-6 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_40px_-12px_rgba(0,0,0,0.5)] transition-all duration-500 hover:-translate-y-1 group relative overflow-hidden">
+const StatCard = ({ icon: Icon, title, count, color, onClick, active }: { icon: any, title: string, count: string | number, color: string, onClick?: () => void, active?: boolean }) => (
+  <div 
+    onClick={onClick}
+    className={`bg-white/5 dark:bg-slate-900/40 backdrop-blur-3xl border ${active ? 'border-indigo-500 shadow-[0_0_30px_rgba(99,102,241,0.3)] ring-1 ring-indigo-500' : 'border-white/10 dark:border-white/5 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.3)]'} rounded-3xl p-6 hover:shadow-[0_8px_40px_-12px_rgba(0,0,0,0.5)] transition-all duration-500 hover:-translate-y-1 group relative overflow-hidden ${onClick ? 'cursor-pointer' : ''}`}
+  >
     <div className={`absolute top-0 right-0 w-32 h-32 bg-${color}-500/10 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-${color}-500/20 transition-all duration-500`} />
     <div className={`flex items-center gap-3 mb-3 text-${color}-400 dark:text-${color}-400`}>
       <Icon size={22} strokeWidth={1.5} />
@@ -75,6 +78,7 @@ export default function AdminPage() {
     archives: 0,
   });
   const [allFiles, setAllFiles] = useState<any[]>([]);
+  const [fileFilter, setFileFilter] = useState<"all" | "pdfs" | "images" | "documents" | "archives">("all");
   const [search, setSearch] = useState("");
   const [showTrash, setShowTrash] = useState(false);
   const [auth, setAuth] = useState(false);
@@ -110,7 +114,7 @@ export default function AdminPage() {
         else if (d.fileType === "application/pdf") pf++;
         else if (d.fileType.includes("word") || d.fileType.includes("text") || d.fileType.includes("presentation") || d.fileType.includes("excel")) dc++;
         else if (d.fileType.includes("zip") || d.fileType.includes("tar") || d.fileType.includes("rar")) ar++;
-        fileList.push(d);
+        fileList.push({ ...d, fileId: doc.id });
       });
       setFileStats({ totalFiles: tf, storageUsed: su, pdfs: pf, images: im, documents: dc, archives: ar });
       setAllFiles(fileList.sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()));
@@ -147,6 +151,15 @@ export default function AdminPage() {
   const searchedPads = visiblePads.filter(pad =>
     pad.name.toLowerCase().includes(search.toLowerCase())
   );
+
+  const filteredFiles = allFiles.filter(file => {
+    if (fileFilter === "all") return true;
+    if (fileFilter === "pdfs") return file.fileType === "application/pdf";
+    if (fileFilter === "images") return file.fileType.startsWith("image/");
+    if (fileFilter === "documents") return file.fileType.includes("word") || file.fileType.includes("text") || file.fileType.includes("presentation") || file.fileType.includes("excel");
+    if (fileFilter === "archives") return file.fileType.includes("zip") || file.fileType.includes("tar") || file.fileType.includes("rar");
+    return true;
+  });
 
   const filteredPads = searchedPads.filter(pad => {
     if (filterMode === "locked") return pad.locked;
@@ -471,15 +484,15 @@ export default function AdminPage() {
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-indigo-400"><Database size={24} /> Storage Metrics</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-12">
-              <StatCard icon={FileIcon} title="Total Files" count={fileStats.totalFiles} color="blue" />
+              <StatCard icon={FileIcon} title="Total Files" count={fileStats.totalFiles} color="blue" onClick={() => setFileFilter("all")} active={fileFilter === "all"} />
               <StatCard icon={Database} title="Storage Used" count={`${(fileStats.storageUsed / 1024 / 1024).toFixed(2)} MB`} color="indigo" />
-              <StatCard icon={FileText} title="PDFs" count={fileStats.pdfs} color="purple" />
-              <StatCard icon={ImageIcon} title="Images" count={fileStats.images} color="pink" />
-              <StatCard icon={FileText} title="Documents" count={fileStats.documents} color="green" />
-              <StatCard icon={Archive} title="Archives" count={fileStats.archives} color="orange" />
+              <StatCard icon={FileText} title="PDFs" count={fileStats.pdfs} color="purple" onClick={() => setFileFilter("pdfs")} active={fileFilter === "pdfs"} />
+              <StatCard icon={ImageIcon} title="Images" count={fileStats.images} color="pink" onClick={() => setFileFilter("images")} active={fileFilter === "images"} />
+              <StatCard icon={FileText} title="Documents" count={fileStats.documents} color="green" onClick={() => setFileFilter("documents")} active={fileFilter === "documents"} />
+              <StatCard icon={Archive} title="Archives" count={fileStats.archives} color="orange" onClick={() => setFileFilter("archives")} active={fileFilter === "archives"} />
             </div>
 
-            <h2 className="text-2xl font-extrabold mb-6 flex items-center gap-3 text-purple-400 tracking-tight mt-16"><Database size={26} /> Global File Index</h2>
+            <h2 className="text-2xl font-extrabold mb-6 flex items-center gap-3 text-purple-400 tracking-tight mt-16"><Database size={26} /> Global File Index {fileFilter !== "all" && <span className="text-sm font-medium text-purple-300/50 bg-purple-500/10 px-3 py-1 rounded-full ml-2">Filtered: {fileFilter}</span>}</h2>
             <div className="bg-slate-900/40 backdrop-blur-3xl border border-white/10 rounded-[2rem] overflow-hidden shadow-2xl">
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
@@ -495,7 +508,7 @@ export default function AdminPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
-                    {allFiles.slice(0, 50).map(file => (
+                    {filteredFiles.slice(0, 50).map(file => (
                       <tr key={file.fileId} className="hover:bg-white/5 transition-colors group">
                         <td className="p-5 flex items-center gap-4">
                           <div className="p-2.5 bg-white/5 rounded-xl text-indigo-300 group-hover:scale-110 group-hover:bg-indigo-500/20 transition-all">{getFileIcon(file.fileType)}</div>
@@ -516,9 +529,11 @@ export default function AdminPage() {
                         </td>
                       </tr>
                     ))}
-                    {allFiles.length === 0 && (
+                    {filteredFiles.length === 0 && (
                       <tr>
-                        <td colSpan={7} className="p-12 text-center text-slate-500 font-medium">No files uploaded yet.</td>
+                        <td colSpan={7} className="p-8 text-center text-slate-500">
+                          No files found {fileFilter !== "all" ? `for category: ${fileFilter}` : ""}
+                        </td>
                       </tr>
                     )}
                   </tbody>
