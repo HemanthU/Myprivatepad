@@ -13,7 +13,7 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { Lock, Shield, Unlock, Trash, Clock, ExternalLink, Settings, Home, Search, FileText, EyeOff, Flame, Link as LinkIcon, RefreshCw, Ghost, Database, Archive, File as FileIcon, Image as ImageIcon, Download } from "lucide-react";
+import { Lock, Shield, Unlock, Trash, Clock, ExternalLink, Settings, Home, Search, FileText, EyeOff, Flame, Link as LinkIcon, RefreshCw, Ghost, Database, Archive, File as FileIcon, Image as ImageIcon, Download, Activity, AlertTriangle, Check, Folder } from "lucide-react";
 import { usePrompt } from "@/hooks/usePrompt";
 import { ToastProvider, useToast } from "@/hooks/useToast";
 import dynamic from "next/dynamic";
@@ -55,6 +55,7 @@ type PadData = {
   totalOpens?: number;
   lastOpened?: string;
   burnAfterRead?: boolean;
+  readOnly?: boolean;
 };
 
 export default function AdminPage() {
@@ -83,7 +84,7 @@ export default function AdminPage() {
   const [showTrash, setShowTrash] = useState(false);
   const [auth, setAuth] = useState(false);
   const [historyPad, setHistoryPad] = useState<string | null>(null);
-  const [adminTab, setAdminTab] = useState<"dashboard" | "pads">("dashboard");
+  const [adminTab, setAdminTab] = useState<"landing" | "dashboard" | "pads">("landing");
   const [selectedPads, setSelectedPads] = useState<string[]>([]);
   const [filterMode, setFilterMode] = useState<"all" | "locked" | "ghost" | "shadow" | "burn">("all");
   const [sortMode, setSortMode] = useState<"recent" | "opens" | "name">("recent");
@@ -137,6 +138,7 @@ export default function AdminPage() {
             totalOpens: settings.totalOpens || 0,
             lastOpened: settings.lastOpened || "",
             burnAfterRead: settings.burnAfterRead || false,
+            readOnly: settings.readOnly || false,
           };
         })
       );
@@ -435,8 +437,22 @@ export default function AdminPage() {
     }
   };
 
+  const totalFilesCount = fileStats.totalFiles;
+  const totalPadsCount = pads.length;
+  const lockedPadsCount = pads.filter(p => p.locked).length;
+  const readOnlyPadsCount = pads.filter(p => p.readOnly).length;
+  const expiringPadsCount = pads.filter(p => p.selfDelete && p.deleteAt && new Date(p.deleteAt).getTime() > Date.now()).length;
+  const expiredPadsCount = pads.filter(p => p.selfDelete && p.deleteAt && new Date(p.deleteAt).getTime() <= Date.now()).length;
+
+  const recentActivity = [
+    ...pads.filter(p => p.lastOpened).map(p => ({ id: p.name + '-pad', type: 'Pad', label: `Pad opened: ${p.name}`, time: new Date(p.lastOpened!).getTime(), icon: FileText, color: 'text-purple-400' })),
+    ...allFiles.map(f => ({ id: f.fileId + '-file', type: 'File', label: `File uploaded: ${f.fileName}`, time: new Date(f.uploadedAt).getTime(), icon: FileIcon, color: 'text-blue-400' }))
+  ].sort((a, b) => b.time - a.time).slice(0, 8);
+
+  const dbStatus = (pads.length > 0 || allFiles.length > 0) ? "Operational" : "Checking...";
+
   if (!auth) {
-    return <div className="min-h-screen bg-gray-50 dark:bg-gray-900" />;
+    return null; // Return empty until auth check passes or redirects
   }
 
   return (
@@ -454,6 +470,12 @@ export default function AdminPage() {
         </h1>
         
         <div className="flex items-center gap-2 bg-black/40 p-1.5 rounded-2xl border border-white/5 shadow-inner">
+          <button 
+            onClick={() => setAdminTab("landing")} 
+            className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all duration-300 ${adminTab === 'landing' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25 scale-100' : 'text-slate-400 hover:text-white hover:bg-white/5 scale-95 hover:scale-100'}`}
+          >
+            Overview
+          </button>
           <button 
             onClick={() => setAdminTab("dashboard")} 
             className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all duration-300 ${adminTab === 'dashboard' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25 scale-100' : 'text-slate-400 hover:text-white hover:bg-white/5 scale-95 hover:scale-100'}`}
@@ -480,6 +502,141 @@ export default function AdminPage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-6 pt-8 pb-20 relative z-10">
+        
+        {adminTab === "landing" && (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-12">
+            {/* 1. Header */}
+            <h1 className="text-3xl font-extrabold text-white tracking-tight">Hello SAM</h1>
+
+            {/* 2. Counters (1 Row horizontally scrollable on mobile) */}
+            <div className="flex flex-nowrap overflow-x-auto sm:overflow-visible sm:grid sm:grid-cols-4 lg:grid-cols-8 gap-4 pb-4 sm:pb-0 hide-scrollbar">
+              <div onClick={() => { setAdminTab("dashboard"); setFileFilter("all"); }} className="min-w-[140px] flex-shrink-0 cursor-pointer bg-white/5 border border-white/10 hover:bg-white/10 transition-colors rounded-2xl p-4 flex flex-col items-center justify-center">
+                <span className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-1 text-center">Total Files</span>
+                <span className="text-2xl font-extrabold text-white">{totalFilesCount}</span>
+              </div>
+              <div onClick={() => { setAdminTab("pads"); setFilterMode("all"); setShowTrash(false); }} className="min-w-[140px] flex-shrink-0 cursor-pointer bg-white/5 border border-white/10 hover:bg-white/10 transition-colors rounded-2xl p-4 flex flex-col items-center justify-center">
+                <span className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-1 text-center">Total Pads</span>
+                <span className="text-2xl font-extrabold text-white">{totalPadsCount}</span>
+              </div>
+              <div onClick={() => { setAdminTab("pads"); setFilterMode("locked"); setShowTrash(false); }} className="min-w-[140px] flex-shrink-0 cursor-pointer bg-white/5 border border-white/10 hover:bg-white/10 transition-colors rounded-2xl p-4 flex flex-col items-center justify-center">
+                <span className="text-xs text-blue-400 font-bold uppercase tracking-widest mb-1 text-center">Locked</span>
+                <span className="text-2xl font-extrabold text-blue-400">{lockedPadsCount}</span>
+              </div>
+              <div className="min-w-[140px] flex-shrink-0 bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center">
+                <span className="text-xs text-emerald-400 font-bold uppercase tracking-widest mb-1 text-center">Read Only</span>
+                <span className="text-2xl font-extrabold text-emerald-400">{readOnlyPadsCount}</span>
+              </div>
+              <div className="min-w-[140px] flex-shrink-0 bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center opacity-60">
+                <span className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-1 text-center">Online</span>
+                <span className="text-2xl font-extrabold text-slate-500">—</span>
+              </div>
+              <div className="min-w-[140px] flex-shrink-0 bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center">
+                <span className="text-xs text-orange-400 font-bold uppercase tracking-widest mb-1 text-center">Expiring</span>
+                <span className="text-2xl font-extrabold text-orange-400">{expiringPadsCount}</span>
+              </div>
+              <div className="min-w-[140px] flex-shrink-0 bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center">
+                <span className="text-xs text-rose-400 font-bold uppercase tracking-widest mb-1 text-center">Expired</span>
+                <span className="text-2xl font-extrabold text-rose-400">{expiredPadsCount}</span>
+              </div>
+              <div className="min-w-[140px] flex-shrink-0 bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center opacity-60">
+                <span className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-1 text-center">Versions</span>
+                <span className="text-2xl font-extrabold text-slate-500">—</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* 3. Recent Activity */}
+              <div>
+                <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-indigo-400"><Activity size={20} /> Recent Activity</h2>
+                <div className="bg-white/5 border border-white/10 rounded-3xl p-6 h-64 overflow-y-auto">
+                  {recentActivity.length === 0 ? (
+                    <p className="text-slate-500 italic text-sm">No recent activity</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {recentActivity.map((activity, i) => (
+                        <div key={activity.id + i} className="flex items-start gap-3">
+                          <div className={`mt-1 p-1.5 rounded-full bg-white/5 ${activity.color}`}>
+                            <activity.icon size={14} />
+                          </div>
+                          <div>
+                            <p className="text-sm text-slate-200"><span className="font-semibold text-slate-400">[{activity.type}]</span> {activity.label}</p>
+                            <p className="text-xs text-slate-500">{new Date(activity.time).toLocaleString()}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-8">
+                {/* 4. Attention Required */}
+                <div>
+                  <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-rose-400"><AlertTriangle size={20} /> Attention Required</h2>
+                  <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
+                    {expiringPadsCount === 0 && expiredPadsCount === 0 ? (
+                      <p className="text-emerald-400 font-medium flex items-center gap-2"><Check size={18} /> Everything looks good</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {expiringPadsCount > 0 && <p className="text-orange-400 flex items-center gap-2">⚠ {expiringPadsCount} pad{expiringPadsCount !== 1 ? 's' : ''} expire soon</p>}
+                        {expiredPadsCount > 0 && <p className="text-rose-400 flex items-center gap-2">⚠ {expiredPadsCount} pad{expiredPadsCount !== 1 ? 's' : ''} have expired</p>}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* 5 & 6. System Status and Admin Session */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="bg-white/5 border border-white/10 rounded-3xl p-5">
+                    <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-3">System Status</h3>
+                    <div className="space-y-2 text-sm">
+                      <p className="text-slate-300 flex items-center gap-2">
+                        <span className={dbStatus === "Operational" ? "text-emerald-400" : "text-amber-400"}>●</span> 
+                        Database — {dbStatus}
+                      </p>
+                      <p className="text-slate-300 flex items-center gap-2">
+                        <span className={dbStatus === "Operational" ? "text-emerald-400" : "text-amber-400"}>●</span> 
+                        Storage — {dbStatus}
+                      </p>
+                      <p className="text-slate-300 flex items-center gap-2"><span className="text-emerald-400">●</span> Authentication — Operational</p>
+                      <p className="text-slate-300 flex items-center gap-2"><span className="text-emerald-400">●</span> Synchronization — Operational</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-white/5 border border-white/10 rounded-3xl p-5">
+                    <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-3">Admin Session</h3>
+                    <div className="space-y-2 text-sm">
+                      <p className="text-emerald-400 font-medium">Session: Active</p>
+                      <p className="text-slate-400">Session started: {new Date().toLocaleTimeString()}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 7 & 8. Navigation Buttons */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4">
+              <button 
+                onClick={() => setAdminTab("dashboard")}
+                className="group relative overflow-hidden rounded-3xl bg-indigo-900/20 border border-indigo-500/20 p-8 text-left hover:bg-indigo-900/40 hover:border-indigo-500/40 transition-all duration-300 hover:-translate-y-1"
+              >
+                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-indigo-500/20 transition-all" />
+                <h3 className="text-3xl font-extrabold text-indigo-400 mb-2 flex items-center gap-3"><Folder size={32} /> Files</h3>
+                <p className="text-indigo-200/70">Open Command Center</p>
+              </button>
+              
+              <button 
+                onClick={() => setAdminTab("pads")}
+                className="group relative overflow-hidden rounded-3xl bg-purple-900/20 border border-purple-500/20 p-8 text-left hover:bg-purple-900/40 hover:border-purple-500/40 transition-all duration-300 hover:-translate-y-1"
+              >
+                <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-purple-500/20 transition-all" />
+                <h3 className="text-3xl font-extrabold text-purple-400 mb-2 flex items-center gap-3"><FileText size={32} /> Pads</h3>
+                <p className="text-purple-200/70">Open Pad Manager</p>
+              </button>
+            </div>
+          </div>
+        )}
+
         {adminTab === "dashboard" && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-indigo-400"><Database size={24} /> Storage Metrics</h2>
@@ -545,6 +702,7 @@ export default function AdminPage() {
 
         {adminTab === "pads" && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
               <div 
                 onClick={() => { setFilterMode("all"); setShowTrash(false); }}
                 className={`border rounded-2xl p-4 flex flex-col items-center justify-center cursor-pointer transition-all hover:-translate-y-1 ${!showTrash && filterMode === "all" ? "bg-white/10 border-white/30 shadow-[0_0_15px_rgba(255,255,255,0.1)] ring-1 ring-white/30" : "bg-white/5 border-white/10 hover:bg-white/10"}`}>
@@ -582,7 +740,6 @@ export default function AdminPage() {
                 <span className="text-xs text-rose-400/70 uppercase tracking-widest mt-1">Trash</span>
               </div>
             </div>
-
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
               <div className="relative w-full max-w-md group">
                 <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-400 transition-colors" size={20} />
