@@ -125,7 +125,7 @@ export default function NotePage() {
           }
         }
 
-        if (settings.shadowMode) {
+        if (settings.shadowMode && sessionStorage.getItem("adminAuth") !== "true") {
           const searchParams = new URLSearchParams(window.location.search);
           if (searchParams.get("shadow") !== settings.shadowKey) {
             router.push("/");

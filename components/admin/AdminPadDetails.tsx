@@ -24,11 +24,12 @@ export default function AdminPadDetails({ pad, onClose }: AdminPadDetailsProps) 
       const fetchContent = async () => {
         setLoadingContent(true);
         try {
-          const docSnap = await getDoc(doc(db, "notes", pad.name));
-          if (docSnap.exists()) {
-            setPadContent(docSnap.data().text || "");
+          const res = await fetch(`/api/admin/pad/${pad.name}`);
+          if (res.ok) {
+            const data = await res.json();
+            setPadContent(data.content || "");
           } else {
-            setPadContent("");
+            setPadContent("Unauthorized or Error loading content.");
           }
         } catch (e) {
           setPadContent("Error loading content.");
@@ -207,12 +208,19 @@ export default function AdminPadDetails({ pad, onClose }: AdminPadDetailsProps) 
                   <button onClick={() => setShowPreview(!showPreview)} className="w-full flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors text-slate-300 hover:text-white">
                     <span className="flex items-center gap-2"><EyeOff size={16} /> {showPreview ? "Hide Admin Preview" : "Admin Preview (Read-Only)"}</span>
                   </button>
+                  <button onClick={() => router.push(`/admin/edit/${pad.name}`)} className="w-full flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors text-slate-300 hover:text-white">
+                    <span className="flex items-center gap-2"><Edit2 size={16} /> Admin Edit Mode</span>
+                  </button>
                   <button onClick={async () => {
                     const days = await prompt({ title: "Extend Expiration", placeholder: "Enter days to extend" });
                     if (days && !isNaN(Number(days))) {
                       const newDate = new Date();
                       newDate.setDate(newDate.getDate() + Number(days));
-                      await updateDoc(doc(db, "padSettings", pad.name), { deleteAt: newDate.toISOString(), selfDelete: true });
+                      await fetch(`/api/admin/pad/${pad.name}`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ action: "updateLifecycle", updates: { deleteAt: newDate.toISOString(), selfDelete: true } })
+                      });
                       promptAlert({ title: "Success", message: `Expiration extended by ${days} days.` });
                     }
                   }} className="w-full flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors text-slate-300 hover:text-white">
@@ -221,7 +229,11 @@ export default function AdminPadDetails({ pad, onClose }: AdminPadDetailsProps) 
                   <button onClick={async () => {
                     const confirmed = await confirm({ title: "Remove Expiration", message: "Remove self-delete timer for this pad?" });
                     if (confirmed) {
-                      await updateDoc(doc(db, "padSettings", pad.name), { selfDelete: false, deleteAt: null });
+                      await fetch(`/api/admin/pad/${pad.name}`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ action: "updateLifecycle", updates: { selfDelete: false, deleteAt: null } })
+                      });
                       promptAlert({ title: "Success", message: "Expiration removed." });
                     }
                   }} className="w-full flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors text-slate-300 hover:text-white">
@@ -235,7 +247,7 @@ export default function AdminPadDetails({ pad, onClose }: AdminPadDetailsProps) 
 
           {showPreview && (
             <div className="mt-8">
-              <h3 className="text-lg font-bold text-rose-400 flex items-center gap-2 mb-4 uppercase tracking-widest"><AlertTriangle size={18} /> ADMIN PREVIEW - READ ONLY</h3>
+              <h3 className="text-lg font-bold text-rose-400 flex items-center gap-2 mb-4 uppercase tracking-widest"><AlertTriangle size={18} /> ADMIN OVERRIDE VIEW {pad.shadowMode && " | SHADOW PAD — ADMIN ACCESS"}</h3>
               <div className="bg-black/60 border border-white/10 rounded-2xl p-6 relative">
                 {loadingContent ? (
                   <p className="text-slate-500 animate-pulse">Loading secure content...</p>

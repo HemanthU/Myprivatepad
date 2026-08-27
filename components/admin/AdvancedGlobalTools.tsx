@@ -153,15 +153,61 @@ function CleanupPanel() {
 }
 
 function SessionsPanel() {
+  const [logs, setLogs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchLogs = async () => {
+      try {
+        const { collection, getDocs, query, orderBy, limit } = await import("firebase/firestore");
+        const { db } = await import("@/lib/firebase");
+        const q = query(collection(db, "adminAuditLogs"), orderBy("timestamp", "desc"), limit(50));
+        const snap = await getDocs(q);
+        setLogs(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      } catch (e) {
+        console.error("Failed to fetch session logs", e);
+      }
+      setLoading(false);
+    };
+    fetchLogs();
+  }, []);
+
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
       <h3 className="text-2xl font-bold text-white mb-2">Session Activity</h3>
-      <p className="text-slate-400">View active administrative and user sessions.</p>
+      <p className="text-slate-400">View recent administrative sessions and privileged actions.</p>
       
-      <div className="mt-8 p-8 border border-white/10 rounded-2xl bg-white/5 text-center">
-        <Monitor className="text-slate-500 mb-4 mx-auto" size={48} />
-        <h4 className="text-xl font-bold text-white mb-2">Session tracking unavailable</h4>
-        <p className="text-slate-400 max-w-md mx-auto">The current PadX architecture does not support centralized session tracking. Device information and active connections are not stored.</p>
+      <div className="mt-8 bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden">
+        {loading ? (
+          <div className="p-8 text-center text-slate-400 animate-pulse">Loading secure audit logs...</div>
+        ) : logs.length === 0 ? (
+          <div className="p-8 text-center">
+            <Monitor className="text-slate-500 mb-4 mx-auto" size={48} />
+            <h4 className="text-xl font-bold text-white mb-2">No active sessions</h4>
+            <p className="text-slate-400">No recent administrative overrides recorded.</p>
+          </div>
+        ) : (
+          <table className="w-full text-left border-collapse text-sm">
+            <thead>
+              <tr className="bg-black/40 text-slate-400 text-xs uppercase tracking-widest border-b border-white/5">
+                <th className="p-4 font-bold">Time</th>
+                <th className="p-4 font-bold">Action</th>
+                <th className="p-4 font-bold">Target Pad</th>
+                <th className="p-4 font-bold">Actor</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {logs.map(log => (
+                <tr key={log.id} className="hover:bg-white/5 transition-colors">
+                  <td className="p-4 text-slate-400">{new Date(log.timestamp).toLocaleString()}</td>
+                  <td className="p-4 font-medium text-emerald-400">{log.action}</td>
+                  <td className="p-4 text-indigo-300 font-mono">{log.padId}</td>
+                  <td className="p-4 text-slate-300">{log.actor}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );
