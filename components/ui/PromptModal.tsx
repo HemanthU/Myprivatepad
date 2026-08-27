@@ -57,7 +57,7 @@ export default function PromptModal({ isOpen, config, onClose }: PromptModalProp
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
                 placeholder={config.placeholder || "Type here..."}
-                className="w-full px-5 py-4 bg-white/80 dark:bg-black/30 border border-slate-200/80 dark:border-slate-800 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:focus:ring-blue-500/20 outline-none transition-all text-lg font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-600 shadow-inner backdrop-blur-md"
+                className="w-full px-5 py-4 bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:focus:ring-blue-500/20 outline-none transition-all text-lg font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 shadow-inner"
               />
               <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-black/5 dark:ring-white/5 pointer-events-none group-focus-within:ring-0" />
             </div>

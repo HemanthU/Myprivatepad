@@ -239,10 +239,12 @@ export default function AdminPage() {
     }
   };
 
-  const deletePad = async (padName: string, permanent: boolean = false) => {
+  const deletePad = async (padName: string, permanent: boolean = false, skipConfirm: boolean = false) => {
     if (permanent) {
-      const confirmDelete = await confirm({ title: "Delete Forever", message: `Delete "${padName}" permanently? This cannot be undone.` });
-      if (!confirmDelete) return;
+      if (!skipConfirm) {
+        const confirmDelete = await confirm({ title: "Delete Forever", message: `Delete "${padName}" permanently? This cannot be undone.` });
+        if (!confirmDelete) return;
+      }
 
       const q = query(collection(db, "files"), where("padId", "==", padName));
       const filesSnap = await getDocs(q);
@@ -258,14 +260,24 @@ export default function AdminPage() {
 
       await deleteDoc(doc(db, "notes", padName));
       await deleteDoc(doc(db, "padSettings", padName));
-      setPads((prev) => prev.filter((pad) => pad.name !== padName));
+      setPads(prev => prev.filter(p => p.name !== padName));
     } else {
+      if (!skipConfirm) {
+        const confirmTrash = await confirm({ title: "Move to Trash", message: `Move "${padName}" to trash?` });
+        if (!confirmTrash) return;
+      }
+      
+      const settingsSnap = await getDoc(doc(db, "padSettings", padName));
       await setDoc(doc(db, "padSettings", padName), {
-        ...(await getDoc(doc(db, "padSettings", padName))).data(),
+        ...(settingsSnap.exists() ? settingsSnap.data() : {}),
         isTrashed: true,
         deletedAt: new Date().toISOString()
       });
       setPads(prev => prev.map(p => p.name === padName ? { ...p, isTrashed: true } : p));
+    }
+
+    if (!skipConfirm) {
+      await promptAlert({ title: "Deleted", message: permanent ? "Pad permanently deleted." : "Pad moved to trash." });
     }
   };
 
@@ -338,7 +350,7 @@ export default function AdminPage() {
       const confirmed = await confirm({ title: `Bulk Delete (${selectedPads.length})`, message: `Are you sure you want to delete ${selectedPads.length} pads${isPermanent ? ' permanently' : ''}?` });
       if (!confirmed) return;
       for (const padName of selectedPads) {
-        await deletePad(padName, isPermanent);
+        await deletePad(padName, isPermanent, true);
       }
       toast(`Successfully deleted ${selectedPads.length} pads`, "success");
     } else if (action === "lock") {
