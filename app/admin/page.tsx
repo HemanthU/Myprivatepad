@@ -545,28 +545,39 @@ export default function AdminPage() {
 
         {adminTab === "pads" && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center">
+              <div 
+                onClick={() => { setFilterMode("all"); setShowTrash(false); }}
+                className={`border rounded-2xl p-4 flex flex-col items-center justify-center cursor-pointer transition-all hover:-translate-y-1 ${!showTrash && filterMode === "all" ? "bg-white/10 border-white/30 shadow-[0_0_15px_rgba(255,255,255,0.1)] ring-1 ring-white/30" : "bg-white/5 border-white/10 hover:bg-white/10"}`}>
                 <span className="text-2xl font-bold text-white">{totalPads}</span>
                 <span className="text-xs text-slate-400 uppercase tracking-widest mt-1">Total Pads</span>
               </div>
-              <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4 flex flex-col items-center justify-center">
+              <div 
+                onClick={() => { setFilterMode("locked"); setShowTrash(false); }}
+                className={`border rounded-2xl p-4 flex flex-col items-center justify-center cursor-pointer transition-all hover:-translate-y-1 ${!showTrash && filterMode === "locked" ? "bg-blue-500/20 border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.2)] ring-1 ring-blue-500/50" : "bg-blue-500/10 border-blue-500/20 hover:bg-blue-500/20"}`}>
                 <span className="text-2xl font-bold text-blue-400">{lockedPads}</span>
                 <span className="text-xs text-blue-400/70 uppercase tracking-widest mt-1">Locked</span>
               </div>
-              <div className="bg-orange-500/10 border border-orange-500/20 rounded-2xl p-4 flex flex-col items-center justify-center">
+              <div 
+                onClick={() => { setFilterMode("burn"); setShowTrash(false); }}
+                className={`border rounded-2xl p-4 flex flex-col items-center justify-center cursor-pointer transition-all hover:-translate-y-1 ${!showTrash && filterMode === "burn" ? "bg-orange-500/20 border-orange-500/50 shadow-[0_0_15px_rgba(249,115,22,0.2)] ring-1 ring-orange-500/50" : "bg-orange-500/10 border-orange-500/20 hover:bg-orange-500/20"}`}>
                 <span className="text-2xl font-bold text-orange-400">{pads.filter(p => p.burnAfterRead).length}</span>
                 <span className="text-xs text-orange-400/70 uppercase tracking-widest mt-1">Burn</span>
               </div>
-              <div className="bg-purple-500/10 border border-purple-500/20 rounded-2xl p-4 flex flex-col items-center justify-center">
+              <div 
+                onClick={() => { setFilterMode("ghost"); setShowTrash(false); }}
+                className={`border rounded-2xl p-4 flex flex-col items-center justify-center cursor-pointer transition-all hover:-translate-y-1 ${!showTrash && filterMode === "ghost" ? "bg-purple-500/20 border-purple-500/50 shadow-[0_0_15px_rgba(168,85,247,0.2)] ring-1 ring-purple-500/50" : "bg-purple-500/10 border-purple-500/20 hover:bg-purple-500/20"}`}>
                 <span className="text-2xl font-bold text-purple-400">{ghostPadsCount}</span>
                 <span className="text-xs text-purple-400/70 uppercase tracking-widest mt-1">Ghost</span>
               </div>
-              <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-2xl p-4 flex flex-col items-center justify-center">
+              <div 
+                onClick={() => { setFilterMode("shadow"); setShowTrash(false); }}
+                className={`border rounded-2xl p-4 flex flex-col items-center justify-center cursor-pointer transition-all hover:-translate-y-1 ${!showTrash && filterMode === "shadow" ? "bg-indigo-500/20 border-indigo-500/50 shadow-[0_0_15px_rgba(99,102,241,0.2)] ring-1 ring-indigo-500/50" : "bg-indigo-500/10 border-indigo-500/20 hover:bg-indigo-500/20"}`}>
                 <span className="text-2xl font-bold text-indigo-400">{shadowPadsCount}</span>
                 <span className="text-xs text-indigo-400/70 uppercase tracking-widest mt-1">Shadow</span>
               </div>
-              <div className="bg-rose-500/10 border border-rose-500/20 rounded-2xl p-4 flex flex-col items-center justify-center">
+              <div 
+                onClick={() => { setShowTrash(true); setFilterMode("all"); }}
+                className={`border rounded-2xl p-4 flex flex-col items-center justify-center cursor-pointer transition-all hover:-translate-y-1 ${showTrash ? "bg-rose-500/20 border-rose-500/50 shadow-[0_0_15px_rgba(244,63,94,0.2)] ring-1 ring-rose-500/50" : "bg-rose-500/10 border-rose-500/20 hover:bg-rose-500/20"}`}>
                 <span className="text-2xl font-bold text-rose-400">{trashCount}</span>
                 <span className="text-xs text-rose-400/70 uppercase tracking-widest mt-1">Trash</span>
               </div>
