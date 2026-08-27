@@ -15,7 +15,7 @@ const getRandomColor = () => {
   return colors[Math.floor(Math.random() * colors.length)];
 };
 
-export default function CollaborativeEditor({ slug, isBurned, isDecoyMode, initialText, language = "plaintext", onStatsChange }: { slug: string, isBurned: boolean, isDecoyMode: boolean, initialText?: string, language?: string, onStatsChange: (words: number, chars: number, text: string) => void }) {
+export default function CollaborativeEditor({ slug, isBurned, isDecoyMode, initialText, language = "plaintext", onStatsChange, onUsersChange }: { slug: string, isBurned: boolean, isDecoyMode: boolean, initialText?: string, language?: string, onStatsChange: (words: number, chars: number, text: string) => void, onUsersChange?: (users: any[]) => void }) {
   const [ydoc] = useState(() => new Y.Doc());
   const [provider, setProvider] = useState<WebrtcProvider>();
   const { toast } = useToast();
@@ -23,7 +23,7 @@ export default function CollaborativeEditor({ slug, isBurned, isDecoyMode, initi
   const editorRef = useRef<any>(null);
   const bindingRef = useRef<any>(null);
   const monaco = useMonaco();
-  const { theme, codeFont, fontSize, lineHeight, letterSpacing } = useAppStore();
+  const { theme, codeFont, fontSize, lineHeight, letterSpacing, wordWrap, minimap } = useAppStore();
 
   useEffect(() => {
     // Map custom themes to Monaco themes
@@ -55,6 +55,14 @@ export default function CollaborativeEditor({ slug, isBurned, isDecoyMode, initi
     webrtcProvider.awareness.setLocalStateField('user', {
       name: 'Anonymous Ghost',
       color: getRandomColor(),
+    });
+
+    webrtcProvider.awareness.on('change', () => {
+      if (onUsersChange) {
+        const states = Array.from(webrtcProvider.awareness.getStates().values());
+        const activeUsers = states.map(s => s.user).filter(Boolean);
+        onUsersChange(activeUsers);
+      }
     });
 
     setProvider(webrtcProvider);
@@ -149,8 +157,8 @@ export default function CollaborativeEditor({ slug, isBurned, isDecoyMode, initi
           fontSize: fontSize,
           lineHeight: lineHeight * fontSize,
           letterSpacing: letterSpacing,
-          minimap: { enabled: true },
-          wordWrap: "on",
+          minimap: { enabled: minimap },
+          wordWrap: wordWrap ? "on" : "off",
           bracketPairColorization: { enabled: true },
           autoClosingBrackets: "always",
           cursorBlinking: "smooth",

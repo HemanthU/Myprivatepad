@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useAppStore, ThemeType } from "@/lib/store";
-import { Check, Monitor, Moon, Sun, Palette, Type, Layout, Sliders, Image as ImageIcon } from "lucide-react";
+import { Check, Monitor, Moon, Sun, Palette, Type, Layout, Sliders, Image as ImageIcon, Settings2 } from "lucide-react";
 
 export default function AppearanceSettings() {
   const store = useAppStore();
@@ -152,6 +152,40 @@ export default function AppearanceSettings() {
           <div>
             <label className="text-xs font-medium text-gray-500 block mb-2">Spacing: {store.letterSpacing}px</label>
             <input type="range" min="-1" max="5" step="0.5" value={store.letterSpacing} onChange={(e) => store.updateTypography(store.fontSize, store.lineHeight, Number(e.target.value))} className="w-full accent-blue-500" />
+          </div>
+        </div>
+      </section>
+
+      {/* Editor Options */}
+      <section className="bg-card p-5 rounded-2xl border border-border space-y-4">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="p-2 bg-emerald-500/10 text-emerald-500 rounded-lg">
+            <Settings2 size={18} />
+          </div>
+          <h4 className="font-semibold text-foreground">Editor Preferences</h4>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex items-center justify-between p-3 bg-black/5 dark:bg-white/5 rounded-xl border border-border">
+            <div>
+              <span className="block text-sm font-medium text-foreground">Word Wrap</span>
+              <span className="block text-xs text-gray-500">Wrap long lines of text</span>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" className="sr-only peer" checked={store.wordWrap} onChange={(e) => store.updateEditorOptions(e.target.checked, store.minimap)} />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-500"></div>
+            </label>
+          </div>
+
+          <div className="flex items-center justify-between p-3 bg-black/5 dark:bg-white/5 rounded-xl border border-border">
+            <div>
+              <span className="block text-sm font-medium text-foreground">Minimap</span>
+              <span className="block text-xs text-gray-500">Show code minimap</span>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" className="sr-only peer" checked={store.minimap} onChange={(e) => store.updateEditorOptions(store.wordWrap, e.target.checked)} />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-500"></div>
+            </label>
           </div>
         </div>
       </section>

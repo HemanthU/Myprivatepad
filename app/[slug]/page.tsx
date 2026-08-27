@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { doc, onSnapshot, setDoc, getDoc, deleteDoc } from "firebase/firestore";
-import { FileText, Unlock, Lock, EyeOff, Save, Key, User, ArrowLeft, Trash, Eye, Ghost, Database, Settings, PenTool, ChevronLeft, Play, X, Terminal, Share2 } from "lucide-react";
+import { FileText, Search, Shield, Clock, Unlock, Lock, EyeOff, Save, Key, User, ArrowLeft, Trash, Eye, Ghost, Database, Settings, PenTool, ChevronLeft, Play, X, Terminal, Share2 } from "lucide-react";
 import { db, storage } from "@/lib/firebase";
 import ThemeToggle from "@/components/ThemeToggle";
 import PadFiles from "@/components/PadFiles";
@@ -12,12 +12,14 @@ import { useToast } from "@/hooks/useToast";
 import PromptModal from "@/components/ui/PromptModal";
 import CommandPalette from "@/components/ui/CommandPalette";
 import CollaborativeEditor from "@/components/CollaborativeEditor";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import Sidebar from "@/components/Sidebar";
+import { useWorkspaceStore } from "@/lib/workspaceStore";
 import TabBar from "@/components/TabBar";
-import CustomSelect from "@/components/ui/CustomSelect";
 import ShareModal from "@/components/ui/ShareModal";
+import SecurityModal from "@/components/ui/SecurityModal";
+import ExportModal from "@/components/ui/ExportModal";
 import { QRCodeSVG } from "qrcode.react";
-import InteractiveTerminal from "@/components/InteractiveTerminal";
-import SplitPane from "@/components/SplitPane";
 
 export default function NotePage() {
   const params = useParams();
@@ -27,49 +29,25 @@ export default function NotePage() {
   const [localText, setLocalText] = useState("");
   const [wordCount, setWordCount] = useState(0);
   const [charCount, setCharCount] = useState(0);
-  const [language, setLanguage] = useState("plaintext");
-  const [terminalOutput, setTerminalOutput] = useState("");
-  const [isRunning, setIsRunning] = useState(false);
-  const [showTerminal, setShowTerminal] = useState(false);
-  const [stdInput, setStdInput] = useState("");
+  const [activeUsers, setActiveUsers] = useState<any[]>([]);
+  const [connectionStatus, setConnectionStatus] = useState<"Synced" | "Saving..." | "Connecting..." | "Offline" | "Sync Error">("Connecting...");
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [settingsData, setSettingsData] = useState<any>({});
+  const { addRecentPad, toggleExplorer, isExplorerOpen } = useWorkspaceStore();
 
-  const handleExport = async (format: string) => {
-    if (format === "txt") {
-      const blob = new Blob([localText], { type: "text/plain" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${slug}-export.txt`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } else if (format === "md") {
-      const blob = new Blob([localText], { type: "text/markdown" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${slug}-export.md`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } else if (format === "pdf") {
-      const html2pdf = (await import("html2pdf.js")).default;
-      const element = document.createElement("div");
-      element.innerHTML = `<h1 style="font-family: sans-serif; text-align: center; color: #333;">PadX: ${slug}</h1><hr/><pre style="white-space: pre-wrap; font-family: monospace; font-size: 14px; padding: 20px; line-height: 1.5; color: #000;">${localText.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</pre>`;
-      html2pdf().set({
-        margin: 15,
-        filename: `${slug}-export.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      }).from(element).save();
-    }
-  };
+  useEffect(() => {
+    addRecentPad(slug);
+  }, [slug, addRecentPad]);
   const [loaded, setLoaded] = useState(false);
-  const [status, setStatus] = useState("Saved");
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const [isDecoyMode, setIsDecoyMode] = useState(false);
   const [unlockDate, setUnlockDate] = useState<string | null>(null);
+  const [deleteAtDate, setDeleteAtDate] = useState<string | null>(null);
   const [isBurned, setIsBurned] = useState(false);
+  const [isReadOnly, setIsReadOnly] = useState(false);
   const [showPalette, setShowPalette] = useState(false);
   const [distractionFree, setDistractionFree] = useState(false);
   const [activeTab, setActiveTab] = useState<"notes" | "files">("notes");
@@ -96,6 +74,32 @@ export default function NotePage() {
     return () => window.removeEventListener("beforeunload", handleUnload);
   }, [slug, isBurned, isDecoyMode]);
 
+  useEffect(() => {
+    const handleOnline = () => setConnectionStatus("Connecting...");
+    const handleOffline = () => setConnectionStatus("Offline");
+    
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    
+    if (navigator.onLine) {
+      // Simulate connecting briefly then synced
+      setConnectionStatus("Connecting...");
+      const timer = setTimeout(() => setConnectionStatus("Synced"), 1500);
+      return () => {
+        clearTimeout(timer);
+        window.removeEventListener("online", handleOnline);
+        window.removeEventListener("offline", handleOffline);
+      };
+    } else {
+      setConnectionStatus("Offline");
+    }
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
+
   const { prompt, confirm, alert: promptAlert, isOpen, config, handleClose } = usePrompt();
   const { toast } = useToast();
 
@@ -106,7 +110,7 @@ export default function NotePage() {
 
       if (settingsSnap.exists()) {
         const settings = settingsSnap.data();
-        setLanguage(settings.language || "plaintext");
+        setSettingsData(settings);
 
         if (settings.isTrashed) {
           router.push("/");
@@ -188,6 +192,8 @@ export default function NotePage() {
             await deleteDoc(doc(db, "padSettings", slug));
             router.push("/");
             return;
+          } else {
+            setDeleteAtDate(settings.deleteAt);
           }
         }
 
@@ -207,6 +213,10 @@ export default function NotePage() {
             return;
           }
         }
+
+        if (settings.readOnly) {
+          setIsReadOnly(true);
+        }
       }
 
       setLoaded(true);
@@ -215,6 +225,44 @@ export default function NotePage() {
 
     loadPad();
   }, [slug, router]);
+
+  const applyTemplate = async (templateText: string) => {
+    try {
+      if (isDecoyMode) {
+        await setDoc(doc(db, "padSettings", slug), {
+          ...settingsData,
+          decoyContent: templateText
+        });
+      } else {
+        await setDoc(doc(db, "notes", slug), { content: templateText, updatedAt: new Date() }, { merge: true });
+      }
+      setLocalText(templateText);
+      setShowTemplates(false);
+      toast("Template applied", "success");
+    } catch (e) {
+      toast("Failed to apply template", "error");
+    }
+  };
+
+  const [timeLeft, setTimeLeft] = useState<string>("");
+  useEffect(() => {
+    if (!deleteAtDate) return;
+    const interval = setInterval(() => {
+      const now = new Date().getTime();
+      const end = new Date(deleteAtDate).getTime();
+      const distance = end - now;
+      if (distance < 0) {
+        clearInterval(interval);
+        router.push("/");
+        return;
+      }
+      const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const s = Math.floor((distance % (1000 * 60)) / 1000);
+      setTimeLeft(`${h}h ${m}m ${s}s`);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [deleteAtDate, router]);
 
   const handleSwitchPad = async () => {
     const newPad = await prompt({
@@ -227,20 +275,7 @@ export default function NotePage() {
     }
   };
 
-  const handleRunCode = async () => {
-    if (!localText.trim() || language === "plaintext" || language === "markdown" || language === "json" || language === "html" || language === "css") {
-      toast("Select a valid programming language to run code.", "error");
-      return;
-    }
-    
-    // Close terminal first if it's open, to force remount of InteractiveTerminal
-    if (showTerminal) {
-      setShowTerminal(false);
-      setTimeout(() => setShowTerminal(true), 50);
-    } else {
-      setShowTerminal(true);
-    }
-  };
+
 
   useEffect(() => {
     const handleShortcuts = async (e: KeyboardEvent) => {
@@ -291,7 +326,7 @@ export default function NotePage() {
         e.preventDefault();
         if (isBurned) return;
 
-        setStatus("Saving...");
+        setConnectionStatus("Saving...");
 
         try {
           if (isDecoyMode) {
@@ -316,10 +351,10 @@ export default function NotePage() {
                }).catch(console.error);
             }
           }
-          setStatus("Saved");
+          setConnectionStatus("Synced");
           toast("Note saved successfully", "success");
         } catch {
-          setStatus("Sync Error");
+          setConnectionStatus("Sync Error");
           toast("Failed to save note", "error");
         }
       }
@@ -478,8 +513,12 @@ export default function NotePage() {
   }
 
   return (
-    <div className="min-h-screen bg-transparent text-foreground transition-colors duration-300 flex flex-col items-center font-sans relative">
-      <PromptModal isOpen={isOpen} config={config} onClose={handleClose} />
+    <ErrorBoundary>
+    <div className="flex h-screen overflow-hidden w-full">
+      <Sidebar currentSlug={slug} />
+      
+      <div className="flex-1 h-full overflow-y-auto bg-transparent text-foreground transition-colors duration-300 flex flex-col items-center font-sans relative">
+        <PromptModal isOpen={isOpen} config={config} onClose={handleClose} />
       <CommandPalette isOpen={showPalette} onClose={() => setShowPalette(false)} currentSlug={slug} />
       {!distractionFree && <TabBar currentSlug={slug} />}
       {isBurned && (
@@ -490,6 +529,15 @@ export default function NotePage() {
       {!distractionFree && (
       <header className="w-full max-w-[1400px] flex items-center justify-between p-4 sm:p-8 mb-2">
         <div className="flex items-center gap-2">
+          {!isExplorerOpen && (
+            <button 
+              onClick={toggleExplorer}
+              className="p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              title="Toggle Explorer"
+            >
+              <Database size={24} />
+            </button>
+          )}
           <button 
             onClick={() => router.push("/")}
             className="p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -505,13 +553,78 @@ export default function NotePage() {
           </h1>
         </div>
         <div className="flex items-center gap-3 sm:gap-4">
+          {activeUsers.length > 0 && (
+            <div className="flex items-center -space-x-2 mr-2">
+              {activeUsers.map((user, i) => (
+                <div 
+                  key={i} 
+                  className="w-8 h-8 rounded-full border-2 border-white dark:border-slate-900 flex items-center justify-center text-white text-xs font-bold shadow-sm"
+                  style={{ backgroundColor: user.color || '#3b82f6' }}
+                  title={user.name}
+                >
+                  {user.name ? user.name.charAt(0).toUpperCase() : 'G'}
+                </div>
+              ))}
+            </div>
+          )}
           <button 
             onClick={handleSwitchPad}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-sm font-semibold hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors border border-transparent shadow-sm"
+            className="flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-sm font-semibold hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors border border-transparent shadow-sm"
             title="Switch Pad (Ctrl+K)"
           >
-            Switch Pad
+            <Search size={16} className="sm:hidden" />
+            <span className="hidden sm:inline">Switch Pad</span>
           </button>
+          <button
+            onClick={() => setIsSecurityModalOpen(true)}
+            className="p-2 rounded-full bg-slate-100 dark:bg-slate-900/30 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-900/50 transition-colors"
+            title="Advanced Security"
+          >
+            <Shield size={18} />
+          </button>
+          
+          {deleteAtDate && timeLeft && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-sm font-semibold animate-pulse" title="Time until self-destruct">
+              <Clock size={16} />
+              {timeLeft}
+            </div>
+          )}
+
+          {localText.trim() === "" && !isBurned && !isReadOnly && (
+            <div className="relative">
+              <button
+                onClick={() => setShowTemplates(!showTemplates)}
+                className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-sm font-semibold hover:bg-emerald-200 dark:hover:bg-emerald-900/50 transition-colors border border-transparent shadow-sm"
+                title="Insert Template"
+              >
+                <span className="text-lg leading-none">+</span>
+                <span className="hidden sm:inline">Templates</span>
+              </button>
+              {showTemplates && (
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl shadow-xl z-50 py-1 overflow-hidden animate-in fade-in zoom-in-95">
+                  <button 
+                    onClick={() => applyTemplate("# Markdown Boilerplate\n\n## Introduction\nStart writing here...\n\n- Bullet 1\n- Bullet 2\n\n```python\nprint('Hello World')\n```")}
+                    className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                  >
+                    Markdown Boilerplate
+                  </button>
+                  <button 
+                    onClick={() => applyTemplate("// Code Interview\n\nfunction solveProblem(input) {\n  // TODO: implement\n  return input;\n}\n\nconsole.log(solveProblem([1,2,3]));")}
+                    className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                  >
+                    Code Interview
+                  </button>
+                  <button 
+                    onClick={() => applyTemplate("# Daily Standup\n\n**Yesterday:**\n- \n\n**Today:**\n- \n\n**Blockers:**\n- None")}
+                    className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                  >
+                    Daily Standup
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           <button
             onClick={() => setIsShareModalOpen(true)}
             className="p-2 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-200 dark:hover:bg-indigo-900/50 transition-colors"
@@ -519,8 +632,8 @@ export default function NotePage() {
           >
             <Share2 size={18} />
           </button>
-          <span className={`hidden sm:flex text-sm font-semibold px-3 py-1.5 rounded-full items-center gap-1.5 ${status === 'Saved' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : status === 'Saving...' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'}`}>
-            {isBurned ? "🔥 Burned" : status === "Saved" ? "✓ Saved" : status === "Saving..." ? "⟳ Saving..." : "⚠ Sync Error"}
+          <span className={`hidden sm:flex text-sm font-semibold px-3 py-1.5 rounded-full items-center gap-1.5 ${connectionStatus === 'Synced' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : connectionStatus === 'Saving...' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' : connectionStatus === 'Connecting...' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'}`}>
+            {isBurned ? "🔥 Burned" : connectionStatus === "Synced" ? "🟢 Synced" : connectionStatus === "Saving..." ? "🟡 Saving..." : connectionStatus === "Connecting..." ? "🟠 Connecting..." : connectionStatus === "Offline" ? "🔴 Offline" : "🔴 Sync Error"}
           </span>
           <ThemeToggle />
         </div>
@@ -548,58 +661,13 @@ export default function NotePage() {
             >
               Files
             </button>
-            {activeTab === "notes" && (
-              <>
-                <div className="border-l border-gray-300 dark:border-gray-700 mx-1"></div>
-                <CustomSelect
-                  value={language}
-                  onChange={async (newLang) => {
-                    setLanguage(newLang);
-                    if (!isBurned && !isDecoyMode) {
-                      const { setDoc, doc } = await import("firebase/firestore");
-                      await setDoc(doc(db, "padSettings", slug), { language: newLang }, { merge: true });
-                    }
-                  }}
-                  options={[
-                    { value: "plaintext", label: "Text" },
-                    { value: "markdown", label: "Markdown" },
-                    { value: "javascript", label: "JavaScript" },
-                    { value: "python", label: "Python" },
-                    { value: "cpp", label: "C++" },
-                    { value: "c", label: "C" },
-                    { value: "java", label: "Java" },
-                    { value: "html", label: "HTML" },
-                    { value: "css", label: "CSS" },
-                    { value: "json", label: "JSON" }
-                  ]}
-                  className="w-36"
-                />
-                {language !== "plaintext" && language !== "markdown" && language !== "html" && language !== "css" && language !== "json" && (
-                  <button
-                    onClick={handleRunCode}
-                    disabled={isRunning}
-                    className="px-4 py-2 rounded-lg bg-green-500/10 text-green-600 hover:bg-green-500/20 dark:bg-green-500/20 dark:text-green-400 dark:hover:bg-green-500/30 transition-all font-semibold flex items-center gap-2"
-                  >
-                    {isRunning ? <div className="animate-spin rounded-full h-4 w-4 border-2 border-green-500 border-t-transparent" /> : <Play size={16} />}
-                    Run
-                  </button>
-                )}
-              </>
-            )}
             <div className="border-l border-gray-300 dark:border-gray-700 mx-1"></div>
-            <CustomSelect
-              value=""
-              placeholder="Export"
-              onChange={(format) => {
-                if (format) handleExport(format);
-              }}
-              options={[
-                { value: "txt", label: ".TXT" },
-                { value: "md", label: ".MD" },
-                { value: "pdf", label: ".PDF" }
-              ]}
-              className="w-28"
-            />
+            <button
+              onClick={() => setIsExportModalOpen(true)}
+              className="px-4 py-2 rounded-lg font-semibold text-sm transition-all text-gray-500 hover:text-black dark:hover:text-white flex items-center gap-2"
+            >
+              Export
+            </button>
           </div>
         </div>
         )}
@@ -608,40 +676,19 @@ export default function NotePage() {
           {/* Notes Tab */}
           <div className={`col-start-1 row-start-1 w-full flex flex-col min-h-[600px] bg-card shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] border border-border rounded-3xl p-6 sm:p-12 transition-all duration-300 hover:shadow-[0_8px_40px_rgb(0,0,0,0.08)] dark:hover:shadow-[0_8px_40px_rgb(0,0,0,0.5)] ${activeTab === 'notes' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'}`}>
               <div className="flex-1 flex flex-col min-h-[400px] relative overflow-hidden">
-                {showTerminal ? (
-                  <SplitPane direction="vertical" defaultRatio={0.6} className="w-full h-full">
-                    <CollaborativeEditor 
-                      slug={slug} 
-                      isBurned={isBurned} 
-                      isDecoyMode={isDecoyMode}
-                      initialText={isBurned ? localText : undefined}
-                      language={language}
-                      onStatsChange={(words, chars, text) => {
-                        setWordCount(words);
-                        setCharCount(chars);
-                        setLocalText(text);
-                      }}
-                    />
-                    <InteractiveTerminal 
-                      code={localText}
-                      language={language}
-                      onClose={() => setShowTerminal(false)}
-                    />
-                  </SplitPane>
-                ) : (
-                  <CollaborativeEditor 
-                    slug={slug} 
-                    isBurned={isBurned} 
-                    isDecoyMode={isDecoyMode}
-                    initialText={isBurned ? localText : undefined}
-                    language={language}
-                    onStatsChange={(words, chars, text) => {
-                      setWordCount(words);
-                      setCharCount(chars);
-                      setLocalText(text);
-                    }}
-                  />
-                )}
+                <CollaborativeEditor 
+                  slug={slug} 
+                  isBurned={isBurned || isReadOnly} 
+                  isDecoyMode={isDecoyMode}
+                  initialText={isBurned ? localText : undefined}
+                  language="plaintext"
+                  onStatsChange={(words, chars, text) => {
+                    setWordCount(words);
+                    setCharCount(chars);
+                    setLocalText(text);
+                  }}
+                  onUsersChange={setActiveUsers}
+                />
               </div>
               <div className="mt-6 pt-4 border-t border-border flex justify-end text-sm font-medium text-gray-500 dark:text-gray-400">
                 {wordCount} words • {charCount} chars
@@ -676,6 +723,10 @@ export default function NotePage() {
       )}
 
       <ShareModal slug={slug} isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} />
+      <SecurityModal slug={slug} isOpen={isSecurityModalOpen} onClose={() => setIsSecurityModalOpen(false)} />
+      <ExportModal slug={slug} content={localText} metadata={settingsData} isOpen={isExportModalOpen} onClose={() => setIsExportModalOpen(false)} />
+      </div>
     </div>
+    </ErrorBoundary>
   );
 }

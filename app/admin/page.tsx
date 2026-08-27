@@ -13,13 +13,14 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { Lock, Shield, Unlock, Trash, Clock, ExternalLink, Settings, Home, Search, FileText, EyeOff, Flame, Link as LinkIcon, RefreshCw, Ghost, Database, Archive, File as FileIcon, Image as ImageIcon } from "lucide-react";
+import { Lock, Shield, Unlock, Trash, Clock, ExternalLink, Settings, Home, Search, FileText, EyeOff, Flame, Link as LinkIcon, RefreshCw, Ghost, Database, Archive, File as FileIcon, Image as ImageIcon, Download } from "lucide-react";
 import { usePrompt } from "@/hooks/usePrompt";
 import { ToastProvider, useToast } from "@/hooks/useToast";
 import dynamic from "next/dynamic";
 
 const VersionHistory = dynamic(() => import("@/components/VersionHistory"), { ssr: false });
 import PromptModal from "@/components/ui/PromptModal";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const StatCard = ({ icon: Icon, title, count, color }: { icon: any, title: string, count: string | number, color: string }) => (
   <div className="bg-white/5 dark:bg-slate-900/40 backdrop-blur-3xl border border-white/10 dark:border-white/5 rounded-3xl p-6 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_40px_-12px_rgba(0,0,0,0.5)] transition-all duration-500 hover:-translate-y-1 group relative overflow-hidden">
@@ -79,6 +80,9 @@ export default function AdminPage() {
   const [auth, setAuth] = useState(false);
   const [historyPad, setHistoryPad] = useState<string | null>(null);
   const [adminTab, setAdminTab] = useState<"dashboard" | "pads">("dashboard");
+  const [selectedPads, setSelectedPads] = useState<string[]>([]);
+  const [filterMode, setFilterMode] = useState<"all" | "locked" | "ghost" | "shadow" | "burn">("all");
+  const [sortMode, setSortMode] = useState<"recent" | "opens" | "name">("recent");
   
   const { prompt, confirm, alert: promptAlert, isOpen, config, handleClose } = usePrompt();
   const { toast } = useToast();
@@ -138,13 +142,24 @@ export default function AdminPage() {
     loadPads();
   }, []);
 
-  const visiblePads = pads.filter(p => 
-    showTrash ? p.isTrashed : (!p.isTrashed && (!p.ghostMode || p.name.toLowerCase() === search.toLowerCase()) && (!p.shadowMode || p.name.toLowerCase() === search.toLowerCase()))
-  );
+  const visiblePads = pads.filter(p => showTrash ? p.isTrashed : !p.isTrashed);
 
-  const filteredPads = visiblePads.filter((pad) =>
+  const searchedPads = visiblePads.filter(pad =>
     pad.name.toLowerCase().includes(search.toLowerCase())
   );
+
+  const filteredPads = searchedPads.filter(pad => {
+    if (filterMode === "locked") return pad.locked;
+    if (filterMode === "ghost") return pad.ghostMode;
+    if (filterMode === "shadow") return pad.shadowMode;
+    if (filterMode === "burn") return pad.burnAfterRead;
+    return true; // "all"
+  }).sort((a, b) => {
+    if (sortMode === "opens") return (b.totalOpens || 0) - (a.totalOpens || 0);
+    if (sortMode === "name") return a.name.localeCompare(b.name);
+    // default to recent
+    return new Date(b.lastOpened || 0).getTime() - new Date(a.lastOpened || 0).getTime();
+  });
 
   const totalPads = pads.filter(p => !p.isTrashed && !p.ghostMode && !p.shadowMode).length;
   const lockedPads = pads.filter(p => !p.isTrashed && p.locked).length;
@@ -315,11 +330,92 @@ export default function AdminPage() {
     await promptAlert({ title: "One-Time Link", message: `Generated:\n\n${window.location.origin}/o/${id}\n\n(Copy this now, it won't be shown again)` });
   };
 
+  const handleBulkAction = async (action: "delete" | "lock" | "burn" | "archive" | "export") => {
+    if (selectedPads.length === 0) return;
+    
+    if (action === "delete") {
+      const isPermanent = showTrash;
+      const confirmed = await confirm({ title: `Bulk Delete (${selectedPads.length})`, message: `Are you sure you want to delete ${selectedPads.length} pads${isPermanent ? ' permanently' : ''}?` });
+      if (!confirmed) return;
+      for (const padName of selectedPads) {
+        await deletePad(padName, isPermanent);
+      }
+      toast(`Successfully deleted ${selectedPads.length} pads`, "success");
+    } else if (action === "lock") {
+      const password = await prompt({ title: "Bulk Lock", placeholder: "Set password for selected pads" });
+      if (!password) return;
+      for (const padName of selectedPads) {
+        await setDoc(doc(db, "padSettings", padName), {
+          ...(await getDoc(doc(db, "padSettings", padName))).data(),
+          locked: true,
+          password,
+        });
+      }
+      setPads(prev => prev.map(p => selectedPads.includes(p.name) ? { ...p, locked: true } : p));
+      toast(`Successfully locked ${selectedPads.length} pads`, "success");
+    } else if (action === "burn") {
+      const confirmed = await confirm({ title: `Bulk Burn (${selectedPads.length})`, message: "Enable Burn After Read for selected pads?" });
+      if (!confirmed) return;
+      for (const padName of selectedPads) {
+        await setDoc(doc(db, "padSettings", padName), {
+          ...(await getDoc(doc(db, "padSettings", padName))).data(),
+          burnAfterRead: true,
+        });
+      }
+      setPads(prev => prev.map(p => selectedPads.includes(p.name) ? { ...p, burnAfterRead: true } : p));
+      toast(`Enabled Burn After Read for ${selectedPads.length} pads`, "success");
+    } else if (action === "archive") {
+      // Archive is conceptually same as trashing/soft delete in this app, but if it has an isArchived field we'd set it.
+      // Assuming we just move to trash for archive.
+      const confirmed = await confirm({ title: `Bulk Archive (${selectedPads.length})`, message: "Move selected pads to trash?" });
+      if (!confirmed) return;
+      for (const padName of selectedPads) {
+        await deletePad(padName, false);
+      }
+      toast(`Archived ${selectedPads.length} pads`, "success");
+    } else if (action === "export") {
+      try {
+        const exportData = await Promise.all(
+          selectedPads.map(async (padName) => {
+            const padDoc = await getDoc(doc(db, "notes", padName));
+            const settingsDoc = await getDoc(doc(db, "padSettings", padName));
+            return {
+              id: padName,
+              content: padDoc.exists() ? padDoc.data().text : "",
+              metadata: settingsDoc.exists() ? settingsDoc.data() : {}
+            };
+          })
+        );
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `padx-admin-export-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast(`Exported ${selectedPads.length} pads`, "success");
+      } catch (err) {
+        toast("Failed to export pads", "error");
+      }
+    }
+    
+    setSelectedPads([]);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedPads.length === filteredPads.length) {
+      setSelectedPads([]);
+    } else {
+      setSelectedPads(filteredPads.map(p => p.name));
+    }
+  };
+
   if (!auth) {
     return <div className="min-h-screen bg-gray-50 dark:bg-gray-900" />;
   }
 
   return (
+    <ErrorBoundary>
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans relative overflow-hidden transition-colors duration-500">
       {/* Deep premium background gradients */}
       <div className="absolute top-0 left-0 w-[50%] h-[50%] bg-indigo-600/10 blur-[150px] rounded-full pointer-events-none animate-pulse-glow" />
@@ -422,6 +518,33 @@ export default function AdminPage() {
 
         {adminTab === "pads" && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center">
+                <span className="text-2xl font-bold text-white">{totalPads}</span>
+                <span className="text-xs text-slate-400 uppercase tracking-widest mt-1">Total Pads</span>
+              </div>
+              <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4 flex flex-col items-center justify-center">
+                <span className="text-2xl font-bold text-blue-400">{lockedPads}</span>
+                <span className="text-xs text-blue-400/70 uppercase tracking-widest mt-1">Locked</span>
+              </div>
+              <div className="bg-orange-500/10 border border-orange-500/20 rounded-2xl p-4 flex flex-col items-center justify-center">
+                <span className="text-2xl font-bold text-orange-400">{pads.filter(p => p.burnAfterRead).length}</span>
+                <span className="text-xs text-orange-400/70 uppercase tracking-widest mt-1">Burn</span>
+              </div>
+              <div className="bg-purple-500/10 border border-purple-500/20 rounded-2xl p-4 flex flex-col items-center justify-center">
+                <span className="text-2xl font-bold text-purple-400">{ghostPadsCount}</span>
+                <span className="text-xs text-purple-400/70 uppercase tracking-widest mt-1">Ghost</span>
+              </div>
+              <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-2xl p-4 flex flex-col items-center justify-center">
+                <span className="text-2xl font-bold text-indigo-400">{shadowPadsCount}</span>
+                <span className="text-xs text-indigo-400/70 uppercase tracking-widest mt-1">Shadow</span>
+              </div>
+              <div className="bg-rose-500/10 border border-rose-500/20 rounded-2xl p-4 flex flex-col items-center justify-center">
+                <span className="text-2xl font-bold text-rose-400">{trashCount}</span>
+                <span className="text-xs text-rose-400/70 uppercase tracking-widest mt-1">Trash</span>
+              </div>
+            </div>
+
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
               <div className="relative w-full max-w-md group">
                 <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-400 transition-colors" size={20} />
@@ -434,12 +557,73 @@ export default function AdminPage() {
               </div>
 
               <button
-                onClick={() => setShowTrash(!showTrash)}
+                onClick={() => {
+                  setShowTrash(!showTrash);
+                  setSelectedPads([]);
+                }}
                 className={`flex items-center gap-2 px-6 py-4 rounded-2xl font-semibold transition-all shadow-sm ${showTrash ? 'bg-red-500/20 text-red-400 border border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.2)]' : 'bg-white/5 border border-white/10 hover:bg-white/10 text-gray-300'}`}
               >
                 <Trash size={20} />
                 {showTrash ? "Exit Trash Sector" : "View Trash Sector"}
               </button>
+            </div>
+
+            {selectedPads.length > 0 && (
+              <div className="bg-indigo-900/50 border border-indigo-500/30 rounded-2xl p-4 mb-6 flex items-center justify-between animate-in fade-in slide-in-from-top-4 flex-wrap gap-4">
+                <span className="text-indigo-200 font-medium">{selectedPads.length} pads selected</span>
+                <div className="flex flex-wrap gap-3">
+                  <button onClick={() => setSelectedPads([])} className="px-4 py-2 text-sm font-semibold text-slate-300 hover:text-white transition-colors">Cancel</button>
+                  <button onClick={() => handleBulkAction("lock")} className="px-3 py-2 text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 transition-colors shadow-lg shadow-blue-500/20">
+                    <Lock size={16} /> Lock
+                  </button>
+                  <button onClick={() => handleBulkAction("burn")} className="px-3 py-2 text-sm font-bold bg-orange-600 hover:bg-orange-700 text-white rounded-lg flex items-center gap-2 transition-colors shadow-lg shadow-orange-500/20">
+                    <Flame size={16} /> Burn
+                  </button>
+                  <button onClick={() => handleBulkAction("archive")} className="px-3 py-2 text-sm font-bold bg-purple-600 hover:bg-purple-700 text-white rounded-lg flex items-center gap-2 transition-colors shadow-lg shadow-purple-500/20">
+                    <Archive size={16} /> Archive
+                  </button>
+                  <button onClick={() => handleBulkAction("export")} className="px-3 py-2 text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center gap-2 transition-colors shadow-lg shadow-emerald-500/20">
+                    <Download size={16} /> Export
+                  </button>
+                  <button onClick={() => handleBulkAction("delete")} className="px-3 py-2 text-sm font-bold bg-red-600 hover:bg-red-700 text-white rounded-lg flex items-center gap-2 transition-colors shadow-lg shadow-red-500/20">
+                    <Trash size={16} /> Delete
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 px-2 gap-4">
+              <label className="flex items-center gap-3 cursor-pointer group select-none">
+                <div className={`w-5 h-5 rounded flex items-center justify-center border transition-colors ${selectedPads.length === filteredPads.length && filteredPads.length > 0 ? 'bg-indigo-600 border-indigo-600' : 'border-slate-600 bg-black/20 group-hover:border-indigo-500'}`}>
+                  {selectedPads.length === filteredPads.length && filteredPads.length > 0 && <span className="text-white text-xs">✓</span>}
+                </div>
+                <input type="checkbox" className="hidden" checked={selectedPads.length === filteredPads.length && filteredPads.length > 0} onChange={toggleSelectAll} />
+                <span className="text-sm font-medium text-slate-400 group-hover:text-slate-300 transition-colors">Select All ({filteredPads.length})</span>
+              </label>
+
+              <div className="flex items-center gap-3">
+                <select 
+                  value={filterMode} 
+                  onChange={(e) => setFilterMode(e.target.value as any)}
+                  className="bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-sm text-slate-300 outline-none focus:border-indigo-500"
+                >
+                  <option value="all">All Types</option>
+                  <option value="locked">Locked</option>
+                  <option value="ghost">Ghost</option>
+                  <option value="shadow">Shadow</option>
+                  <option value="burn">Burn After Read</option>
+                </select>
+
+                <select 
+                  value={sortMode} 
+                  onChange={(e) => setSortMode(e.target.value as any)}
+                  className="bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-sm text-slate-300 outline-none focus:border-indigo-500"
+                >
+                  <option value="recent">Last Opened</option>
+                  <option value="opens">Most Opens</option>
+                  <option value="name">Name (A-Z)</option>
+                </select>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -454,7 +638,28 @@ export default function AdminPage() {
                 >
                   {/* Glass highlight effect on hover */}
                   <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-                  <div className="flex items-start justify-between mb-4">
+                  
+                  <div className="absolute top-4 left-4 z-10">
+                    <label className="cursor-pointer group flex items-center justify-center w-6 h-6">
+                      <div className={`w-5 h-5 rounded flex items-center justify-center border transition-colors ${selectedPads.includes(pad.name) ? 'bg-indigo-600 border-indigo-600' : 'border-slate-500 bg-black/40 opacity-0 group-hover:opacity-100'}`}>
+                        {selectedPads.includes(pad.name) && <span className="text-white text-xs">✓</span>}
+                      </div>
+                      <input 
+                        type="checkbox" 
+                        className="hidden" 
+                        checked={selectedPads.includes(pad.name)}
+                        onChange={() => {
+                          if (selectedPads.includes(pad.name)) {
+                            setSelectedPads(prev => prev.filter(p => p !== pad.name));
+                          } else {
+                            setSelectedPads(prev => [...prev, pad.name]);
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+
+                  <div className="flex items-start justify-between mb-4 pl-8">
                     <h2 className="text-2xl font-bold break-all flex-1 pr-4 line-clamp-1 text-white group-hover:text-indigo-300 transition-colors">
                       {pad.name}
                     </h2>
@@ -525,5 +730,6 @@ export default function AdminPage() {
         />
       )}
     </div>
+    </ErrorBoundary>
   );
 }

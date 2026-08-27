@@ -28,6 +28,8 @@ export interface AppSettings {
 
   // Editor Layout
   layout: 'editor-only' | 'split-vertical' | 'split-horizontal' | 'preview-only';
+  wordWrap: boolean;
+  minimap: boolean;
 
   // Actions
   setTheme: (theme: ThemeType) => void;
@@ -39,6 +41,7 @@ export interface AppSettings {
   updateFonts: (writing: string, code: string) => void;
   updateTypography: (size: number, lineH: number, letterS: number) => void;
   setLayout: (layout: AppSettings['layout']) => void;
+  updateEditorOptions: (wrap: boolean, showMinimap: boolean) => void;
 }
 
 export const useAppStore = create<AppSettings>()(
@@ -63,6 +66,8 @@ export const useAppStore = create<AppSettings>()(
       letterSpacing: 0,
 
       layout: 'editor-only',
+      wordWrap: true,
+      minimap: false,
 
       setTheme: (theme) => set({ theme }),
       setAccentColor: (color) => set({ accentColor: color }),
@@ -73,6 +78,7 @@ export const useAppStore = create<AppSettings>()(
       updateFonts: (writing, code) => set({ writingFont: writing, codeFont: code }),
       updateTypography: (size, lineH, letterS) => set({ fontSize: size, lineHeight: lineH, letterSpacing: letterS }),
       setLayout: (layout) => set({ layout }),
+      updateEditorOptions: (wrap, showMinimap) => set({ wordWrap: wrap, minimap: showMinimap }),
     }),
     {
       name: 'padx-settings',
