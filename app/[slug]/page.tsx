@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { doc, onSnapshot, setDoc, getDoc, deleteDoc } from "firebase/firestore";
-import { FileText, Search, Shield, Clock, Unlock, Lock, EyeOff, Save, Key, User, ArrowLeft, Trash, Eye, Ghost, Database, Settings, PenTool, ChevronLeft, Play, X, Terminal, Share2 } from "lucide-react";
+import { FileText, Search, Shield, Clock, Unlock, Lock, EyeOff, Save, Key, User, ArrowLeft, Trash, Eye, Ghost, Database, Settings, PenTool, ChevronLeft, Play, X, Terminal, Share2, Palette } from "lucide-react";
 import { db, storage } from "@/lib/firebase";
 import ThemeToggle from "@/components/ThemeToggle";
 import PadFiles from "@/components/PadFiles";
@@ -19,6 +19,9 @@ import TabBar from "@/components/TabBar";
 import ShareModal from "@/components/ui/ShareModal";
 import SecurityModal from "@/components/ui/SecurityModal";
 import ExportModal from "@/components/ui/ExportModal";
+import PadCustomization, { PadCustomizationSettings, DEFAULT_CUSTOMIZATION } from "@/components/pad/PadCustomization";
+import PadTypeSelector from "@/components/pad/PadTypeSelector";
+import { logAccessEvent } from "@/lib/accessLogger";
 import { QRCodeSVG } from "qrcode.react";
 
 export default function NotePage() {
@@ -36,6 +39,7 @@ export default function NotePage() {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [settingsData, setSettingsData] = useState<any>({});
+  const [isCustomizationOpen, setIsCustomizationOpen] = useState(false);
   const { addRecentPad, toggleExplorer, isExplorerOpen } = useWorkspaceStore();
 
   useEffect(() => {
@@ -51,6 +55,21 @@ export default function NotePage() {
   const [showPalette, setShowPalette] = useState(false);
   const [distractionFree, setDistractionFree] = useState(false);
   const [activeTab, setActiveTab] = useState<"notes" | "files">("notes");
+
+  const padType = settingsData.type || 'text';
+  const customization = settingsData.customization || DEFAULT_CUSTOMIZATION;
+
+  const handleCustomizationChange = async (newSettings: PadCustomizationSettings) => {
+    try {
+      await setDoc(doc(db, "padSettings", slug), {
+        ...settingsData,
+        customization: newSettings
+      }, { merge: true });
+      setSettingsData({ ...settingsData, customization: newSettings });
+    } catch (e) {
+      toast("Failed to save customization", "error");
+    }
+  };
 
   const textRef = useRef(localText);
   useEffect(() => {
@@ -105,6 +124,12 @@ export default function NotePage() {
 
   useEffect(() => {
     const loadPad = async () => {
+      let isAdmin = false;
+      try {
+        const adminRes = await fetch('/api/admin/heartbeat', { method: 'POST' });
+        if (adminRes.ok) isAdmin = true;
+      } catch (e) {}
+
       const settingsRef = doc(db, "padSettings", slug);
       const settingsSnap = await getDoc(settingsRef);
 
@@ -118,14 +143,18 @@ export default function NotePage() {
         }
 
         if (settings.timeLocked && settings.unlockAt) {
-          if (new Date() < new Date(settings.unlockAt)) {
-            setUnlockDate(settings.unlockAt);
-            setLoaded(true);
-            return;
-          }
+          try {
+            const accessRes = await fetch(`/api/pad/${slug}/access`);
+            const accessData = await accessRes.json();
+            if (!accessData.accessible && accessData.timeLocked) {
+              setUnlockDate(accessData.unlockAt);
+              setLoaded(true);
+              return;
+            }
+          } catch (e) {}
         }
 
-        if (settings.shadowMode && sessionStorage.getItem("adminAuth") !== "true") {
+        if (settings.shadowMode && !isAdmin) {
           const searchParams = new URLSearchParams(window.location.search);
           if (searchParams.get("shadow") !== settings.shadowKey) {
             router.push("/");
@@ -201,7 +230,7 @@ export default function NotePage() {
           const unlocked = sessionStorage.getItem(`unlocked-${slug}`);
           const decoyUnlocked = sessionStorage.getItem(`decoy-unlocked-${slug}`);
 
-          if (!unlocked && !decoyUnlocked && sessionStorage.getItem("adminAuth") !== "true") {
+          if (!unlocked && !decoyUnlocked && !isAdmin) {
             router.push(`/locked/${slug}`);
             return;
           }
@@ -219,6 +248,7 @@ export default function NotePage() {
         }
       }
 
+      logAccessEvent('pad_viewed', slug);
       setLoaded(true);
       setInitialLoadComplete(true);
     };
@@ -626,6 +656,13 @@ export default function NotePage() {
           )}
 
           <button
+            onClick={() => setIsCustomizationOpen(true)}
+            className="p-2 rounded-full bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400 hover:bg-pink-200 dark:hover:bg-pink-900/50 transition-colors"
+            title="Customize Pad"
+          >
+            <Palette size={18} />
+          </button>
+          <button
             onClick={() => setIsShareModalOpen(true)}
             className="p-2 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-200 dark:hover:bg-indigo-900/50 transition-colors"
             title="Share Pad"
@@ -640,7 +677,23 @@ export default function NotePage() {
       </header>
       )}
 
-      <main className="w-full max-w-[1400px] px-4 sm:px-8 flex-1 flex flex-col">
+      <main 
+        className="w-full px-4 sm:px-8 flex-1 flex flex-col mx-auto"
+        style={{
+          fontFamily: customization.font === 'serif' ? 'ui-serif, Georgia, serif' : 
+                      customization.font === 'mono' ? 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace' : 
+                      customization.font === 'cursive' ? 'cursive' : 'inherit',
+          fontSize: customization.fontSize === 'small' ? '0.875rem' :
+                    customization.fontSize === 'large' ? '1.125rem' :
+                    customization.fontSize === 'xl' ? '1.25rem' : '1rem',
+          lineHeight: customization.lineSpacing === 'compact' ? '1.2' :
+                      customization.lineSpacing === 'relaxed' ? '1.75' :
+                      customization.lineSpacing === 'loose' ? '2' : '1.5',
+          maxWidth: customization.width === 'narrow' ? '800px' :
+                    customization.width === 'wide' ? '1200px' :
+                    customization.width === 'full' ? '100%' : '1400px',
+        }}
+      >
         {!distractionFree && (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 dark:text-gray-200">
@@ -681,6 +734,7 @@ export default function NotePage() {
                   isBurned={isBurned || isReadOnly} 
                   isDecoyMode={isDecoyMode}
                   initialText={isBurned ? localText : undefined}
+                  padType={padType}
                   language="plaintext"
                   onStatsChange={(words, chars, text) => {
                     setWordCount(words);
@@ -725,6 +779,7 @@ export default function NotePage() {
       <ShareModal slug={slug} isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} />
       <SecurityModal slug={slug} isOpen={isSecurityModalOpen} onClose={() => setIsSecurityModalOpen(false)} />
       <ExportModal slug={slug} content={localText} metadata={settingsData} isOpen={isExportModalOpen} onClose={() => setIsExportModalOpen(false)} />
+      {isCustomizationOpen && <PadCustomization settings={customization} onChange={handleCustomizationChange} onClose={() => setIsCustomizationOpen(false)} />}
       </div>
     </div>
     </ErrorBoundary>

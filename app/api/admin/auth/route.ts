@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { signAdminToken } from "@/lib/adminAuth";
+import { db } from "@/lib/firebase";
+import { doc, setDoc } from "firebase/firestore";
+import { logAdminAction } from "@/lib/audit";
 
 export async function POST(req: Request) {
   try {
@@ -8,7 +11,18 @@ export async function POST(req: Request) {
 
     // Verify using the existing shared Admin password logic
     if (password === "sams") {
-      const token = await signAdminToken();
+      const sessionId = crypto.randomUUID();
+      const now = new Date().toISOString();
+      
+      // Create session in Firestore
+      await setDoc(doc(db, "adminSessions", sessionId), {
+        sessionId,
+        status: "active",
+        startedAt: now,
+        lastActivity: now,
+      });
+
+      const token = await signAdminToken(sessionId);
       
       const cookieStore = await cookies();
       cookieStore.set("padx_admin_token", token, {
@@ -19,7 +33,9 @@ export async function POST(req: Request) {
         path: "/",
       });
 
-      return NextResponse.json({ success: true });
+      await logAdminAction("Admin login", "system", {}, sessionId);
+
+      return NextResponse.json({ success: true, sessionId });
     }
 
     return NextResponse.json({ error: "Invalid password" }, { status: 401 });

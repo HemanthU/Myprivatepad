@@ -130,36 +130,62 @@ export default function AdminPadDetails({ pad, onClose }: AdminPadDetailsProps) 
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             
-            {/* Info Section */}
+            {/* Metadata Section */}
             <div className="space-y-6">
               <div>
                 <h3 className="text-lg font-bold text-indigo-400 flex items-center gap-2 mb-4"><Info size={18} /> Metadata</h3>
                 <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-3 text-sm">
                   <div className="flex justify-between border-b border-white/5 pb-2">
-                    <span className="text-slate-400">Creator</span>
+                    <span className="text-slate-400">Pad ID / Slug</span>
+                    <span className="text-white font-medium">{pad.name}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-white/5 pb-2">
+                    <span className="text-slate-400">Creator / Owner</span>
                     <span className="text-white font-medium">Unknown (Anonymous)</span>
                   </div>
                   <div className="flex justify-between border-b border-white/5 pb-2">
-                    <span className="text-slate-400">Owner</span>
-                    <span className="text-white font-medium">Unknown</span>
-                  </div>
-                  <div className="flex justify-between pb-2">
                     <span className="text-slate-400">Created</span>
-                    <span className="text-white font-medium">Not available</span>
+                    <span className="text-white font-medium">{pad.createdAt ? new Date(pad.createdAt).toLocaleString() : 'Not available'}</span>
                   </div>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-bold text-indigo-400 flex items-center gap-2 mb-4"><Activity size={18} /> Access History</h3>
-                <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-3 text-sm">
+                  <div className="flex justify-between border-b border-white/5 pb-2">
+                    <span className="text-slate-400">Last Modified</span>
+                    <span className="text-white font-medium">{pad.updatedAt ? new Date(pad.updatedAt).toLocaleString() : 'Not available'}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-white/5 pb-2">
+                    <span className="text-slate-400">Last Accessed</span>
+                    <span className="text-white font-medium">{pad.lastOpened ? new Date(pad.lastOpened).toLocaleString() : 'Never'}</span>
+                  </div>
                   <div className="flex justify-between border-b border-white/5 pb-2">
                     <span className="text-slate-400">Total Opens</span>
                     <span className="text-white font-medium font-mono">{pad.totalOpens || 0}</span>
                   </div>
+                  <div className="flex justify-between border-b border-white/5 pb-2">
+                    <span className="text-slate-400">Mode</span>
+                    <span className="text-white font-medium">{pad.readOnly ? 'READ ONLY' : 'EDIT'}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-white/5 pb-2">
+                    <span className="text-slate-400">Lock</span>
+                    <span className="text-white font-medium">{pad.locked ? 'ENABLED' : 'DISABLED'}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-white/5 pb-2">
+                    <span className="text-slate-400">Shadow Mode</span>
+                    <span className="text-white font-medium">{pad.shadowMode ? 'ENABLED' : 'DISABLED'}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-white/5 pb-2">
+                    <span className="text-slate-400">Auto-Lock</span>
+                    <span className="text-white font-medium">{pad.timeLocked ? 'ENABLED' : 'DISABLED'}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-white/5 pb-2">
+                    <span className="text-slate-400">Expiration</span>
+                    <span className="text-white font-medium">{pad.deleteAt ? new Date(pad.deleteAt).toLocaleString() : 'Never'}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-white/5 pb-2">
+                    <span className="text-slate-400">Versions</span>
+                    <span className="text-white font-medium font-mono">{pad.versionCount || 0}</span>
+                  </div>
                   <div className="flex justify-between pb-2">
-                    <span className="text-slate-400">Last Opened</span>
-                    <span className="text-white font-medium" suppressHydrationWarning>{pad.lastOpened ? new Date(pad.lastOpened).toLocaleString() : 'Never'}</span>
+                    <span className="text-slate-400">Content Size</span>
+                    <span className="text-white font-medium font-mono">{pad.contentLength || 0} chars</span>
                   </div>
                 </div>
               </div>

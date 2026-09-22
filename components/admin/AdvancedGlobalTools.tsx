@@ -12,7 +12,7 @@ type AdvancedGlobalToolsProps = {
 };
 
 export default function AdvancedGlobalTools({ onClose }: AdvancedGlobalToolsProps) {
-  const [activeTab, setActiveTab] = useState<"overview" | "duplicates" | "cleanup" | "sessions" | "emergency" | "import" | "preferences">("overview");
+  const [activeTab, setActiveTab] = useState<"duplicates" | "cleanup" | "sessions" | "emergency" | "import" | "preferences">("duplicates");
   
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
@@ -24,8 +24,7 @@ export default function AdvancedGlobalTools({ onClose }: AdvancedGlobalToolsProp
             <h2 className="text-xl font-bold text-white flex items-center gap-2"><Shield className="text-indigo-400" /> Advanced Tools</h2>
           </div>
           
-          <TabButton active={activeTab === "overview"} onClick={() => setActiveTab("overview")} icon={Activity} label="Overview" />
-          <div className="my-2 border-t border-white/5" />
+
           <TabButton active={activeTab === "duplicates"} onClick={() => setActiveTab("duplicates")} icon={Copy} label="Duplicate Detection" />
           <TabButton active={activeTab === "cleanup"} onClick={() => setActiveTab("cleanup")} icon={RefreshCw} label="Cleanup Center" />
           <TabButton active={activeTab === "sessions"} onClick={() => setActiveTab("sessions")} icon={Monitor} label="Session Activity" />
@@ -43,7 +42,7 @@ export default function AdvancedGlobalTools({ onClose }: AdvancedGlobalToolsProp
 
         {/* Main Content Area */}
         <div className="flex-1 bg-slate-900 overflow-y-auto p-8 relative">
-          {activeTab === "overview" && <OverviewPanel />}
+
           {activeTab === "duplicates" && <DuplicatesPanel />}
           {activeTab === "cleanup" && <CleanupPanel />}
           {activeTab === "sessions" && <SessionsPanel />}
@@ -70,28 +69,6 @@ function TabButton({ active, onClick, icon: Icon, label, color = "text-slate-300
 }
 
 // Sub-panels
-
-function OverviewPanel() {
-  return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
-      <h3 className="text-2xl font-bold text-white mb-2">Advanced Admin Controls</h3>
-      <p className="text-slate-400">Select a tool from the sidebar to begin.</p>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-        <div className="p-6 rounded-2xl bg-white/5 border border-white/10">
-          <Shield className="text-indigo-400 mb-4" size={32} />
-          <h4 className="text-lg font-semibold text-white mb-2">Safe Operations</h4>
-          <p className="text-slate-400 text-sm leading-relaxed">All destructive operations require explicit typed confirmation to prevent accidental data loss.</p>
-        </div>
-        <div className="p-6 rounded-2xl bg-white/5 border border-white/10">
-          <Database className="text-emerald-400 mb-4" size={32} />
-          <h4 className="text-lg font-semibold text-white mb-2">On-Demand Processing</h4>
-          <p className="text-slate-400 text-sm leading-relaxed">Heavy tasks like Duplicate Detection run only when explicitly requested to preserve database performance.</p>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function DuplicatesPanel() {
   const [scanning, setScanning] = useState(false);
@@ -208,6 +185,11 @@ function SessionsPanel() {
             </tbody>
           </table>
         )}
+      </div>
+      <div className="flex justify-end mt-4">
+        <a href="/admin/activity" className="text-sm font-semibold text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-2">
+          View Full Persistent History &rarr;
+        </a>
       </div>
     </div>
   );

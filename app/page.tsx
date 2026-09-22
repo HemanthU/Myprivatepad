@@ -3,14 +3,31 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ThemeToggle from "@/components/ThemeToggle";
+import PadTypeSelector, { PadType } from "@/components/pad/PadTypeSelector";
+import { doc, setDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 export default function Home() {
   const [keyword, setKeyword] = useState("");
+  const [padType, setPadType] = useState<PadType>('text');
+  const [showTypeSelector, setShowTypeSelector] = useState(false);
   const router = useRouter();
 
-  const openPad = () => {
+  const openPad = async () => {
     if (!keyword.trim()) return;
-    router.push(`/${keyword.trim()}`);
+    const slug = keyword.trim();
+    // Store the pad type in padSettings if creating with a non-default type
+    if (padType !== 'text') {
+      try {
+        const { getDoc } = await import('firebase/firestore');
+        const snap = await getDoc(doc(db, 'padSettings', slug));
+        if (!snap.exists()) {
+          // New pad — set type
+          await setDoc(doc(db, 'padSettings', slug), { type: padType }, { merge: true });
+        }
+      } catch { /* non-fatal */ }
+    }
+    router.push(`/${slug}`);
   };
 
   return (
@@ -36,10 +53,32 @@ export default function Home() {
             <input
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && openPad()}
+              onKeyDown={(e) => e.key === 'Enter' && openPad()}
               placeholder="Enter pad keyword"
               className="w-full p-4 rounded-2xl bg-gray-100 dark:bg-white/10 border border-gray-200 dark:border-transparent focus:border-gray-400 dark:focus:border-gray-500 outline-none text-lg transition-all text-center text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 shadow-inner"
             />
+
+            <button
+              type="button"
+              onClick={() => setShowTypeSelector(!showTypeSelector)}
+              className="flex items-center justify-between w-full p-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+            >
+              <span className="font-medium">Pad Type</span>
+              <span className="flex items-center gap-2">
+                {padType === 'text' && '📄 Text'}
+                {padType === 'checklist' && '✅ Checklist'}
+                {padType === 'markdown' && '📝 Markdown'}
+                {padType === 'code' && '💻 Code'}
+                {padType === 'journal' && '📓 Journal'}
+                <span className="text-gray-400">{showTypeSelector ? '▲' : '▼'}</span>
+              </span>
+            </button>
+
+            {showTypeSelector && (
+              <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 rounded-2xl p-4 shadow-lg">
+                <PadTypeSelector value={padType} onChange={(t) => { setPadType(t); setShowTypeSelector(false); }} />
+              </div>
+            )}
 
             <button
               onClick={openPad}

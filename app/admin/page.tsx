@@ -23,6 +23,7 @@ import PromptModal from "@/components/ui/PromptModal";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import AdminPadDetails from "@/components/admin/AdminPadDetails";
 import AdvancedGlobalTools from "@/components/admin/AdvancedGlobalTools";
+import AdminHeartbeat from "@/components/admin/AdminHeartbeat";
 
 const StatCard = ({ icon: Icon, title, count, color, onClick, active }: { icon: any, title: string, count: string | number, color: string, onClick?: () => void, active?: boolean }) => (
   <div 
@@ -97,14 +98,21 @@ export default function AdminPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      if (sessionStorage.getItem("adminAuth") === "true") {
+    // Verify admin JWT cookie server-side — sessionStorage is not a security boundary
+    const verify = async () => {
+      try {
+        const res = await fetch('/api/admin/heartbeat', { method: 'POST' });
+        if (!res.ok) {
+          router.push('/');
+          return;
+        }
         setAuth(true);
-      } else {
-        router.push("/");
+      } catch {
+        router.push('/');
         return;
       }
-    }
+    };
+    verify();
 
     const loadPads = async () => {
       const snapshot = await getDocs(collection(db, "notes"));
@@ -124,11 +132,25 @@ export default function AdminPage() {
       setFileStats({ totalFiles: tf, storageUsed: su, pdfs: pf, images: im, documents: dc, archives: ar });
       setAllFiles(fileList.sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()));
 
+      const getIsoString = (val: any) => {
+        if (!val) return "";
+        if (typeof val === "string") return val;
+        if (val.toDate) return val.toDate().toISOString();
+        if (val instanceof Date) return val.toISOString();
+        return "";
+      };
+
       const padList = await Promise.all(
         snapshot.docs.map(async (noteDoc) => {
           const padName = noteDoc.id;
+          const noteData = noteDoc.data();
           const settingsSnap = await getDoc(doc(db, "padSettings", padName));
           const settings = settingsSnap.exists() ? settingsSnap.data() : {};
+          
+          let versionCount = 0;
+          if (noteData.history) {
+             versionCount = noteData.history.length;
+          }
 
           return {
             name: padName,
@@ -143,6 +165,10 @@ export default function AdminPage() {
             lastOpened: settings.lastOpened || "",
             burnAfterRead: settings.burnAfterRead || false,
             readOnly: settings.readOnly || false,
+            createdAt: getIsoString(noteData.createdAt) || getIsoString(settings.createdAt) || "",
+            updatedAt: getIsoString(noteData.updatedAt) || getIsoString(settings.updatedAt) || "",
+            versionCount: versionCount,
+            contentLength: noteData.content ? noteData.content.length : 0,
           };
         })
       );
@@ -478,6 +504,7 @@ export default function AdminPage() {
   return (
     <ErrorBoundary>
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans relative overflow-hidden transition-colors duration-500">
+      <AdminHeartbeat />
       {/* Deep premium background gradients */}
       <div className="absolute top-0 left-0 w-[50%] h-[50%] bg-indigo-600/10 blur-[150px] rounded-full pointer-events-none animate-pulse-glow" />
       <div className="absolute bottom-0 right-0 w-[50%] h-[50%] bg-purple-600/10 blur-[150px] rounded-full pointer-events-none animate-pulse-glow" style={{ animationDelay: "2s" }} />
@@ -620,8 +647,7 @@ export default function AdminPage() {
               </div>
             </div>
 
-            {/* 7 & 8. Navigation Buttons */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-4">
               <button 
                 onClick={() => setAdminTab("dashboard")}
                 className="group relative overflow-hidden rounded-3xl bg-indigo-900/20 border border-indigo-500/20 p-8 text-left hover:bg-indigo-900/40 hover:border-indigo-500/40 transition-all duration-300 hover:-translate-y-1"
@@ -638,6 +664,24 @@ export default function AdminPage() {
                 <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-purple-500/20 transition-all" />
                 <h3 className="text-3xl font-extrabold text-purple-400 mb-2 flex items-center gap-3"><FileText size={32} /> Pads</h3>
                 <p className="text-purple-200/70">Open Pad Manager</p>
+              </button>
+
+              <button 
+                onClick={() => router.push("/admin/activity")}
+                className="group relative overflow-hidden rounded-3xl bg-blue-900/20 border border-blue-500/20 p-8 text-left hover:bg-blue-900/40 hover:border-blue-500/40 transition-all duration-300 hover:-translate-y-1"
+              >
+                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-blue-500/20 transition-all" />
+                <h3 className="text-3xl font-extrabold text-blue-400 mb-2 flex items-center gap-3"><Activity size={32} /> Activity</h3>
+                <p className="text-blue-200/70">Historical Sessions</p>
+              </button>
+
+              <button 
+                onClick={() => setShowAdvancedTools(true)}
+                className="group relative overflow-hidden rounded-3xl bg-slate-800/40 border border-slate-500/20 p-8 text-left hover:bg-slate-800/60 hover:border-slate-500/40 transition-all duration-300 hover:-translate-y-1"
+              >
+                <div className="absolute top-0 right-0 w-32 h-32 bg-slate-500/10 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-slate-500/20 transition-all" />
+                <h3 className="text-3xl font-extrabold text-slate-300 mb-2 flex items-center gap-3"><Settings size={32} /> Settings</h3>
+                <p className="text-slate-400/70">Advanced Tools</p>
               </button>
             </div>
           </div>

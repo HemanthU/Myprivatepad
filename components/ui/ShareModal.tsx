@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { X, Copy, Check, Share2 } from "lucide-react";
+import { doc, setDoc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 interface ShareModalProps {
   slug: string;
@@ -12,6 +14,27 @@ interface ShareModalProps {
 
 export default function ShareModal({ slug, isOpen, onClose }: ShareModalProps) {
   const [copied, setCopied] = useState(false);
+  const [sharingMode, setSharingMode] = useState<'private' | 'readonly' | 'edit'>('private');
+
+  useEffect(() => {
+    if (isOpen) {
+      getDoc(doc(db, 'padSettings', slug)).then(snap => {
+        if (snap.exists() && snap.data().sharingMode) {
+          setSharingMode(snap.data().sharingMode);
+        }
+      });
+    }
+  }, [isOpen, slug]);
+
+  const handleModeChange = async (mode: 'private' | 'readonly' | 'edit') => {
+    setSharingMode(mode);
+    const snap = await getDoc(doc(db, 'padSettings', slug));
+    await setDoc(doc(db, 'padSettings', slug), {
+      ...(snap.exists() ? snap.data() : {}),
+      sharingMode: mode,
+      readOnly: mode === 'readonly'
+    }, { merge: true });
+  };
 
   if (!isOpen) return null;
 
@@ -62,6 +85,21 @@ export default function ShareModal({ slug, isOpen, onClose }: ShareModalProps) {
           <div className="text-center space-y-1">
             <p className="font-bold text-lg text-slate-800 dark:text-slate-200 tracking-tight">Scan to Open</p>
             <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Point your camera at the QR code to open this pad on your phone.</p>
+          </div>
+
+          <div className="w-full flex flex-col gap-2 mt-2">
+            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Access Level</label>
+            <div className="flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1">
+              {(['private', 'readonly', 'edit'] as const).map(mode => (
+                <button
+                  key={mode}
+                  onClick={() => handleModeChange(mode)}
+                  className={`flex-1 py-1.5 px-2 text-xs font-medium rounded-lg transition-all ${sharingMode === mode ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'}`}
+                >
+                  {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="w-full relative group mt-2">

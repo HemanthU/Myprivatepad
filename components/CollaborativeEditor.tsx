@@ -15,7 +15,7 @@ const getRandomColor = () => {
   return colors[Math.floor(Math.random() * colors.length)];
 };
 
-export default function CollaborativeEditor({ slug, isBurned, isDecoyMode, initialText, language = "plaintext", onStatsChange, onUsersChange }: { slug: string, isBurned: boolean, isDecoyMode: boolean, initialText?: string, language?: string, onStatsChange: (words: number, chars: number, text: string) => void, onUsersChange?: (users: any[]) => void }) {
+export default function CollaborativeEditor({ slug, isBurned, isDecoyMode, initialText, language = "plaintext", padType, onStatsChange, onUsersChange }: { slug: string, isBurned: boolean, isDecoyMode: boolean, initialText?: string, language?: string, padType?: string, onStatsChange: (words: number, chars: number, text: string) => void, onUsersChange?: (users: any[]) => void }) {
   const [ydoc] = useState(() => new Y.Doc());
   const [provider, setProvider] = useState<WebrtcProvider>();
   const { toast } = useToast();
@@ -142,13 +142,18 @@ export default function CollaborativeEditor({ slug, isBurned, isDecoyMode, initi
 
   const monacoTheme = theme === 'light' ? 'padX-light' : 'padX-dark';
 
+  const mappedLanguage = padType === 'code' ? 'javascript' :
+                         padType === 'markdown' ? 'markdown' :
+                         (padType === 'text' || padType === 'checklist' || padType === 'journal') ? 'plaintext' :
+                         language === 'plaintext' ? 'text' : language;
+
   if (!provider) return <div className="animate-pulse flex-1 bg-gray-100 dark:bg-gray-800 rounded-xl" />;
 
   return (
     <div className="w-full flex-1 flex flex-col custom-monaco-wrapper">
       <Editor
         height="100%"
-        language={language === 'plaintext' ? 'text' : language}
+        language={mappedLanguage}
         theme={monacoTheme}
         onMount={handleEditorDidMount}
         options={{

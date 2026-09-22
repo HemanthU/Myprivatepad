@@ -5,8 +5,8 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { logAdminAction } from "@/lib/audit";
 
 export async function GET(req: Request, { params }: { params: Promise<{ slug: string }> }) {
-  const isAdmin = await getAdminSession();
-  if (!isAdmin) {
+  const adminSession = await getAdminSession();
+  if (!adminSession.authorized) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -22,7 +22,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
     let actionLabel = "Viewed protected pad";
     if (settings.shadowMode) actionLabel = "Viewed shadow pad";
     
-    await logAdminAction(actionLabel, slug);
+    await logAdminAction(actionLabel, slug, {}, adminSession.sessionId);
 
     return NextResponse.json({
       success: true,
@@ -35,8 +35,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
 }
 
 export async function POST(req: Request, { params }: { params: Promise<{ slug: string }> }) {
-  const isAdmin = await getAdminSession();
-  if (!isAdmin) {
+  const adminSession = await getAdminSession();
+  if (!adminSession.authorized) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -50,10 +50,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
     
     if (action === "updateSecurity") {
       await updateDoc(settingsRef, updates);
-      await logAdminAction("Changed security", slug, updates);
+      await logAdminAction("Changed security", slug, updates, adminSession.sessionId);
     } else if (action === "updateLifecycle") {
       await updateDoc(settingsRef, updates);
-      await logAdminAction("Restored expired pad", slug, updates);
+      await logAdminAction("Restored expired pad", slug, updates, adminSession.sessionId);
     }
 
     return NextResponse.json({ success: true });

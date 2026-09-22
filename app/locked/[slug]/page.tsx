@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import ThemeToggle from "@/components/ThemeToggle";
 import { Lock, ArrowRight } from "lucide-react";
 
@@ -14,36 +12,44 @@ export default function LockedPadPage() {
 
   const [password, setPassword] = useState("");
   const [isShaking, setIsShaking] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const unlockPad = async () => {
-    const settingsRef = doc(db, "padSettings", slug);
-    const settingsSnap = await getDoc(settingsRef);
-
-    if (!settingsSnap.exists()) {
-      alert("No lock settings found.");
-      return;
-    }
-
-    const settings = settingsSnap.data();
-
-    if (password === settings.password) {
-      sessionStorage.setItem(`unlocked-${slug}`, "true");
-      router.push(`/${slug}`);
-    } else if (settings.decoyPassword && password === settings.decoyPassword) {
-      sessionStorage.setItem(`decoy-unlocked-${slug}`, "true");
-      router.push(`/${slug}`);
-    } else {
+    if (!password.trim() || isLoading) return;
+    setIsLoading(true);
+    try {
+      const res = await fetch(`/api/pad/${slug}/unlock`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        // Server set HttpOnly cookie. Also set sessionStorage for UI compatibility.
+        if (data.decoy) {
+          sessionStorage.setItem(`decoy-unlocked-${slug}`, 'true');
+        } else {
+          sessionStorage.setItem(`unlocked-${slug}`, 'true');
+        }
+        router.push(`/${slug}`);
+      } else {
+        setIsShaking(true);
+        setTimeout(() => setIsShaking(false), 500);
+        setPassword('');
+      }
+    } catch {
       setIsShaking(true);
       setTimeout(() => setIsShaking(false), 500);
-      setPassword("");
+      setPassword('');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground transition-colors duration-500 relative overflow-hidden">
-      {/* Premium Decorative Background Elements */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-500/20 dark:bg-blue-600/10 blur-[120px] rounded-full pointer-events-none animate-pulse-glow" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-500/20 dark:bg-purple-600/10 blur-[120px] rounded-full pointer-events-none animate-pulse-glow" style={{ animationDelay: "2s" }} />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-500/20 dark:bg-purple-600/10 blur-[120px] rounded-full pointer-events-none animate-pulse-glow" style={{ animationDelay: '2s' }} />
 
       <header className="w-full flex justify-end p-6 absolute top-0 z-10">
         <ThemeToggle />
@@ -71,17 +77,19 @@ export default function LockedPadPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && unlockPad()}
+              onKeyDown={(e) => e.key === 'Enter' && unlockPad()}
               placeholder="Enter passcode"
-              className="w-full p-4 rounded-2xl bg-white/60 dark:bg-black/20 border border-gray-200/80 dark:border-white/5 focus:border-blue-400/50 dark:focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 dark:focus:ring-blue-500/20 outline-none text-lg transition-all text-center text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 shadow-inner backdrop-blur-md"
+              disabled={isLoading}
+              className="w-full p-4 rounded-2xl bg-white/60 dark:bg-black/20 border border-gray-200/80 dark:border-white/5 focus:border-blue-400/50 dark:focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 dark:focus:ring-blue-500/20 outline-none text-lg transition-all text-center text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 shadow-inner backdrop-blur-md disabled:opacity-60"
             />
 
             <button
               onClick={unlockPad}
-              className="w-full group p-4 rounded-2xl bg-gradient-to-r from-gray-900 to-black dark:from-white dark:to-gray-200 text-white dark:text-black font-semibold text-lg hover:opacity-95 active:scale-[0.98] shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
+              disabled={isLoading}
+              className="w-full group p-4 rounded-2xl bg-gradient-to-r from-gray-900 to-black dark:from-white dark:to-gray-200 text-white dark:text-black font-semibold text-lg hover:opacity-95 active:scale-[0.98] shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 disabled:opacity-60"
             >
-              Unlock Workspace
-              <ArrowRight size={20} className="opacity-70 group-hover:translate-x-1 transition-transform" />
+              {isLoading ? 'Verifying...' : 'Unlock Workspace'}
+              {!isLoading && <ArrowRight size={20} className="opacity-70 group-hover:translate-x-1 transition-transform" />}
             </button>
           </div>
         </div>
