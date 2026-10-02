@@ -178,10 +178,14 @@ export default function NotePage() {
           const filesSnap = await getDocs(q);
           for (const fileDoc of filesSnap.docs) {
             const fileData = fileDoc.data();
-            if (fileData.fileUrl) {
+            if (fileData.chunkCount) {
+              for (let i = 0; i < fileData.chunkCount; i++) {
+                await deleteDoc(doc(db, "files", fileData.fileId, "chunks", i.toString()));
+              }
+            } else if (fileData.storagePath && fileData.storagePath !== "firestore") {
               try {
                 const { ref, deleteObject } = await import("firebase/storage");
-                const fileRef = ref(storage, fileData.fileUrl);
+                const fileRef = ref(storage, fileData.storagePath);
                 await deleteObject(fileRef);
               } catch(e) {
                 console.error("Failed to delete from storage:", e);
@@ -205,10 +209,14 @@ export default function NotePage() {
             const filesSnap = await getDocs(q);
             for (const fileDoc of filesSnap.docs) {
               const fileData = fileDoc.data();
-              if (fileData.fileUrl) {
+              if (fileData.chunkCount) {
+                for (let i = 0; i < fileData.chunkCount; i++) {
+                  await deleteDoc(doc(db, "files", fileData.fileId, "chunks", i.toString()));
+                }
+              } else if (fileData.storagePath && fileData.storagePath !== "firestore") {
                 try {
                   const { ref, deleteObject } = await import("firebase/storage");
-                  const fileRef = ref(storage, fileData.fileUrl);
+                  const fileRef = ref(storage, fileData.storagePath);
                   await deleteObject(fileRef);
                 } catch(e) {
                   console.error("Failed to delete from storage:", e);

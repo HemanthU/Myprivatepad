@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { collection, query, where, onSnapshot, doc, setDoc, deleteDoc, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from "firebase/storage";
+import { db, storage } from "@/lib/firebase";
 import { FileText, Image as ImageIcon, Archive, File as FileIcon, X, Download, Trash, Eye, UploadCloud, Lock, FileArchive, Search, Folder, Flame, Star, Tag, Loader2, ScanText, Copy, ChevronLeft } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { usePrompt } from "@/hooks/usePrompt";
@@ -59,19 +60,21 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
       
       setUploadingFiles(prev => [...prev, { id: fileId, name: file.name, progress: 0 }]);
 
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        try {
-          const base64Data = (e.target?.result as string).split(',')[1];
-          const CHUNK_SIZE = 800 * 1024; // 800KB chunks
-          const totalChunks = Math.ceil(base64Data.length / CHUNK_SIZE);
-          
-          for (let i = 0; i < totalChunks; i++) {
-            const chunkData = base64Data.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
-            await setDoc(doc(db, "files", fileId, "chunks", i.toString()), { data: chunkData });
-            setUploadingFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress: ((i + 1) / totalChunks) * 100 } : f));
-          }
+      const storageRef = ref(storage, `pad_files/${slug}/${fileId}_${file.name}`);
+      const uploadTask = uploadBytesResumable(storageRef, file);
 
+      uploadTask.on('state_changed', 
+        (snapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          setUploadingFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress } : f));
+        }, 
+        (error) => {
+          console.error("Upload failed", error);
+          alert("Upload failed: " + error.message);
+          setUploadingFiles(prev => prev.filter(f => f.id !== fileId));
+        }, 
+        async () => {
+          const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
           const metadata: FileMetadata = {
             fileId,
             padId: slug,
@@ -79,25 +82,18 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
             fileType: file.type || "application/octet-stream",
             fileSize: file.size,
             uploadedAt: new Date().toISOString(),
-            storagePath: "firestore",
-            downloadUrl: "firestore",
+            storagePath: uploadTask.snapshot.ref.fullPath,
+            downloadUrl,
             isEncrypted: encryptUploads,
             isBurnAfterRead: burnUploads,
             totalViews: 0,
-            totalDownloads: 0,
-            chunkCount: totalChunks
+            totalDownloads: 0
           };
           
           await setDoc(doc(db, "files", fileId), metadata);
-          
-          setUploadingFiles(prev => prev.filter(f => f.id !== fileId));
-        } catch (error: any) {
-          console.error("Upload failed", error);
-          alert("Upload failed: " + error.message);
           setUploadingFiles(prev => prev.filter(f => f.id !== fileId));
         }
-      };
-      reader.readAsDataURL(file);
+      );
     });
   }, [slug, encryptUploads, burnUploads]);
 
@@ -121,6 +117,13 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
     if (file.chunkCount) {
       for (let i = 0; i < file.chunkCount; i++) {
         await deleteDoc(doc(db, "files", file.fileId, "chunks", i.toString()));
+      }
+    } else if (file.storagePath && file.storagePath !== "firestore") {
+      try {
+        const fileRef = ref(storage, file.storagePath);
+        await deleteObject(fileRef);
+      } catch (e) {
+        console.error("Storage deletion failed:", e);
       }
     }
     await deleteDoc(doc(db, "files", file.fileId));
