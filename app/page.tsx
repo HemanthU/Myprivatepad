@@ -31,7 +31,7 @@ export default function Home() {
       </header>
 
       <main className="flex flex-1 flex-col items-center justify-center p-4 sm:p-8">
-        <div className="w-full max-w-lg bg-card/80 backdrop-blur-xl border border-border rounded-3xl p-8 sm:p-12 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_40px_rgb(0,0,0,0.16)] transition-all duration-300 flex flex-col items-center text-center">
+        <div className="w-full max-w-lg glass-frosted/80 backdrop-blur-xl border border-border rounded-3xl p-8 sm:p-12 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_40px_rgb(0,0,0,0.16)] transition-all duration-300 flex flex-col items-center text-center">
           
           <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight mb-2 bg-gradient-to-r from-gray-900 to-gray-500 dark:from-white dark:to-gray-400 bg-clip-text text-transparent">
             PadX
@@ -49,7 +49,7 @@ export default function Home() {
               onChange={(e) => setKeyword(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && openPad()}
               placeholder="Enter pad keyword"
-              className="w-full p-4 rounded-2xl bg-gray-100 dark:bg-white/10 border border-gray-200 dark:border-transparent focus:border-gray-400 dark:focus:border-gray-500 outline-none text-lg transition-all text-center text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 shadow-inner"
+              className="w-full p-4 rounded-2xl glass-clear text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-300 backdrop-blur-md border border-gray-200 dark:border-transparent focus:border-gray-400 dark:focus:border-gray-500 outline-none text-lg transition-all text-center text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 shadow-inner"
             />
 
             <button

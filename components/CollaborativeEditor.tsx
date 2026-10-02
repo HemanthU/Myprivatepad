@@ -58,10 +58,13 @@ export default function CollaborativeEditor({
     let webrtcProvider: WebrtcProvider | null = null;
     let observer: (event: Y.YTextEvent, transaction: Y.Transaction) => void;
     let timeout: NodeJS.Timeout;
+    let isMounted = true;
 
     const setupSync = async () => {
       const password = isLocked ? sessionStorage.getItem(`padx-key-${slug}`) : null;
       const roomName = await hashRoomName(slug, password);
+
+      if (!isMounted) return;
 
       webrtcProvider = new WebrtcProvider(roomName, ydoc, {
         signaling: ['wss://signaling.yjs.dev', 'wss://y-webrtc-signaling-eu.herokuapp.com']
@@ -73,14 +76,14 @@ export default function CollaborativeEditor({
       });
 
       webrtcProvider.awareness.on('change', () => {
-        if (onUsersChange && webrtcProvider) {
+        if (onUsersChange && webrtcProvider && isMounted) {
           const states = Array.from(webrtcProvider.awareness.getStates().values());
           const activeUsers = states.map(s => s.user).filter(Boolean);
           onUsersChange(activeUsers);
         }
       });
 
-      setProvider(webrtcProvider);
+      if (isMounted) setProvider(webrtcProvider);
 
       const ytext = ydoc.getText("monaco");
 
@@ -153,8 +156,9 @@ export default function CollaborativeEditor({
                  await setDoc(doc(db, "notes", slug), { content: saveText, updatedAt: new Date().toISOString() });
               }
               toast("Pad Auto-Saved", "success");
-            } catch {
-              toast("Sync Error", "error");
+            } catch (err: any) {
+              console.error("Auto-save sync error:", err);
+              toast("Sync Error: " + (err?.message || "Unknown error"), "error");
             }
           }, 1500);
         }
@@ -166,6 +170,7 @@ export default function CollaborativeEditor({
     setupSync();
 
     return () => {
+      isMounted = false;
       const ytext = ydoc.getText("monaco");
       if (observer) ytext.unobserve(observer);
       if (webrtcProvider) webrtcProvider.destroy();

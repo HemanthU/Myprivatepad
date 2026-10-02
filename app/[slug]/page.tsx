@@ -62,10 +62,9 @@ export default function NotePage() {
   const handleCustomizationChange = async (newSettings: PadCustomizationSettings) => {
     try {
       await setDoc(doc(db, "padSettings", slug), {
-        ...settingsData,
         customization: newSettings
       }, { merge: true });
-      setSettingsData({ ...settingsData, customization: newSettings });
+      setSettingsData((prev: any) => ({ ...prev, customization: newSettings }));
     } catch (e) {
       toast("Failed to save customization", "error");
     }
@@ -277,7 +276,7 @@ export default function NotePage() {
           decoyContent: templateText
         });
       } else {
-        await setDoc(doc(db, "notes", slug), { content: templateText, updatedAt: new Date() }, { merge: true });
+        await setDoc(doc(db, "notes", slug), { content: templateText, updatedAt: new Date().toISOString() }, { merge: true });
       }
       setLocalText(templateText);
       setShowTemplates(false);
@@ -383,7 +382,7 @@ export default function NotePage() {
           } else {
             await setDoc(doc(db, "notes", slug), {
               content: localText,
-              updatedAt: new Date(),
+              updatedAt: new Date().toISOString(),
             });
             const settingsSnap = await getDoc(doc(db, "padSettings", slug));
             if (settingsSnap.exists() && settingsSnap.data().webhookUrl) {
@@ -741,7 +740,7 @@ export default function NotePage() {
 
         <div className="flex-1 w-full grid grid-cols-1 grid-rows-1 mb-8">
           {/* Notes Tab */}
-          <div className={`col-start-1 row-start-1 w-full flex flex-col min-h-[600px] bg-card shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] border border-border rounded-3xl p-6 sm:p-12 transition-all duration-300 hover:shadow-[0_8px_40px_rgb(0,0,0,0.08)] dark:hover:shadow-[0_8px_40px_rgb(0,0,0,0.5)] ${activeTab === 'notes' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'}`}>
+          <div className={`col-start-1 row-start-1 w-full flex flex-col min-h-[600px] glass-frosted shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] border border-border rounded-3xl p-6 sm:p-12 transition-all duration-300 hover:shadow-[0_8px_40px_rgb(0,0,0,0.08)] dark:hover:shadow-[0_8px_40px_rgb(0,0,0,0.5)] ${activeTab === 'notes' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'}`}>
               <div className="flex-1 flex flex-col min-h-[400px] relative overflow-hidden">
                 <CollaborativeEditor 
                   slug={slug} 
@@ -773,7 +772,7 @@ export default function NotePage() {
 
         {/* Mobile Bottom Navigation */}
       {!distractionFree && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 flex sm:hidden bg-card/90 backdrop-blur-xl border-t border-border p-2 pb-4 justify-around shadow-[0_-8px_30px_rgb(0,0,0,0.12)]">
+        <div className="fixed bottom-0 left-0 right-0 z-40 flex sm:hidden glass-frosted/90 backdrop-blur-xl border-t border-border p-2 pb-4 justify-around shadow-[0_-8px_30px_rgb(0,0,0,0.12)]">
           <button
             onClick={() => setActiveTab("notes")}
             className={`flex-1 py-2 flex flex-col items-center justify-center gap-1 rounded-xl font-semibold text-xs transition-all ${activeTab === 'notes' ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30' : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-200'}`}

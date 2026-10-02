@@ -4,6 +4,9 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "PadX Premium",
   description: "Personal cloud code editor and notes",
+  verification: {
+    google: "sKsjZ_n9m-gxo_O0HmyT85k-OugOlUsrrX7TFoIEnds",
+  },
 };
 
 import { ToastProvider } from "@/hooks/useToast";

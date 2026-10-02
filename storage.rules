@@ -1,0 +1,16 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // PadX Media Files
+    // Files are grouped by pad slug. Anyone with the pad slug can read/write.
+    match /pad_files/{slug}/{fileName} {
+      allow read, write: if true; // Security by obscurity (slug is known to users)
+    }
+
+    // Default deny for everything else
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

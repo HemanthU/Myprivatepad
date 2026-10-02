@@ -8,6 +8,7 @@ import { db, storage } from "@/lib/firebase";
 import { FileText, Image as ImageIcon, Archive, File as FileIcon, X, Download, Trash, Eye, UploadCloud, Lock, FileArchive, Search, Folder, Flame, Star, Tag, Loader2, ScanText, Copy, ChevronLeft } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { usePrompt } from "@/hooks/usePrompt";
+import { useToast } from "@/hooks/useToast";
 import PromptModal from "@/components/ui/PromptModal";
 import Tesseract from "tesseract.js";
 
@@ -44,6 +45,7 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
   const [copyingOcr, setCopyingOcr] = useState(false);
   
   const { prompt, confirm, alert: promptAlert, isOpen, config, handleClose } = usePrompt();
+  const { toast } = useToast();
 
   useEffect(() => {
     const q = query(collection(db, "files"), where("padId", "==", slug));
@@ -55,45 +57,48 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
   }, [slug]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    acceptedFiles.forEach(file => {
+    acceptedFiles.forEach(async (file) => {
+      if (file.size > 750 * 1024) {
+        toast(`File ${file.name} is too large. Max 750KB (Cloud Storage disabled).`, "error");
+        return;
+      }
       const fileId = Math.random().toString(36).substring(2, 15);
-      
       setUploadingFiles(prev => [...prev, { id: fileId, name: file.name, progress: 0 }]);
 
-      const storageRef = ref(storage, `pad_files/${slug}/${fileId}_${file.name}`);
-      const uploadTask = uploadBytesResumable(storageRef, file);
-
-      uploadTask.on('state_changed', 
-        (snapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          setUploadingFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress } : f));
-        }, 
-        (error) => {
-          console.error("Upload failed", error);
-          alert("Upload failed: " + error.message);
-          setUploadingFiles(prev => prev.filter(f => f.id !== fileId));
-        }, 
-        async () => {
-          const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
-          const metadata: FileMetadata = {
-            fileId,
-            padId: slug,
-            fileName: file.name,
-            fileType: file.type || "application/octet-stream",
-            fileSize: file.size,
-            uploadedAt: new Date().toISOString(),
-            storagePath: uploadTask.snapshot.ref.fullPath,
-            downloadUrl,
-            isEncrypted: encryptUploads,
-            isBurnAfterRead: burnUploads,
-            totalViews: 0,
-            totalDownloads: 0
-          };
-          
-          await setDoc(doc(db, "files", fileId), metadata);
-          setUploadingFiles(prev => prev.filter(f => f.id !== fileId));
+      try {
+        const buffer = await file.arrayBuffer();
+        let binary = "";
+        const bytes = new Uint8Array(buffer);
+        const len = bytes.byteLength;
+        for (let i = 0; i < len; i++) {
+          binary += String.fromCharCode(bytes[i]);
         }
-      );
+        let base64 = btoa(binary);
+        const downloadUrl = `data:${file.type || 'application/octet-stream'};base64,${base64}`;
+
+        setUploadingFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress: 50 } : f));
+
+        const metadata: FileMetadata = {
+          fileId,
+          padId: slug,
+          fileName: file.name,
+          fileType: file.type || "application/octet-stream",
+          fileSize: file.size,
+          uploadedAt: new Date().toISOString(),
+          storagePath: "firestore",
+          downloadUrl,
+          isEncrypted: encryptUploads,
+          isBurnAfterRead: burnUploads,
+          totalViews: 0,
+          totalDownloads: 0
+        };
+        
+        await setDoc(doc(db, "files", fileId), metadata);
+        setUploadingFiles(prev => prev.filter(f => f.id !== fileId));
+      } catch (error: any) {
+        toast("Upload failed: " + error.message, "error");
+        setUploadingFiles(prev => prev.filter(f => f.id !== fileId));
+      }
     });
   }, [slug, encryptUploads, burnUploads]);
 
@@ -279,7 +284,7 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {items.map((f: FileMetadata) => (
-            <div key={f.fileId} className="bg-card border border-border rounded-2xl p-4 flex flex-col hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+            <div key={f.fileId} className="glass-frosted border border-border rounded-2xl p-4 flex flex-col hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
               <div className="flex items-start justify-between mb-3">
                 <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden flex items-center justify-center">
                   {!f.isEncrypted && !f.isBurnAfterRead && f.fileType.startsWith("image/") ? (
@@ -333,7 +338,7 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
       <PromptModal isOpen={isOpen} config={config} onClose={handleClose} />
       <div 
         {...getRootProps()} 
-        className={`w-full border-2 border-dashed rounded-3xl p-8 sm:p-12 text-center cursor-pointer transition-all ${isDragActive ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600 bg-card hover:bg-gray-50 dark:hover:bg-gray-800/50'}`}
+        className={`w-full border-2 border-dashed rounded-3xl p-8 sm:p-12 text-center cursor-pointer transition-all ${isDragActive ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600 glass-frosted hover:bg-gray-50 dark:hover:bg-gray-800/50'}`}
       >
         <input {...getInputProps()} />
         <div className="flex flex-col items-center justify-center gap-4">
@@ -390,12 +395,12 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by name or tags..."
-              className="w-full pl-12 pr-4 py-3 rounded-2xl bg-card border border-border focus:border-gray-400 outline-none text-sm transition-all"
+              className="w-full pl-12 pr-4 py-3 rounded-2xl glass-frosted border border-border focus:border-gray-400 outline-none text-sm transition-all"
             />
           </div>
           <button 
             onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-            className={`px-4 py-3 rounded-2xl border flex items-center justify-center gap-2 text-sm font-semibold transition-all ${showFavoritesOnly ? 'bg-yellow-50 border-yellow-200 text-yellow-700 dark:bg-yellow-900/30 dark:border-yellow-700 dark:text-yellow-400' : 'bg-card border-border hover:bg-gray-50 dark:hover:bg-gray-800'}`}
+            className={`px-4 py-3 rounded-2xl border flex items-center justify-center gap-2 text-sm font-semibold transition-all ${showFavoritesOnly ? 'bg-yellow-50 border-yellow-200 text-yellow-700 dark:bg-yellow-900/30 dark:border-yellow-700 dark:text-yellow-400' : 'glass-frosted border-border hover:bg-gray-50 dark:hover:bg-gray-800'}`}
           >
             <Star size={16} className={showFavoritesOnly ? "fill-current" : ""} /> Favorites
           </button>
@@ -417,7 +422,7 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
 
       {previewFile && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-md flex flex-col items-center justify-center p-0 sm:p-8 animate-in fade-in duration-200">
-          <div className="w-full max-w-5xl h-full sm:max-h-[90vh] bg-card/90 backdrop-blur-3xl border border-white/20 dark:border-white/10 sm:rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden relative">
+          <div className="w-full max-w-5xl h-full sm:max-h-[90vh] glass-frosted/90 backdrop-blur-3xl border border-white/20 dark:border-white/10 sm:rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden relative">
             
             <div className="p-4 sm:p-6 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between shrink-0 gap-4 bg-transparent">
               <div className="flex items-center gap-4">
@@ -493,7 +498,7 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
 
       {ocrResultText !== null && (
         <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-md flex flex-col items-center justify-center p-0 sm:p-8 animate-in fade-in duration-200">
-          <div className="w-full max-w-6xl h-full sm:h-auto sm:max-h-[90vh] bg-card/90 backdrop-blur-3xl border border-white/20 dark:border-white/10 sm:rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden relative">
+          <div className="w-full max-w-6xl h-full sm:h-auto sm:max-h-[90vh] glass-frosted/90 backdrop-blur-3xl border border-white/20 dark:border-white/10 sm:rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden relative">
             <div className="p-4 sm:p-6 border-b border-border flex items-center justify-between shrink-0 bg-transparent">
               <div className="flex items-center gap-3">
                 <button onClick={() => setOcrResultText(null)} className="p-2 -ml-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors flex items-center gap-1 font-semibold text-gray-700 dark:text-gray-300">

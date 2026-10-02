@@ -58,7 +58,7 @@ export default function LockedPadPage() {
       </header>
 
       <main className="flex flex-1 flex-col items-center justify-center p-6 relative z-10 animate-fade-in-up">
-        <div className={`w-full max-w-md bg-white/40 dark:bg-gray-900/40 backdrop-blur-3xl border border-white/60 dark:border-white/10 rounded-[2rem] p-8 sm:p-12 shadow-[0_8px_40px_-12px_rgba(0,0,0,0.1)] dark:shadow-[0_8px_40px_-12px_rgba(0,0,0,0.5)] transition-all duration-300 flex flex-col items-center text-center ${isShaking ? 'animate-[shake_0.5s_ease-in-out]' : ''}`}>
+        <div className={`w-full max-w-md glass-frosted backdrop-blur-3xl border border-white/60 dark:border-white/10 rounded-[2rem] p-8 sm:p-12 shadow-[0_8px_40px_-12px_rgba(0,0,0,0.1)] dark:shadow-[0_8px_40px_-12px_rgba(0,0,0,0.5)] transition-all duration-300 flex flex-col items-center text-center ${isShaking ? 'animate-[shake_0.5s_ease-in-out]' : ''}`}>
           
           <div className="relative mb-8 group">
             <div className="absolute inset-0 bg-blue-500/20 dark:bg-blue-400/20 rounded-full blur-xl group-hover:blur-2xl transition-all duration-500" />
@@ -82,7 +82,7 @@ export default function LockedPadPage() {
               onKeyDown={(e) => e.key === 'Enter' && unlockPad()}
               placeholder="Enter passcode"
               disabled={isLoading}
-              className="w-full p-4 rounded-2xl bg-white/60 dark:bg-black/20 border border-gray-200/80 dark:border-white/5 focus:border-blue-400/50 dark:focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 dark:focus:ring-blue-500/20 outline-none text-lg transition-all text-center text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 shadow-inner backdrop-blur-md disabled:opacity-60"
+              className="w-full p-4 rounded-2xl glass-clear text-gray-900 dark:text-white backdrop-blur-md border border-gray-200/80 dark:border-white/5 focus:border-blue-400/50 dark:focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 dark:focus:ring-blue-500/20 outline-none text-lg transition-all text-center text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 shadow-inner backdrop-blur-md disabled:opacity-60"
             />
 
             <button
