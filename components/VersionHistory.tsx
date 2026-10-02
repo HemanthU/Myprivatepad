@@ -8,6 +8,7 @@ import { Clock, Trash, RotateCcw, X, GitCompare, Save } from "lucide-react";
 import { usePrompt } from "@/hooks/usePrompt";
 import Editor, { DiffEditor } from "@monaco-editor/react";
 import { useAppStore } from "@/lib/store";
+import { encryptText, decryptText } from "@/lib/clientCrypto";
 
 export default function VersionHistory({ slug, currentText, onClose, onRestore }: {
   slug: string;
@@ -25,7 +26,18 @@ export default function VersionHistory({ slug, currentText, onClose, onRestore }
   const fetchVersions = async () => {
     const q = query(collection(db, "padVersions", slug, "snapshots"), orderBy("createdAt", "desc"));
     const snap = await getDocs(q);
-    const fetched = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const password = sessionStorage.getItem(`padx-key-${slug}`);
+    
+    const fetched = await Promise.all(snap.docs.map(async d => {
+      let rawText = d.data().text;
+      if (password && rawText) {
+        try {
+          rawText = await decryptText(rawText, password);
+        } catch(e) {}
+      }
+      return { id: d.id, ...d.data(), text: rawText };
+    }));
+    
     const all = [{ id: "current", text: currentText, createdAt: new Date().toISOString(), isCurrent: true, source: 'live' }, ...fetched];
     setVersions(all);
     setSelectedIndex(0);
@@ -39,8 +51,11 @@ export default function VersionHistory({ slug, currentText, onClose, onRestore }
 
   const saveCurrentVersion = async () => {
     const id = Date.now().toString();
+    const password = sessionStorage.getItem(`padx-key-${slug}`);
+    const saveText = password ? await encryptText(currentText, password) : currentText;
+
     await setDoc(doc(db, "padVersions", slug, "snapshots", id), {
-      text: currentText,
+      text: saveText,
       createdAt: new Date().toISOString(),
       source: 'manual',
     });
@@ -55,10 +70,13 @@ export default function VersionHistory({ slug, currentText, onClose, onRestore }
     });
     if (!confirmed) return;
 
+    const password = sessionStorage.getItem(`padx-key-${slug}`);
+    const saveText = password ? await encryptText(currentText, password) : currentText;
+
     // Step 1: Save the current version as a checkpoint BEFORE restoring
     const checkpointId = Date.now().toString();
     await setDoc(doc(db, "padVersions", slug, "snapshots", checkpointId), {
-      text: currentText,
+      text: saveText,
       createdAt: new Date().toISOString(),
       source: 'checkpoint', // Saved automatically before a restore
     });

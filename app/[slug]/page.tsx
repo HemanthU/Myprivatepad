@@ -252,7 +252,12 @@ export default function NotePage() {
         }
 
         if (settings.readOnly) {
-          setIsReadOnly(true);
+          const { auth } = await import('@/lib/firebase');
+          if (settings.ownerId && settings.ownerId === auth?.currentUser?.uid) {
+            setIsReadOnly(false); // Owner bypasses read-only mode
+          } else {
+            setIsReadOnly(true);
+          }
         }
       }
 
@@ -703,29 +708,30 @@ export default function NotePage() {
         }}
       >
         {!distractionFree && (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 sm:mb-8 gap-4">
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 dark:text-gray-200">
             # {slug} {isDecoyMode && <span className="text-sm font-normal text-gray-500">(Decoy)</span>}
           </h2>
-          <div className="hidden sm:flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl w-max">
+          {/* Responsive Tabs Navigation */}
+          <div className="flex bg-gray-100/80 dark:bg-gray-800/80 backdrop-blur-md p-1.5 rounded-2xl w-full sm:w-max overflow-x-auto scrollbar-hide shadow-inner border border-white/20 dark:border-white/5">
             <button
               onClick={() => setActiveTab("notes")}
-              className={`px-6 py-2 rounded-lg font-semibold text-sm transition-all ${activeTab === 'notes' ? 'bg-white dark:bg-black shadow-sm text-black dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+              className={`flex-1 sm:flex-none min-w-[80px] px-6 py-2.5 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 ${activeTab === 'notes' ? 'bg-white dark:bg-black shadow-[0_2px_10px_-3px_rgba(0,0,0,0.1)] dark:shadow-none border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-white/50 dark:hover:bg-black/50 border border-transparent'}`}
               title="Notes (Alt+1)"
             >
               Notes
             </button>
             <button
               onClick={() => setActiveTab("files")}
-              className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${activeTab === 'files' ? 'bg-white text-black shadow-sm dark:bg-black dark:text-white' : 'text-gray-500 hover:text-black dark:hover:text-white'}`}
+              className={`flex-1 sm:flex-none min-w-[80px] px-6 py-2.5 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 ${activeTab === 'files' ? 'bg-white dark:bg-black shadow-[0_2px_10px_-3px_rgba(0,0,0,0.1)] dark:shadow-none border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-white/50 dark:hover:bg-black/50 border border-transparent'}`}
               title="Files (Alt+2)"
             >
               Files
             </button>
-            <div className="border-l border-gray-300 dark:border-gray-700 mx-1"></div>
+            <div className="hidden sm:block border-l border-gray-300 dark:border-gray-700 mx-1"></div>
             <button
               onClick={() => setIsExportModalOpen(true)}
-              className="px-4 py-2 rounded-lg font-semibold text-sm transition-all text-gray-500 hover:text-black dark:hover:text-white flex items-center gap-2"
+              className="flex-1 sm:flex-none min-w-[80px] px-6 py-2.5 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-white/50 dark:hover:bg-black/50 border border-transparent"
             >
               Export
             </button>
@@ -741,6 +747,7 @@ export default function NotePage() {
                   slug={slug} 
                   isBurned={isBurned || isReadOnly} 
                   isDecoyMode={isDecoyMode}
+                  isLocked={settingsData?.locked || false}
                   initialText={isBurned ? localText : undefined}
                   customization={customization}
                   language="plaintext"

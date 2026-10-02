@@ -76,6 +76,7 @@ export default function AdminEditPad() {
           slug={slug}
           isBurned={false}
           isDecoyMode={false}
+          isLocked={false}
           onStatsChange={() => {}}
         />
       </main>

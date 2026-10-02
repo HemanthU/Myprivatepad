@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ThemeToggle from "@/components/ThemeToggle";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { db, auth } from "@/lib/firebase";
 
 export default function Home() {
   const [keyword, setKeyword] = useState("");
@@ -11,6 +13,14 @@ export default function Home() {
   const openPad = async () => {
     if (!keyword.trim()) return;
     const slug = keyword.trim();
+    
+    try {
+      const snap = await getDoc(doc(db, 'padSettings', slug));
+      if (!snap.exists() && auth?.currentUser?.uid) {
+        await setDoc(doc(db, 'padSettings', slug), { ownerId: auth.currentUser.uid }, { merge: true });
+      }
+    } catch { /* non-fatal */ }
+
     router.push(`/${slug}`);
   };
 

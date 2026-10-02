@@ -28,8 +28,10 @@ export default function LockedPadPage() {
         // Server set HttpOnly cookie. Also set sessionStorage for UI compatibility.
         if (data.decoy) {
           sessionStorage.setItem(`decoy-unlocked-${slug}`, 'true');
+          sessionStorage.setItem(`padx-key-${slug}`, password);
         } else {
           sessionStorage.setItem(`unlocked-${slug}`, 'true');
+          sessionStorage.setItem(`padx-key-${slug}`, password);
         }
         router.push(`/${slug}`);
       } else {

@@ -9,6 +9,7 @@ export const metadata: Metadata = {
 import { ToastProvider } from "@/hooks/useToast";
 import GlobalShortcuts from "@/components/GlobalShortcuts";
 import ThemeProvider from "@/components/ThemeProvider";
+import AuthProvider from "@/components/AuthProvider";
 
 export default function RootLayout({
   children,
@@ -39,11 +40,13 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <GlobalShortcuts />
-        <div className="bg-mesh-overlay" />
-        <ThemeProvider>
-          <ToastProvider>{children}</ToastProvider>
-        </ThemeProvider>
+        <AuthProvider>
+          <GlobalShortcuts />
+          <div className="bg-mesh-overlay" />
+          <ThemeProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </ThemeProvider>
+        </AuthProvider>
       </body>
     </html>
   );

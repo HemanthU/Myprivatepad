@@ -38,6 +38,7 @@ export default function SecurityModal({ slug, isOpen, onClose }: { slug: string,
       if (password) {
         await updateSetting("locked", true);
         await updateSetting("password", password);
+        sessionStorage.setItem(`padx-key-${slug}`, password);
       }
     }
   };
