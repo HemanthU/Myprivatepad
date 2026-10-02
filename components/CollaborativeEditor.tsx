@@ -125,7 +125,7 @@ export default function CollaborativeEditor({
                  });
                }
             } else {
-               await setDoc(doc(db, "notes", slug), { content: currentText, updatedAt: new Date() });
+               await setDoc(doc(db, "notes", slug), { content: currentText, updatedAt: new Date().toISOString() });
             }
             toast("Pad Auto-Saved", "success");
           } catch {

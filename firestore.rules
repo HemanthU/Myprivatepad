@@ -33,8 +33,8 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
-    // Files — readable/writable
-    match /files/{fileId} {
+    // Files and their chunk subcollections — readable/writable
+    match /files/{document=**} {
       allow read, write: if true;
     }
 
