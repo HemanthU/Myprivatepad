@@ -100,6 +100,9 @@ export default function ShareModal({ slug, isOpen, onClose }: ShareModalProps) {
                 </button>
               ))}
             </div>
+            <p className="text-[10px] text-slate-500 mt-1 text-center">
+              The pad link stays the same. The backend applies this rule instantly to anyone who visits it.
+            </p>
           </div>
 
           <div className="w-full relative group mt-2">

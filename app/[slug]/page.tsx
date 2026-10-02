@@ -742,7 +742,6 @@ export default function NotePage() {
                   isBurned={isBurned || isReadOnly} 
                   isDecoyMode={isDecoyMode}
                   initialText={isBurned ? localText : undefined}
-                  padType={padType}
                   customization={customization}
                   language="plaintext"
                   onStatsChange={(words, chars, text) => {

@@ -13,10 +13,12 @@ export default function SecurityModal({ slug, isOpen, onClose }: { slug: string,
 
   useEffect(() => {
     if (isOpen) {
-      getDoc(doc(db, "padSettings", slug)).then(snap => {
-        if (snap.exists()) setSettings(snap.data());
-        setLoading(false);
-      });
+      getDoc(doc(db, "padSettings", slug))
+        .then(snap => {
+          if (snap.exists()) setSettings(snap.data());
+        })
+        .catch(console.error)
+        .finally(() => setLoading(false));
     }
   }, [isOpen, slug]);
 

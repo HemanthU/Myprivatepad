@@ -358,15 +358,25 @@ export default function PadFiles({ slug, isLocked }: { slug: string, isLocked: b
       </div>
 
       {uploadingFiles.length > 0 && (
-        <div className="w-full bg-card border border-border rounded-2xl p-4 flex flex-col gap-3">
-          <h4 className="font-semibold text-sm">Uploading ({uploadingFiles.length})</h4>
+        <div className="w-full bg-indigo-50/50 dark:bg-indigo-900/20 backdrop-blur-md border border-indigo-100 dark:border-indigo-800/50 rounded-2xl p-5 flex flex-col gap-4 shadow-sm animate-in fade-in slide-in-from-top-2">
+          <div className="flex items-center gap-3 text-indigo-700 dark:text-indigo-400">
+            <Loader2 className="animate-spin" size={20} />
+            <h4 className="font-bold text-sm">Uploading {uploadingFiles.length} file{uploadingFiles.length > 1 ? 's' : ''}...</h4>
+          </div>
           {uploadingFiles.map(f => (
-            <div key={f.id} className="flex items-center gap-3">
-              <span className="text-xs truncate flex-1">{f.name}</span>
-              <div className="w-1/2 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                <div className="bg-blue-500 h-2 rounded-full transition-all" style={{ width: `${f.progress}%` }}></div>
+            <div key={f.id} className="flex flex-col gap-2">
+              <div className="flex items-center justify-between text-xs font-medium text-slate-700 dark:text-slate-300">
+                <span className="truncate flex-1 max-w-[80%]">{f.name}</span>
+                <span>{Math.round(f.progress)}%</span>
               </div>
-              <span className="text-xs w-8 text-right">{Math.round(f.progress)}%</span>
+              <div className="w-full bg-slate-200/50 dark:bg-slate-700/50 rounded-full h-2 overflow-hidden shadow-inner">
+                <div 
+                  className="bg-gradient-to-r from-indigo-500 to-blue-500 h-full rounded-full transition-all duration-300 relative" 
+                  style={{ width: `${f.progress}%` }}
+                >
+                  <div className="absolute inset-0 bg-white/20 animate-[pulse_1.5s_ease-in-out_infinite]" />
+                </div>
+              </div>
             </div>
           ))}
         </div>

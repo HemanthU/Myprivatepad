@@ -16,9 +16,9 @@ const getRandomColor = () => {
 };
 
 export default function CollaborativeEditor({ 
-  slug, isBurned, isDecoyMode, initialText, language = "plaintext", padType, customization, onStatsChange, onUsersChange 
+  slug, isBurned, isDecoyMode, initialText, language = "plaintext", customization, onStatsChange, onUsersChange 
 }: { 
-  slug: string, isBurned: boolean, isDecoyMode: boolean, initialText?: string, language?: string, padType?: string, customization?: any, onStatsChange: (words: number, chars: number, text: string) => void, onUsersChange?: (users: any[]) => void 
+  slug: string, isBurned: boolean, isDecoyMode: boolean, initialText?: string, language?: string, customization?: any, onStatsChange: (words: number, chars: number, text: string) => void, onUsersChange?: (users: any[]) => void 
 }) {
   const [ydoc] = useState(() => new Y.Doc());
   const [provider, setProvider] = useState<WebrtcProvider>();
@@ -38,14 +38,16 @@ export default function CollaborativeEditor({
         rules: [],
         colors: {
           'editor.background': '#00000000', // transparent
+          'editor.foreground': '#f8fafc',
         }
       });
       monaco.editor.defineTheme('padX-light', {
         base: 'vs',
         inherit: true,
-        rules: [],
+        rules: [{ token: '', foreground: '0f172a' }],
         colors: {
           'editor.background': '#00000000', // transparent
+          'editor.foreground': '#0f172a',
         }
       });
     }
@@ -81,15 +83,7 @@ export default function CollaborativeEditor({
         getDoc(doc(db, isDecoyMode ? "padSettings" : "notes", slug)).then(snap => {
           if (snap.exists() && ytext.toString() === "") {
             const content = isDecoyMode ? snap.data().decoyContent : snap.data().content;
-            
-            // Auto-inject templates if new and padType is specific
-            let initialInsert = content || "";
-            if (initialInsert === "" && padType === "checklist") {
-              initialInsert = "# To-Do List\n\n- [ ] Task 1\n- [ ] Task 2\n- [ ] Task 3\n";
-            } else if (initialInsert === "" && padType === "journal") {
-              initialInsert = `# Journal Entry - ${new Date().toLocaleDateString()}\n\n`;
-            }
-            ytext.insert(0, initialInsert);
+            ytext.insert(0, content || "");
           }
         });
       }
@@ -142,7 +136,7 @@ export default function CollaborativeEditor({
       webrtcProvider.destroy();
       if (bindingRef.current) bindingRef.current.destroy();
     };
-  }, [slug, isDecoyMode, isBurned, padType]);
+  }, [slug, isDecoyMode, isBurned]);
 
   const handleEditorDidMount = (editor: any, monaco: any) => {
     editorRef.current = editor;
@@ -154,10 +148,7 @@ export default function CollaborativeEditor({
 
   const monacoTheme = theme === 'light' ? 'padX-light' : 'padX-dark';
 
-  const mappedLanguage = padType === 'code' ? 'javascript' :
-                         (padType === 'markdown' || padType === 'checklist' || padType === 'journal') ? 'markdown' :
-                         (padType === 'text') ? 'plaintext' :
-                         language === 'plaintext' ? 'text' : language;
+  const mappedLanguage = language === 'plaintext' ? 'text' : language;
 
   // Evaluate Customizations
   let activeFontFamily = codeFont;
