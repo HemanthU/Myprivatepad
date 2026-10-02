@@ -735,6 +735,7 @@ export default function NotePage() {
                   isDecoyMode={isDecoyMode}
                   initialText={isBurned ? localText : undefined}
                   padType={padType}
+                  customization={customization}
                   language="plaintext"
                   onStatsChange={(words, chars, text) => {
                     setWordCount(words);

@@ -15,7 +15,11 @@ const getRandomColor = () => {
   return colors[Math.floor(Math.random() * colors.length)];
 };
 
-export default function CollaborativeEditor({ slug, isBurned, isDecoyMode, initialText, language = "plaintext", padType, onStatsChange, onUsersChange }: { slug: string, isBurned: boolean, isDecoyMode: boolean, initialText?: string, language?: string, padType?: string, onStatsChange: (words: number, chars: number, text: string) => void, onUsersChange?: (users: any[]) => void }) {
+export default function CollaborativeEditor({ 
+  slug, isBurned, isDecoyMode, initialText, language = "plaintext", padType, customization, onStatsChange, onUsersChange 
+}: { 
+  slug: string, isBurned: boolean, isDecoyMode: boolean, initialText?: string, language?: string, padType?: string, customization?: any, onStatsChange: (words: number, chars: number, text: string) => void, onUsersChange?: (users: any[]) => void 
+}) {
   const [ydoc] = useState(() => new Y.Doc());
   const [provider, setProvider] = useState<WebrtcProvider>();
   const { toast } = useToast();
@@ -77,7 +81,15 @@ export default function CollaborativeEditor({ slug, isBurned, isDecoyMode, initi
         getDoc(doc(db, isDecoyMode ? "padSettings" : "notes", slug)).then(snap => {
           if (snap.exists() && ytext.toString() === "") {
             const content = isDecoyMode ? snap.data().decoyContent : snap.data().content;
-            ytext.insert(0, content || "");
+            
+            // Auto-inject templates if new and padType is specific
+            let initialInsert = content || "";
+            if (initialInsert === "" && padType === "checklist") {
+              initialInsert = "# To-Do List\n\n- [ ] Task 1\n- [ ] Task 2\n- [ ] Task 3\n";
+            } else if (initialInsert === "" && padType === "journal") {
+              initialInsert = `# Journal Entry - ${new Date().toLocaleDateString()}\n\n`;
+            }
+            ytext.insert(0, initialInsert);
           }
         });
       }
@@ -130,7 +142,7 @@ export default function CollaborativeEditor({ slug, isBurned, isDecoyMode, initi
       webrtcProvider.destroy();
       if (bindingRef.current) bindingRef.current.destroy();
     };
-  }, [slug, isDecoyMode, isBurned]);
+  }, [slug, isDecoyMode, isBurned, padType]);
 
   const handleEditorDidMount = (editor: any, monaco: any) => {
     editorRef.current = editor;
@@ -143,9 +155,30 @@ export default function CollaborativeEditor({ slug, isBurned, isDecoyMode, initi
   const monacoTheme = theme === 'light' ? 'padX-light' : 'padX-dark';
 
   const mappedLanguage = padType === 'code' ? 'javascript' :
-                         padType === 'markdown' ? 'markdown' :
-                         (padType === 'text' || padType === 'checklist' || padType === 'journal') ? 'plaintext' :
+                         (padType === 'markdown' || padType === 'checklist' || padType === 'journal') ? 'markdown' :
+                         (padType === 'text') ? 'plaintext' :
                          language === 'plaintext' ? 'text' : language;
+
+  // Evaluate Customizations
+  let activeFontFamily = codeFont;
+  let activeFontSize = fontSize;
+  let activeLineHeight = lineHeight * fontSize;
+
+  if (customization) {
+    if (customization.font === 'serif') activeFontFamily = 'ui-serif, Georgia, serif';
+    else if (customization.font === 'mono') activeFontFamily = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
+    else if (customization.font === 'cursive') activeFontFamily = 'cursive';
+
+    if (customization.fontSize === 'small') activeFontSize = 12;
+    else if (customization.fontSize === 'large') activeFontSize = 18;
+    else if (customization.fontSize === 'xl') activeFontSize = 22;
+    else if (customization.fontSize === 'default') activeFontSize = 14;
+
+    if (customization.lineSpacing === 'compact') activeLineHeight = activeFontSize * 1.2;
+    else if (customization.lineSpacing === 'relaxed') activeLineHeight = activeFontSize * 1.75;
+    else if (customization.lineSpacing === 'loose') activeLineHeight = activeFontSize * 2.0;
+    else if (customization.lineSpacing === 'normal') activeLineHeight = activeFontSize * 1.5;
+  }
 
   if (!provider) return <div className="animate-pulse flex-1 bg-gray-100 dark:bg-gray-800 rounded-xl" />;
 
@@ -158,9 +191,9 @@ export default function CollaborativeEditor({ slug, isBurned, isDecoyMode, initi
         onMount={handleEditorDidMount}
         options={{
           readOnly: isBurned,
-          fontFamily: codeFont,
-          fontSize: fontSize,
-          lineHeight: lineHeight * fontSize,
+          fontFamily: activeFontFamily,
+          fontSize: activeFontSize,
+          lineHeight: activeLineHeight,
           letterSpacing: letterSpacing,
           minimap: { enabled: minimap },
           wordWrap: wordWrap ? "on" : "off",
@@ -179,3 +212,4 @@ export default function CollaborativeEditor({ slug, isBurned, isDecoyMode, initi
     </div>
   );
 }
+
