@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import { WifiOff } from "lucide-react";
 import Editor, { useMonaco } from "@monaco-editor/react";
 import * as Y from "yjs";
 import { WebrtcProvider } from "y-webrtc";
@@ -10,6 +11,7 @@ import { db } from "@/lib/firebase";
 import { useToast } from "@/hooks/useToast";
 import { useAppStore } from "@/lib/store";
 import { encryptText, decryptText, hashRoomName } from "@/lib/clientCrypto";
+import { defineMonacoThemes } from "@/lib/monacoThemes";
 
 const getRandomColor = () => {
   const colors = ["#ef4444", "#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899", "#14b8a6"];
@@ -51,6 +53,7 @@ export default function CollaborativeEditor({
           'editor.foreground': '#0f172a',
         }
       });
+      defineMonacoThemes(monaco);
     }
   }, [monaco]);
 
@@ -187,7 +190,8 @@ export default function CollaborativeEditor({
     }
   };
 
-  const monacoTheme = theme === 'light' ? 'padX-light' : 'padX-dark';
+  const customThemes = ['amoled', 'nord', 'dracula', 'solarized', 'catppuccin', 'cyberpunk', 'glass'];
+  const monacoTheme = customThemes.includes(theme) ? theme : (theme === 'light' ? 'padX-light' : 'padX-dark');
 
   const mappedLanguage = language === 'plaintext' ? 'text' : language;
 
@@ -213,6 +217,20 @@ export default function CollaborativeEditor({
   }
 
   const [isMobile, setIsMobile] = useState(false);
+  const [isOffline, setIsOffline] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    setIsOffline(!navigator.onLine);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768 || ('ontouchstart' in window) || navigator.maxTouchPoints > 0);
@@ -225,6 +243,12 @@ export default function CollaborativeEditor({
 
   return (
     <div className="w-full flex-1 flex flex-col custom-monaco-wrapper relative">
+      {isOffline && (
+        <div className="absolute top-2 right-2 z-50 glass-frosted text-yellow-500 rounded-full px-3 py-1 flex items-center gap-2 text-xs font-semibold shadow-md backdrop-blur-md">
+          <WifiOff size={14} />
+          Offline - Saving Locally
+        </div>
+      )}
       {isMobile ? (
         <textarea
           readOnly={isBurned}

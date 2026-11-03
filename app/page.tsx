@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import ThemeToggle from "@/components/ThemeToggle";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
+import InstallPWA from "@/components/ui/InstallPWA";
 
 export default function Home() {
   const [keyword, setKeyword] = useState("");
@@ -61,6 +62,7 @@ export default function Home() {
           </div>
         </div>
       </main>
+      <InstallPWA />
     </div>
   );
 }

@@ -112,7 +112,7 @@ export default function AdminActivityPage() {
       <div className="fixed bottom-0 right-0 w-[50%] h-[50%] bg-indigo-600/10 blur-[150px] rounded-full pointer-events-none" />
 
       {/* Header */}
-      <header className="fixed top-6 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-5xl bg-slate-900/70 backdrop-blur-3xl border border-white/10 rounded-3xl z-50 px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xl">
+      <header className="fixed top-6 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-5xl glass-frosted border border-white/10 rounded-3xl z-50 px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xl">
         <div className="flex items-center gap-4">
           <button onClick={() => router.push("/admin")} className="p-2 hover:bg-white/10 rounded-full text-slate-400 hover:text-white transition">
             <ArrowLeft size={20} />
@@ -132,8 +132,8 @@ export default function AdminActivityPage() {
             <div>
               <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4 flex items-center gap-2"><Filter size={14} /> Views</h3>
               <div className="space-y-1">
-                <button onClick={() => setActiveTab("logs")} className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors ${activeTab === "logs" ? "bg-blue-600/20 text-blue-400 border border-blue-500/20" : "text-slate-400 hover:text-white hover:bg-white/5"}`}>Activity Logs</button>
-                <button onClick={() => setActiveTab("sessions")} className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors ${activeTab === "sessions" ? "bg-indigo-600/20 text-indigo-400 border border-indigo-500/20" : "text-slate-400 hover:text-white hover:bg-white/5"}`}>Session History</button>
+                <button onClick={() => setActiveTab("logs")} className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors ${activeTab === "logs" ? "bg-blue-600/20 text-blue-400 border border-blue-500/20" : "text-slate-400 hover:text-white hover:glass-clear"}`}>Activity Logs</button>
+                <button onClick={() => setActiveTab("sessions")} className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors ${activeTab === "sessions" ? "bg-indigo-600/20 text-indigo-400 border border-indigo-500/20" : "text-slate-400 hover:text-white hover:glass-clear"}`}>Session History</button>
               </div>
             </div>
 
@@ -143,7 +143,7 @@ export default function AdminActivityPage() {
                   <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4 flex items-center gap-2"><Filter size={14} /> Category</h3>
                   <div className="space-y-1">
                     {["ALL", "PADS", "FILES", "SECURITY", "SESSIONS", "SYSTEM"].map(cat => (
-                      <button key={cat} onClick={() => setCategoryFilter(cat)} className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${categoryFilter === cat ? "bg-white/10 text-white font-semibold" : "text-slate-400 hover:text-white hover:bg-white/5"}`}>
+                      <button key={cat} onClick={() => setCategoryFilter(cat)} className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${categoryFilter === cat ? "bg-white/10 text-white font-semibold" : "text-slate-400 hover:text-white hover:glass-clear"}`}>
                         {cat}
                       </button>
                     ))}
@@ -154,7 +154,7 @@ export default function AdminActivityPage() {
                   <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4 flex items-center gap-2"><Calendar size={14} /> Date Range</h3>
                   <div className="space-y-1">
                     {["Today", "Yesterday", "7 days", "30 days", "All time"].map(range => (
-                      <button key={range} onClick={() => setDateFilter(range)} className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${dateFilter === range ? "bg-white/10 text-white font-semibold" : "text-slate-400 hover:text-white hover:bg-white/5"}`}>
+                      <button key={range} onClick={() => setDateFilter(range)} className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${dateFilter === range ? "bg-white/10 text-white font-semibold" : "text-slate-400 hover:text-white hover:glass-clear"}`}>
                         {range}
                       </button>
                     ))}
@@ -168,7 +168,7 @@ export default function AdminActivityPage() {
           <div className="flex-1 min-w-0">
             {activeTab === "logs" ? (
               <div className="space-y-6">
-                <div className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-2xl px-4 py-2 text-slate-300">
+                <div className="flex items-center gap-4 glass-clear border border-white/10 rounded-2xl px-4 py-2 text-slate-300">
                   <Search size={18} className="text-slate-500" />
                   <input 
                     type="text" 
@@ -179,7 +179,7 @@ export default function AdminActivityPage() {
                   />
                 </div>
 
-                <div className="bg-slate-900/40 backdrop-blur-3xl border border-white/10 rounded-[2rem] overflow-hidden shadow-2xl">
+                <div className="glass-frosted border border-white/10 rounded-[2rem] overflow-hidden shadow-2xl">
                   {loading ? (
                     <div className="p-12 text-center text-slate-400 animate-pulse">Fetching persistent audit logs...</div>
                   ) : filteredLogs.length === 0 ? (
@@ -201,7 +201,7 @@ export default function AdminActivityPage() {
                         </thead>
                         <tbody className="divide-y divide-white/5 text-sm">
                           {filteredLogs.map(log => (
-                            <tr key={log.id} className="hover:bg-white/5 transition-colors">
+                            <tr key={log.id} className="hover:glass-clear transition-colors">
                               <td className="p-5 text-slate-400">
                                 {new Date(log.timestamp).toLocaleString()}
                               </td>
@@ -226,7 +226,7 @@ export default function AdminActivityPage() {
               <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
                 <h2 className="text-2xl font-extrabold text-white flex items-center gap-2 mb-6"><Monitor size={24} className="text-indigo-400"/> Session History</h2>
                 
-                <div className="bg-slate-900/40 backdrop-blur-3xl border border-white/10 rounded-[2rem] overflow-hidden shadow-2xl">
+                <div className="glass-frosted border border-white/10 rounded-[2rem] overflow-hidden shadow-2xl">
                   {loading ? (
                     <div className="p-12 text-center text-slate-400 animate-pulse">Loading sessions...</div>
                   ) : sessions.length === 0 ? (
@@ -257,7 +257,7 @@ export default function AdminActivityPage() {
                             else if (s.status === "ended") statusColor = "text-slate-500";
 
                             return (
-                              <tr key={s.id} className="hover:bg-white/5 transition-colors">
+                              <tr key={s.id} className="hover:glass-clear transition-colors">
                                 <td className="p-5 font-mono text-indigo-300">
                                   {s.sessionId}
                                 </td>
