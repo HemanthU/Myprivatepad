@@ -1,6 +1,16 @@
 export const defineMonacoThemes = (monaco: any) => {
   const transparentBackground = '#00000000';
 
+  const baseColors = {
+    'editor.background': transparentBackground,
+    'editorGutter.background': transparentBackground,
+    'editorLineNumber.foreground': '#64748b66',
+    'editorLineNumber.activeForeground': '#38bdf8',
+    'editor.lineHighlightBackground': transparentBackground,
+    'editor.lineHighlightBorder': transparentBackground,
+    'editorOverviewRuler.border': transparentBackground,
+  };
+
   monaco.editor.defineTheme('amoled', {
     base: 'vs-dark',
     inherit: true,
@@ -10,9 +20,9 @@ export const defineMonacoThemes = (monaco: any) => {
       { token: 'string', foreground: 'f1fa8c' },
     ],
     colors: {
-      'editor.background': transparentBackground,
+      ...baseColors,
       'editor.foreground': '#f8f8f2',
-      'editor.selectionBackground': '#44475a',
+      'editor.selectionBackground': '#44475a80',
     }
   });
 
@@ -25,9 +35,9 @@ export const defineMonacoThemes = (monaco: any) => {
       { token: 'string', foreground: 'a3be8c' },
     ],
     colors: {
-      'editor.background': transparentBackground,
+      ...baseColors,
       'editor.foreground': '#d8dee9',
-      'editor.selectionBackground': '#434c5e',
+      'editor.selectionBackground': '#434c5e80',
     }
   });
 
@@ -40,14 +50,14 @@ export const defineMonacoThemes = (monaco: any) => {
       { token: 'string', foreground: 'f1fa8c' },
     ],
     colors: {
-      'editor.background': transparentBackground,
+      ...baseColors,
       'editor.foreground': '#f8f8f2',
-      'editor.selectionBackground': '#44475a',
+      'editor.selectionBackground': '#44475a80',
     }
   });
 
   monaco.editor.defineTheme('solarized', {
-    base: 'vs',
+    base: 'vs-dark',
     inherit: true,
     rules: [
       { token: 'comment', foreground: '93a1a1', fontStyle: 'italic' },
@@ -55,9 +65,9 @@ export const defineMonacoThemes = (monaco: any) => {
       { token: 'string', foreground: '2aa198' },
     ],
     colors: {
-      'editor.background': transparentBackground,
+      ...baseColors,
       'editor.foreground': '#657b83',
-      'editor.selectionBackground': '#eee8d5',
+      'editor.selectionBackground': '#eee8d580',
     }
   });
 
@@ -70,9 +80,9 @@ export const defineMonacoThemes = (monaco: any) => {
       { token: 'string', foreground: 'a6e3a1' },
     ],
     colors: {
-      'editor.background': transparentBackground,
+      ...baseColors,
       'editor.foreground': '#cdd6f4',
-      'editor.selectionBackground': '#585b70',
+      'editor.selectionBackground': '#585b7080',
     }
   });
 
@@ -85,9 +95,9 @@ export const defineMonacoThemes = (monaco: any) => {
       { token: 'string', foreground: 'fcee0a' },
     ],
     colors: {
-      'editor.background': transparentBackground,
+      ...baseColors,
       'editor.foreground': '#00ffff',
-      'editor.selectionBackground': '#711c91',
+      'editor.selectionBackground': '#711c9180',
     }
   });
 
@@ -100,7 +110,7 @@ export const defineMonacoThemes = (monaco: any) => {
       { token: 'string', foreground: 'c3e88d' },
     ],
     colors: {
-      'editor.background': transparentBackground,
+      ...baseColors,
       'editor.foreground': '#eeffff',
       'editor.selectionBackground': '#80cbc440',
     }

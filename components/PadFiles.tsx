@@ -356,7 +356,7 @@ export default function PadFiles({ slug, isLocked }: { slug: string; isLocked: b
   const FileCard = ({ f }: { f: FileMetadata }) => {
     const category = getFileCategory(f.fileType);
     return (
-      <div className="glass-frosted border border-border rounded-2xl p-4 flex flex-col hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+      <div className="glass-frosted border border-white/15 dark:border-white/10 rounded-2xl p-4 flex flex-col hover:shadow-xl hover:-translate-y-1 hover:border-sky-400/40 transition-all duration-300">
         <div className="flex items-start justify-between mb-3">
           <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden flex items-center justify-center w-12 h-12 shrink-0">
             {category === "image" && f.downloadUrl?.startsWith("data:") && !f.isEncrypted ? (
@@ -388,7 +388,7 @@ export default function PadFiles({ slug, isLocked }: { slug: string; isLocked: b
         <p className="text-xs text-gray-500 mb-4">{formatSize(f.fileSize)} • {formatDistanceToNow(new Date(f.uploadedAt))} ago</p>
 
         <div className="mt-auto flex items-center gap-2 pt-3 border-t border-border">
-          <button onClick={() => handlePreview(f)} disabled={previewLoading === f.fileId} className="flex-1 py-1.5 bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400 rounded-lg text-xs font-semibold flex justify-center items-center gap-1 hover:bg-blue-200 transition-colors disabled:opacity-50">
+          <button onClick={() => handlePreview(f)} disabled={previewLoading === f.fileId} className="flex-1 py-1.5 bg-sky-500/15 text-sky-400 border border-sky-400/30 rounded-xl text-xs font-semibold flex justify-center items-center gap-1 hover:bg-sky-500/25 transition-all shadow-sm disabled:opacity-50">
             {previewLoading === f.fileId ? <Loader2 size={14} className="animate-spin" /> : <Eye size={14} />}
             {previewLoading === f.fileId ? "Loading..." : category === "archive" || category === "other" ? "Download" : "View"}
           </button>
@@ -425,27 +425,73 @@ export default function PadFiles({ slug, isLocked }: { slug: string; isLocked: b
       {/* Drop Zone */}
       <div
         {...getRootProps()}
-        className={`w-full border-2 border-dashed rounded-3xl p-8 sm:p-12 text-center cursor-pointer transition-all ${isDragActive ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20" : "border-gray-300 dark:border-gray-700 hover:border-gray-400 glass-frosted"}`}
+        className={`w-full rounded-3xl p-8 sm:p-12 text-center cursor-pointer transition-all duration-300 relative overflow-hidden group glass-frosted border ${
+          isDragActive 
+            ? "border-sky-400 bg-sky-500/10 shadow-[0_0_40px_rgba(56,189,248,0.25)] scale-[1.01]" 
+            : "border-white/20 dark:border-white/10 hover:border-sky-400/40 hover:shadow-[0_12px_40px_rgba(0,0,0,0.15)] dark:hover:shadow-[0_12px_40px_rgba(0,0,0,0.6)]"
+        }`}
       >
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-sky-400/50 to-transparent pointer-events-none" />
         <input {...getInputProps()} />
         <div className="flex flex-col items-center justify-center gap-4">
-          <div className="p-4 bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400 rounded-full">
-            <UploadCloud size={40} />
+          <div className={`p-4 rounded-2xl transition-all duration-300 ${
+            isDragActive 
+              ? "bg-sky-500 text-white scale-110 shadow-lg shadow-sky-500/30" 
+              : "bg-sky-500/10 text-sky-400 group-hover:scale-110 group-hover:bg-sky-500/20"
+          }`}>
+            <UploadCloud size={38} />
           </div>
           <div>
-            <p className="text-xl font-bold mb-1">Drag & Drop any file here</p>
-            <p className="text-gray-500 dark:text-gray-400 text-sm">Images · Music · Video · PDF · Code · Documents · Archives</p>
-            <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Max 20MB per file · Ctrl+U to open picker</p>
+            <p className="text-xl sm:text-2xl font-extrabold tracking-tight mb-1 text-foreground">
+              {isDragActive ? "Drop files to upload instantly" : "Drag & Drop any file here"}
+            </p>
+            <p className="text-gray-400 dark:text-gray-400 text-sm font-medium">
+              Images · Music · Video · PDF · Code · Documents · Archives
+            </p>
+            <p className="text-xs text-sky-400/80 font-mono mt-1.5 flex items-center justify-center gap-2">
+              <span>Max 20MB per file</span>
+              <span>•</span>
+              <span className="px-2 py-0.5 rounded-md glass-clear text-[10px] uppercase font-sans tracking-wide">Ctrl + U</span>
+            </p>
           </div>
-          <div className="flex items-center gap-6 mt-2" onClick={(e) => e.stopPropagation()}>
-            <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
-              <input type="checkbox" checked={encryptUploads} onChange={(e) => setEncryptUploads(e.target.checked)} className="w-4 h-4 rounded text-blue-600" />
-              Vault Mode (Encrypt)
-            </label>
-            <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
-              <input type="checkbox" checked={burnUploads} onChange={(e) => setBurnUploads(e.target.checked)} className="w-4 h-4 rounded text-orange-600" />
-              Burn After Read
-            </label>
+
+          {/* Interactive Mode Options - Frosted Glass Toggle Pills */}
+          <div className="flex flex-wrap items-center justify-center gap-3 mt-3" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setEncryptUploads(!encryptUploads)}
+              className={`flex items-center gap-2.5 px-4 py-2 rounded-2xl text-xs font-semibold transition-all duration-200 border ${
+                encryptUploads
+                  ? "bg-sky-500/15 border-sky-400 text-sky-400 shadow-lg shadow-sky-500/20"
+                  : "glass-clear border-white/10 text-gray-400 hover:text-foreground hover:border-white/20"
+              }`}
+            >
+              <Lock size={14} className={encryptUploads ? "text-sky-400" : "text-gray-500"} />
+              <span>Vault Mode (AES-256)</span>
+              <div className={`w-7 h-4 rounded-full transition-colors flex items-center p-0.5 ${
+                encryptUploads ? "bg-sky-500 justify-end" : "bg-gray-600/40 justify-start"
+              }`}>
+                <div className="w-3 h-3 rounded-full bg-white shadow-sm" />
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setBurnUploads(!burnUploads)}
+              className={`flex items-center gap-2.5 px-4 py-2 rounded-2xl text-xs font-semibold transition-all duration-200 border ${
+                burnUploads
+                  ? "bg-orange-500/15 border-orange-400 text-orange-400 shadow-lg shadow-orange-500/20"
+                  : "glass-clear border-white/10 text-gray-400 hover:text-foreground hover:border-white/20"
+              }`}
+            >
+              <Flame size={14} className={burnUploads ? "text-orange-400" : "text-gray-500"} />
+              <span>Burn After Read</span>
+              <div className={`w-7 h-4 rounded-full transition-colors flex items-center p-0.5 ${
+                burnUploads ? "bg-orange-500 justify-end" : "bg-gray-600/40 justify-start"
+              }`}>
+                <div className="w-3 h-3 rounded-full bg-white shadow-sm" />
+              </div>
+            </button>
           </div>
         </div>
       </div>

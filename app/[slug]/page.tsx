@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { doc, onSnapshot, setDoc, getDoc, deleteDoc } from "firebase/firestore";
 import { FileText, Search, Shield, Clock, Unlock, Lock, EyeOff, Save, Key, User, ArrowLeft, Trash, Eye, Ghost, Database, Settings, PenTool, ChevronLeft, Play, X, Terminal, Share2, Palette } from "lucide-react";
-import { db, storage } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
 import ThemeToggle from "@/components/ThemeToggle";
 import PadFiles from "@/components/PadFiles";
 import { usePrompt } from "@/hooks/usePrompt";
@@ -37,7 +37,7 @@ export default function NotePage() {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-  const [showTemplates, setShowTemplates] = useState(false);
+  
   const [settingsData, setSettingsData] = useState<any>({});
   const [isCustomizationOpen, setIsCustomizationOpen] = useState(false);
   const { addRecentPad, toggleExplorer, isExplorerOpen } = useWorkspaceStore();
@@ -45,6 +45,15 @@ export default function NotePage() {
   useEffect(() => {
     addRecentPad(slug);
   }, [slug, addRecentPad]);
+
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, "padSettings", slug), (snap) => {
+      if (snap.exists()) {
+        setSettingsData(snap.data());
+      }
+    });
+    return () => unsub();
+  }, [slug]);
   const [loaded, setLoaded] = useState(false);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const [isDecoyMode, setIsDecoyMode] = useState(false);
@@ -181,14 +190,6 @@ export default function NotePage() {
               for (let i = 0; i < fileData.chunkCount; i++) {
                 await deleteDoc(doc(db, "files", fileData.fileId, "chunks", i.toString()));
               }
-            } else if (fileData.storagePath && fileData.storagePath !== "firestore") {
-              try {
-                const { ref, deleteObject } = await import("firebase/storage");
-                const fileRef = ref(storage, fileData.storagePath);
-                await deleteObject(fileRef);
-              } catch(e) {
-                console.error("Failed to delete from storage:", e);
-              }
             }
             await deleteDoc(fileDoc.ref);
           }
@@ -211,14 +212,6 @@ export default function NotePage() {
               if (fileData.chunkCount) {
                 for (let i = 0; i < fileData.chunkCount; i++) {
                   await deleteDoc(doc(db, "files", fileData.fileId, "chunks", i.toString()));
-                }
-              } else if (fileData.storagePath && fileData.storagePath !== "firestore") {
-                try {
-                  const { ref, deleteObject } = await import("firebase/storage");
-                  const fileRef = ref(storage, fileData.storagePath);
-                  await deleteObject(fileRef);
-                } catch(e) {
-                  console.error("Failed to delete from storage:", e);
                 }
               }
               await deleteDoc(fileDoc.ref);
@@ -268,23 +261,6 @@ export default function NotePage() {
     loadPad();
   }, [slug, router]);
 
-  const applyTemplate = async (templateText: string) => {
-    try {
-      if (isDecoyMode) {
-        await setDoc(doc(db, "padSettings", slug), {
-          ...settingsData,
-          decoyContent: templateText
-        });
-      } else {
-        await setDoc(doc(db, "notes", slug), { content: templateText, updatedAt: new Date().toISOString() }, { merge: true });
-      }
-      setLocalText(templateText);
-      setShowTemplates(false);
-      toast("Template applied", "success");
-    } catch (e) {
-      toast("Failed to apply template", "error");
-    }
-  };
 
   const [timeLeft, setTimeLeft] = useState<string>("");
   useEffect(() => {
@@ -632,41 +608,6 @@ export default function NotePage() {
             </div>
           )}
 
-          {localText.trim() === "" && !isBurned && !isReadOnly && (
-            <div className="relative">
-              <button
-                onClick={() => setShowTemplates(!showTemplates)}
-                className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-sm font-semibold hover:bg-emerald-200 dark:hover:bg-emerald-900/50 transition-colors border border-transparent shadow-sm"
-                title="Insert Template"
-              >
-                <span className="text-lg leading-none">+</span>
-                <span className="hidden sm:inline">Templates</span>
-              </button>
-              {showTemplates && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl shadow-xl z-50 py-1 overflow-hidden animate-in fade-in zoom-in-95">
-                  <button 
-                    onClick={() => applyTemplate("# Markdown Boilerplate\n\n## Introduction\nStart writing here...\n\n- Bullet 1\n- Bullet 2\n\n```python\nprint('Hello World')\n```")}
-                    className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                  >
-                    Markdown Boilerplate
-                  </button>
-                  <button 
-                    onClick={() => applyTemplate("// Code Interview\n\nfunction solveProblem(input) {\n  // TODO: implement\n  return input;\n}\n\nconsole.log(solveProblem([1,2,3]));")}
-                    className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                  >
-                    Code Interview
-                  </button>
-                  <button 
-                    onClick={() => applyTemplate("# Daily Standup\n\n**Yesterday:**\n- \n\n**Today:**\n- \n\n**Blockers:**\n- None")}
-                    className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                  >
-                    Daily Standup
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
           <button
             onClick={() => setIsCustomizationOpen(true)}
             className="p-2 rounded-full bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400 hover:bg-pink-200 dark:hover:bg-pink-900/50 transition-colors"
@@ -740,7 +681,11 @@ export default function NotePage() {
 
         <div className="flex-1 w-full grid grid-cols-1 grid-rows-1 mb-8">
           {/* Notes Tab */}
-          <div className={`col-start-1 row-start-1 w-full flex flex-col min-h-[600px] glass-frosted shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] border border-border rounded-3xl p-6 sm:p-12 transition-all duration-300 hover:shadow-[0_8px_40px_rgb(0,0,0,0.08)] dark:hover:shadow-[0_8px_40px_rgb(0,0,0,0.5)] ${activeTab === 'notes' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'}`}>
+          <div 
+            style={customization?.background ? { backgroundColor: customization.background } : undefined}
+            className={`col-start-1 row-start-1 w-full flex flex-col min-h-[620px] glass-frosted shadow-[0_16px_50px_rgba(0,0,0,0.1)] dark:shadow-[0_16px_50px_rgba(0,0,0,0.5)] border border-white/25 dark:border-white/10 rounded-3xl p-6 sm:p-10 transition-all duration-300 relative overflow-hidden ${activeTab === 'notes' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'}`}>
+            {/* Top glass highlight line */}
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-sky-400/40 to-transparent pointer-events-none" />
               <div className="flex-1 flex flex-col min-h-[400px] relative overflow-hidden">
                 <CollaborativeEditor 
                   slug={slug} 

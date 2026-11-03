@@ -35,13 +35,20 @@ export default function CollaborativeEditor({
   useEffect(() => {
     // Map custom themes to Monaco themes
     if (monaco) {
+      const transparentBackground = '#00000000';
       monaco.editor.defineTheme('padX-dark', {
         base: 'vs-dark',
         inherit: true,
         rules: [],
         colors: {
-          'editor.background': '#00000000', // transparent
+          'editor.background': transparentBackground,
           'editor.foreground': '#f8fafc',
+          'editorGutter.background': transparentBackground,
+          'editorLineNumber.foreground': '#64748b66',
+          'editorLineNumber.activeForeground': '#38bdf8',
+          'editor.lineHighlightBackground': transparentBackground,
+          'editor.lineHighlightBorder': transparentBackground,
+          'editorOverviewRuler.border': transparentBackground,
         }
       });
       monaco.editor.defineTheme('padX-light', {
@@ -49,8 +56,14 @@ export default function CollaborativeEditor({
         inherit: true,
         rules: [{ token: '', foreground: '0f172a' }],
         colors: {
-          'editor.background': '#00000000', // transparent
+          'editor.background': transparentBackground,
           'editor.foreground': '#0f172a',
+          'editorGutter.background': transparentBackground,
+          'editorLineNumber.foreground': '#94a3b880',
+          'editorLineNumber.activeForeground': '#0284c7',
+          'editor.lineHighlightBackground': transparentBackground,
+          'editor.lineHighlightBorder': transparentBackground,
+          'editorOverviewRuler.border': transparentBackground,
         }
       });
       defineMonacoThemes(monaco);
@@ -205,16 +218,46 @@ export default function CollaborativeEditor({
     else if (customization.font === 'mono') activeFontFamily = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
     else if (customization.font === 'cursive') activeFontFamily = 'cursive';
 
-    if (customization.fontSize === 'small') activeFontSize = 12;
+    if (customization.fontSize === 'small') activeFontSize = 13;
+    else if (customization.fontSize === 'medium' || customization.fontSize === 'default') activeFontSize = 15;
     else if (customization.fontSize === 'large') activeFontSize = 18;
     else if (customization.fontSize === 'xl') activeFontSize = 22;
-    else if (customization.fontSize === 'default') activeFontSize = 14;
 
-    if (customization.lineSpacing === 'compact') activeLineHeight = activeFontSize * 1.2;
-    else if (customization.lineSpacing === 'relaxed') activeLineHeight = activeFontSize * 1.75;
-    else if (customization.lineSpacing === 'loose') activeLineHeight = activeFontSize * 2.0;
+    if (customization.lineSpacing === 'compact') activeLineHeight = activeFontSize * 1.25;
     else if (customization.lineSpacing === 'normal') activeLineHeight = activeFontSize * 1.5;
+    else if (customization.lineSpacing === 'relaxed') activeLineHeight = activeFontSize * 1.8;
+    else if (customization.lineSpacing === 'loose') activeLineHeight = activeFontSize * 2.1;
   }
+
+  // Dynamically update Monaco editor options on customization change
+  useEffect(() => {
+    if (editorRef.current) {
+      editorRef.current.updateOptions({
+        fontFamily: activeFontFamily,
+        fontSize: activeFontSize,
+        lineHeight: activeLineHeight,
+        letterSpacing: letterSpacing,
+        minimap: { enabled: minimap },
+        wordWrap: wordWrap ? "on" : "off",
+        lineNumbers: "on",
+        lineDecorationsWidth: 0,
+        lineNumbersMinChars: 3,
+        glyphMargin: false,
+        folding: false,
+        renderLineHighlight: "none",
+        renderLineHighlightOnlyWhenFocus: false,
+        overviewRulerBorder: false,
+        overviewRulerLanes: 0,
+        hideCursorInOverviewRuler: true,
+        renderWhitespace: "none",
+        scrollbar: {
+          verticalScrollbarSize: 6,
+          horizontalScrollbarSize: 6,
+          useShadows: false,
+        }
+      });
+    }
+  }, [activeFontFamily, activeFontSize, activeLineHeight, letterSpacing, minimap, wordWrap]);
 
   const [isMobile, setIsMobile] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
@@ -286,14 +329,25 @@ export default function CollaborativeEditor({
             letterSpacing: letterSpacing,
             minimap: { enabled: minimap },
             wordWrap: wordWrap ? "on" : "off",
+            lineNumbers: "on",
+            lineDecorationsWidth: 0,
+            lineNumbersMinChars: 3,
+            glyphMargin: false,
+            folding: false,
+            renderLineHighlight: "none",
+            overviewRulerBorder: false,
+            overviewRulerLanes: 0,
+            hideCursorInOverviewRuler: true,
+            renderWhitespace: "none",
             bracketPairColorization: { enabled: true },
             autoClosingBrackets: "always",
             cursorBlinking: "smooth",
             smoothScrolling: true,
-            padding: { top: 16, bottom: 16 },
+            padding: { top: 20, bottom: 20 },
             scrollbar: {
-              verticalScrollbarSize: 8,
-              horizontalScrollbarSize: 8
+              verticalScrollbarSize: 6,
+              horizontalScrollbarSize: 6,
+              useShadows: false,
             }
           }}
           className="w-full h-full rounded-b-xl overflow-hidden"

@@ -276,8 +276,73 @@ html.dark body {
   font-weight: bold;
 }
 
-/* Glassmorphism Overhaul */
-.glass-clear { background: rgba(255,255,255,0.2) !important; border: 1px solid rgba(255,255,255,0.3) !important; backdrop-filter: blur(12px) !important; }
-.dark .glass-clear { background: rgba(0,0,0,0.3) !important; border: 1px solid rgba(255,255,255,0.1) !important; }
-.glass-frosted { background: rgba(255,255,255,0.6) !important; border: 1px solid rgba(255,255,255,0.7) !important; backdrop-filter: blur(32px) !important; box-shadow: 0 8px 32px 0 rgba(0,0,0,0.1) !important; }
-.dark .glass-frosted { background: rgba(15,23,42,0.5) !important; border: 1px solid rgba(255,255,255,0.08) !important; box-shadow: 0 8px 32px 0 rgba(0,0,0,0.5) !important; }
+/* Glassmorphism Overhaul - Black & Whitish Frosted Glass Theme */
+.glass-clear { 
+  background: rgba(255, 255, 255, 0.08) !important; 
+  border: 1px solid rgba(255, 255, 255, 0.15) !important; 
+  backdrop-filter: blur(16px) !important; 
+  -webkit-backdrop-filter: blur(16px) !important;
+}
+.dark .glass-clear { 
+  background: rgba(15, 23, 42, 0.4) !important; 
+  border: 1px solid rgba(255, 255, 255, 0.1) !important; 
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+}
+
+.glass-frosted { 
+  background: rgba(255, 255, 255, 0.7) !important; 
+  border: 1px solid rgba(255, 255, 255, 0.4) !important; 
+  backdrop-filter: blur(28px) saturate(180%) !important; 
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.06), inset 0 1px 1px 0 rgba(255, 255, 255, 0.6) !important; 
+}
+.dark .glass-frosted { 
+  background: rgba(10, 15, 29, 0.65) !important; 
+  border: 1px solid rgba(255, 255, 255, 0.08) !important; 
+  backdrop-filter: blur(28px) saturate(180%) !important; 
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), inset 0 1px 1px 0 rgba(255, 255, 255, 0.05) !important; 
+}
+
+/* Monaco Editor Complete Glassmorphism & Clean Line Numbers */
+.custom-monaco-wrapper,
+.monaco-editor,
+.monaco-editor .overflow-guard,
+.monaco-editor .monaco-scrollable-element,
+.monaco-editor-background,
+.monaco-editor .inputarea.ime-input,
+.monaco-editor .margin {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+.monaco-editor .margin {
+  background: transparent !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+.monaco-editor .line-numbers {
+  color: rgba(148, 163, 184, 0.4) !important;
+  font-family: inherit !important;
+  font-size: 0.82em !important;
+}
+
+.monaco-editor .line-numbers.active-line-number {
+  color: #38bdf8 !important; /* Edge / Ice Blue */
+  font-weight: 700 !important;
+}
+
+/* Strip line highlight background boxes */
+.monaco-editor .current-line,
+.monaco-editor .current-line-exact,
+.monaco-editor .view-overlays .current-line,
+.monaco-editor .view-overlays .current-line-exact {
+  border: none !important;
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+.monaco-editor .glyph-margin {
+  background: transparent !important;
+}
