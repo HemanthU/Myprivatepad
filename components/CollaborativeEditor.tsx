@@ -19,9 +19,9 @@ const getRandomColor = () => {
 };
 
 export default function CollaborativeEditor({ 
-  slug, isBurned, isDecoyMode, isLocked, initialText, language = "plaintext", customization, onStatsChange, onUsersChange 
+  slug, isBurned, isDecoyMode, isLocked, initialText, language = "plaintext", customization, onStatsChange, onUsersChange, onStatusChange 
 }: { 
-  slug: string, isBurned: boolean, isDecoyMode: boolean, isLocked: boolean, initialText?: string, language?: string, customization?: any, onStatsChange: (words: number, chars: number, text: string) => void, onUsersChange?: (users: any[]) => void 
+  slug: string, isBurned: boolean, isDecoyMode: boolean, isLocked: boolean, initialText?: string, language?: string, customization?: any, onStatsChange: (words: number, chars: number, text: string) => void, onUsersChange?: (users: any[]) => void, onStatusChange?: (status: "Synced" | "Saving..." | "Connecting..." | "Offline" | "Sync Error") => void 
 }) {
   const [ydoc] = useState(() => new Y.Doc());
   const [provider, setProvider] = useState<WebrtcProvider>();
@@ -137,6 +137,9 @@ export default function CollaborativeEditor({
         if (transaction.local && !isBurned) {
           if (!initRef.current) return;
           
+          // Instant feedback: notify UI that writing is in progress
+          onStatusChange?.("Saving...");
+
           if (!sessionStorage.getItem(`snapshot-${slug}`)) {
             sessionStorage.setItem(`snapshot-${slug}`, 'true');
             // Snapshot on first edit of session
@@ -153,6 +156,7 @@ export default function CollaborativeEditor({
           }
 
           clearTimeout(timeout);
+          // High-speed 750ms debounce for lightning-fast auto-save
           timeout = setTimeout(async () => {
             try {
               let saveText = currentText;
@@ -171,12 +175,14 @@ export default function CollaborativeEditor({
               } else {
                  await setDoc(doc(db, "notes", slug), { content: saveText, updatedAt: new Date().toISOString() });
               }
+              onStatusChange?.("Synced");
               toast("Pad Auto-Saved", "success");
             } catch (err: any) {
+              onStatusChange?.("Sync Error");
               console.error("Auto-save sync error:", err);
               toast("Sync Error: " + (err?.message || "Unknown error"), "error");
             }
-          }, 1500);
+          }, 750);
         }
       };
 

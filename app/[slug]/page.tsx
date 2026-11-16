@@ -701,6 +701,7 @@ export default function NotePage() {
                     setLocalText(text);
                   }}
                   onUsersChange={setActiveUsers}
+                  onStatusChange={setConnectionStatus}
                 />
               </div>
               <div className="mt-6 pt-4 border-t border-border flex justify-end text-sm font-medium text-gray-500 dark:text-gray-400">
