@@ -44,23 +44,27 @@ export default function CollaborativeEditor({
           'editor.background': transparentBackground,
           'editor.foreground': '#f8fafc',
           'editorGutter.background': transparentBackground,
-          'editorLineNumber.foreground': '#64748b66',
-          'editorLineNumber.activeForeground': '#38bdf8',
+          'editorLineNumber.foreground': 'rgba(255, 255, 255, 0.3)',
+          'editorLineNumber.activeForeground': '#ffffff',
+          'editorCursor.foreground': '#ffffff',
+          'editor.selectionBackground': 'rgba(255, 255, 255, 0.15)',
           'editor.lineHighlightBackground': transparentBackground,
           'editor.lineHighlightBorder': transparentBackground,
           'editorOverviewRuler.border': transparentBackground,
         }
       });
       monaco.editor.defineTheme('padX-light', {
-        base: 'vs',
+        base: 'vs-dark',
         inherit: true,
-        rules: [{ token: '', foreground: '0f172a' }],
+        rules: [{ token: '', foreground: 'f8fafc' }],
         colors: {
           'editor.background': transparentBackground,
-          'editor.foreground': '#0f172a',
+          'editor.foreground': '#f8fafc',
           'editorGutter.background': transparentBackground,
-          'editorLineNumber.foreground': '#94a3b880',
-          'editorLineNumber.activeForeground': '#0284c7',
+          'editorLineNumber.foreground': 'rgba(255, 255, 255, 0.3)',
+          'editorLineNumber.activeForeground': '#ffffff',
+          'editorCursor.foreground': '#ffffff',
+          'editor.selectionBackground': 'rgba(255, 255, 255, 0.15)',
           'editor.lineHighlightBackground': transparentBackground,
           'editor.lineHighlightBorder': transparentBackground,
           'editorOverviewRuler.border': transparentBackground,
@@ -104,9 +108,10 @@ export default function CollaborativeEditor({
       const ytext = ydoc.getText("monaco");
 
       if (!initRef.current) {
-        initRef.current = true;
         if (initialText) {
-           if (ytext.toString() === "") ytext.insert(0, initialText);
+          if (ytext.toString() === "") ytext.insert(0, initialText);
+          initRef.current = true;
+          onStatusChange?.("Synced");
         } else {
           try {
             const snap = await getDoc(doc(db, isDecoyMode ? "padSettings" : "notes", slug));
@@ -125,6 +130,9 @@ export default function CollaborativeEditor({
             }
           } catch (err) {
             console.error("Failed to load pad content", err);
+          } finally {
+            initRef.current = true;
+            onStatusChange?.("Synced");
           }
         }
       }
@@ -214,25 +222,22 @@ export default function CollaborativeEditor({
 
   const mappedLanguage = language === 'plaintext' ? 'text' : language;
 
-  // Evaluate Customizations
-  let activeFontFamily = codeFont;
-  let activeFontSize = fontSize;
-  let activeLineHeight = lineHeight * fontSize;
+  // Generous, beautiful typography for comfortable writing
+  let activeFontFamily = codeFont || "'JetBrains Mono', 'Fira Code', 'Cascadia Code', Menlo, Monaco, Consolas, monospace";
+  let activeFontSize = fontSize && fontSize >= 16 ? fontSize : 18;
+  let activeLineHeight = Math.round(activeFontSize * 1.65);
 
   if (customization) {
     if (customization.font === 'serif') activeFontFamily = 'ui-serif, Georgia, serif';
-    else if (customization.font === 'mono') activeFontFamily = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
+    else if (customization.font === 'mono') activeFontFamily = "'JetBrains Mono', 'Fira Code', ui-monospace, monospace";
     else if (customization.font === 'cursive') activeFontFamily = 'cursive';
 
-    if (customization.fontSize === 'small') activeFontSize = 13;
-    else if (customization.fontSize === 'medium' || customization.fontSize === 'default') activeFontSize = 15;
-    else if (customization.fontSize === 'large') activeFontSize = 18;
-    else if (customization.fontSize === 'xl') activeFontSize = 22;
+    if (customization.fontSize === 'small') activeFontSize = 15;
+    else if (customization.fontSize === 'medium' || customization.fontSize === 'default') activeFontSize = 18;
+    else if (customization.fontSize === 'large') activeFontSize = 20;
+    else if (customization.fontSize === 'xl') activeFontSize = 24;
 
-    if (customization.lineSpacing === 'compact') activeLineHeight = activeFontSize * 1.25;
-    else if (customization.lineSpacing === 'normal') activeLineHeight = activeFontSize * 1.5;
-    else if (customization.lineSpacing === 'relaxed') activeLineHeight = activeFontSize * 1.8;
-    else if (customization.lineSpacing === 'loose') activeLineHeight = activeFontSize * 2.1;
+    activeLineHeight = Math.round(activeFontSize * 1.65);
   }
 
   // Dynamically update Monaco editor options on customization change
@@ -282,7 +287,7 @@ export default function CollaborativeEditor({
   }, []);
 
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768 || ('ontouchstart' in window) || navigator.maxTouchPoints > 0);
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
@@ -301,19 +306,18 @@ export default function CollaborativeEditor({
       {isMobile ? (
         <textarea
           readOnly={isBurned}
-          className="w-full h-full flex-1 resize-none bg-transparent outline-none p-4"
+          className="w-full h-full flex-1 resize-none bg-transparent outline-none p-4 text-foreground selection:bg-white/20"
           style={{
             fontFamily: activeFontFamily,
             fontSize: activeFontSize,
-            lineHeight: activeLineHeight,
+            lineHeight: `${activeLineHeight}px`,
             letterSpacing: letterSpacing
           }}
-          value={ydoc.getText("monaco").toString()}
-          onChange={(e) => {
+          defaultValue={ydoc.getText("monaco").toString()}
+          onInput={(e: any) => {
             if (isBurned) return;
             const ytext = ydoc.getText("monaco");
             const val = e.target.value;
-            // Simple replacement for mobile typing (not perfect sync but works for single user typing)
             ydoc.transact(() => {
               ytext.delete(0, ytext.length);
               ytext.insert(0, val);

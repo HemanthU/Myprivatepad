@@ -185,10 +185,10 @@ export default function VersionHistory({ slug, currentText, onClose, onRestore }
                             <h3 className="font-semibold text-sm flex items-center gap-2 truncate">
                               {v.isCurrent ? 'Current State' : new Date(v.createdAt).toLocaleTimeString()}
                               <span className={`text-[10px] px-1.5 rounded-full shrink-0 ${
-                                v.isCurrent ? 'bg-green-500 text-white' :
-                                v.source === 'checkpoint' ? 'bg-orange-400 text-white' :
-                                v.source === 'manual' ? 'bg-blue-500 text-white' :
-                                'bg-gray-400 text-white'
+                                v.isCurrent ? 'bg-emerald-500/80 text-white' :
+                                v.source === 'checkpoint' ? 'bg-amber-500/80 text-white' :
+                                v.source === 'manual' ? 'bg-white/20 text-white' :
+                                'bg-white/10 text-gray-300'
                               }`}>{sourceLabel(v)}</span>
                             </h3>
                             <p className="text-xs text-gray-500 mt-0.5">
@@ -204,7 +204,7 @@ export default function VersionHistory({ slug, currentText, onClose, onRestore }
                         {!v.isCurrent && (
                           <button
                             onClick={(e) => { e.stopPropagation(); handleRestore(v.text, new Date(v.createdAt).toLocaleString()); }}
-                            className="mt-2 w-full py-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors flex items-center justify-center gap-1"
+                            className="mt-2 w-full py-1.5 text-xs font-semibold text-white hover:bg-white/10 rounded-lg transition-colors flex items-center justify-center gap-1"
                           >
                             <RotateCcw size={12} /> Restore
                           </button>

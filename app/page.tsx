@@ -11,17 +11,9 @@ export default function Home() {
   const [keyword, setKeyword] = useState("");
   const router = useRouter();
 
-  const openPad = async () => {
+  const openPad = () => {
     if (!keyword.trim()) return;
     const slug = keyword.trim();
-    
-    try {
-      const snap = await getDoc(doc(db, 'padSettings', slug));
-      if (!snap.exists() && auth?.currentUser?.uid) {
-        await setDoc(doc(db, 'padSettings', slug), { ownerId: auth.currentUser.uid }, { merge: true });
-      }
-    } catch { /* non-fatal */ }
-
     router.push(`/${slug}`);
   };
 

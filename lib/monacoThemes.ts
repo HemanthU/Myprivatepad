@@ -4,8 +4,8 @@ export const defineMonacoThemes = (monaco: any) => {
   const baseColors = {
     'editor.background': transparentBackground,
     'editorGutter.background': transparentBackground,
-    'editorLineNumber.foreground': '#64748b66',
-    'editorLineNumber.activeForeground': '#38bdf8',
+    'editorLineNumber.foreground': 'rgba(255, 255, 255, 0.3)',
+    'editorLineNumber.activeForeground': '#ffffff',
     'editor.lineHighlightBackground': transparentBackground,
     'editor.lineHighlightBorder': transparentBackground,
     'editorOverviewRuler.border': transparentBackground,

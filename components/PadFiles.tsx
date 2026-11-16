@@ -119,6 +119,14 @@ export default function PadFiles({ slug, isLocked }: { slug: string; isLocked: b
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [previewFile, ocrResultText]);
 
+  const readFileAsDataUrl = (blob: Blob): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
       acceptedFiles.forEach(async (file) => {
@@ -128,18 +136,13 @@ export default function PadFiles({ slug, isLocked }: { slug: string; isLocked: b
         }
 
         const fileId = Math.random().toString(36).substring(2, 15);
-        setUploadingFiles((prev) => [...prev, { id: fileId, name: file.name, progress: 5 }]);
+        setUploadingFiles((prev) => [...prev, { id: fileId, name: file.name, progress: 10 }]);
 
         try {
-          const buffer = await file.arrayBuffer();
-          const bytes = new Uint8Array(buffer);
-          const totalChunks = Math.ceil(bytes.byteLength / CHUNK_SIZE);
-
-          if (totalChunks <= 1) {
-            // Fast-path: single small file stored directly as inline data URL
-            const base64 = uint8ToBase64(bytes);
-            const downloadUrl = `data:${file.type || "application/octet-stream"};base64,${base64}`;
-            setUploadingFiles((prev) => prev.map((f) => (f.id === fileId ? { ...f, progress: 75 } : f)));
+          if (file.size <= CHUNK_SIZE) {
+            // Fast direct inline file storage via native browser FileReader
+            const dataUrl = await readFileAsDataUrl(file);
+            setUploadingFiles((prev) => prev.map((f) => (f.id === fileId ? { ...f, progress: 85 } : f)));
 
             const metadata: FileMetadata = {
               fileId,
@@ -149,17 +152,17 @@ export default function PadFiles({ slug, isLocked }: { slug: string; isLocked: b
               fileSize: file.size,
               uploadedAt: new Date().toISOString(),
               storagePath: "firestore-inline",
-              downloadUrl,
+              downloadUrl: dataUrl,
               isEncrypted: encryptUploads,
               isBurnAfterRead: burnUploads,
               totalViews: 0,
               totalDownloads: 0,
             };
             await setDoc(doc(db, "files", fileId), metadata);
-            // Pre-seed blob cache
-            blobCache.current.set(fileId, downloadUrl);
+            blobCache.current.set(fileId, dataUrl);
           } else {
-            // High-throughput parallel chunk upload pipeline
+            // High-speed chunked upload via native blob slicing
+            const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
             const metadata: FileMetadata = {
               fileId,
               padId: slug,
@@ -176,28 +179,18 @@ export default function PadFiles({ slug, isLocked }: { slug: string; isLocked: b
               chunkCount: totalChunks,
             };
 
-            // Write metadata first
             await setDoc(doc(db, "files", fileId), metadata);
 
-            let uploadedCount = 0;
-            // Execute chunks in parallel batches of UPLOAD_CONCURRENCY
-            for (let i = 0; i < totalChunks; i += UPLOAD_CONCURRENCY) {
-              const batchPromises = [];
-              for (let j = i; j < Math.min(i + UPLOAD_CONCURRENCY, totalChunks); j++) {
-                const start = j * CHUNK_SIZE;
-                const end = Math.min(start + CHUNK_SIZE, bytes.byteLength);
-                const chunkBytes = bytes.subarray(start, end);
-                const chunkBase64 = uint8ToBase64(chunkBytes);
+            for (let i = 0; i < totalChunks; i++) {
+              const start = i * CHUNK_SIZE;
+              const end = Math.min(start + CHUNK_SIZE, file.size);
+              const chunkBlob = file.slice(start, end);
+              const chunkDataUrl = await readFileAsDataUrl(chunkBlob);
+              const chunkBase64 = chunkDataUrl.split(",")[1] || "";
 
-                batchPromises.push(
-                  setDoc(doc(db, "files", fileId, "chunks", j.toString()), { data: chunkBase64 }).then(() => {
-                    uploadedCount++;
-                    const progress = Math.min(95, Math.round((uploadedCount / totalChunks) * 95));
-                    setUploadingFiles((prev) => prev.map((f) => (f.id === fileId ? { ...f, progress } : f)));
-                  })
-                );
-              }
-              await Promise.all(batchPromises);
+              await setDoc(doc(db, "files", fileId, "chunks", i.toString()), { data: chunkBase64 });
+              const progress = Math.min(95, Math.round(((i + 1) / totalChunks) * 95));
+              setUploadingFiles((prev) => prev.map((f) => (f.id === fileId ? { ...f, progress } : f)));
             }
           }
 
@@ -296,14 +289,14 @@ export default function PadFiles({ slug, isLocked }: { slug: string; isLocked: b
 
   const getFileIcon = (type: string) => {
     const cat = getFileCategory(type);
-    if (cat === "image") return <ImageIcon size={22} className="text-blue-400" />;
-    if (cat === "audio") return <Music size={22} className="text-purple-400" />;
-    if (cat === "video") return <Video size={22} className="text-red-400" />;
-    if (cat === "pdf") return <FileText size={22} className="text-orange-400" />;
-    if (cat === "office") return <FileText size={22} className="text-green-400" />;
-    if (cat === "text") return <Code size={22} className="text-sky-400" />;
-    if (cat === "archive") return <Archive size={22} className="text-yellow-400" />;
-    return <FileIcon size={22} className="text-gray-400" />;
+    if (cat === "image") return <ImageIcon size={22} className="text-white/90" />;
+    if (cat === "audio") return <Music size={22} className="text-white/90" />;
+    if (cat === "video") return <Video size={22} className="text-white/90" />;
+    if (cat === "pdf") return <FileText size={22} className="text-white/90" />;
+    if (cat === "office") return <FileText size={22} className="text-white/90" />;
+    if (cat === "text") return <Code size={22} className="text-white/90" />;
+    if (cat === "archive") return <Archive size={22} className="text-white/90" />;
+    return <FileIcon size={22} className="text-white/70" />;
   };
 
   const handlePreview = async (file: FileMetadata) => {
@@ -444,19 +437,19 @@ export default function PadFiles({ slug, isLocked }: { slug: string; isLocked: b
   const getCategoryBadge = (cat: string) => {
     switch (cat) {
       case "image":
-        return <span className="px-2 py-0.5 rounded-md bg-cyan-500/15 border border-cyan-400/30 text-cyan-400 text-[10px] font-bold uppercase tracking-wider">Image</span>;
+        return <span className="px-2 py-0.5 rounded-md bg-white/10 border border-white/20 text-white text-[10px] font-bold uppercase tracking-wider">Image</span>;
       case "audio":
-        return <span className="px-2 py-0.5 rounded-md bg-purple-500/15 border border-purple-400/30 text-purple-400 text-[10px] font-bold uppercase tracking-wider">Audio</span>;
+        return <span className="px-2 py-0.5 rounded-md bg-white/10 border border-white/20 text-white text-[10px] font-bold uppercase tracking-wider">Audio</span>;
       case "video":
-        return <span className="px-2 py-0.5 rounded-md bg-rose-500/15 border border-rose-400/30 text-rose-400 text-[10px] font-bold uppercase tracking-wider">Video</span>;
+        return <span className="px-2 py-0.5 rounded-md bg-white/10 border border-white/20 text-white text-[10px] font-bold uppercase tracking-wider">Video</span>;
       case "pdf":
       case "office":
       case "text":
-        return <span className="px-2 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-400/30 text-emerald-400 text-[10px] font-bold uppercase tracking-wider">Document</span>;
+        return <span className="px-2 py-0.5 rounded-md bg-white/10 border border-white/20 text-white text-[10px] font-bold uppercase tracking-wider">Document</span>;
       case "archive":
-        return <span className="px-2 py-0.5 rounded-md bg-amber-500/15 border border-amber-400/30 text-amber-400 text-[10px] font-bold uppercase tracking-wider">Archive</span>;
+        return <span className="px-2 py-0.5 rounded-md bg-white/10 border border-white/20 text-white text-[10px] font-bold uppercase tracking-wider">Archive</span>;
       default:
-        return <span className="px-2 py-0.5 rounded-md bg-slate-500/15 border border-slate-400/30 text-slate-400 text-[10px] font-bold uppercase tracking-wider">File</span>;
+        return <span className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-gray-400 text-[10px] font-bold uppercase tracking-wider">File</span>;
     }
   };
 
@@ -475,17 +468,17 @@ export default function PadFiles({ slug, isLocked }: { slug: string; isLocked: b
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <span className="font-semibold text-sm text-foreground truncate cursor-pointer hover:text-sky-400 transition-colors" onClick={() => handlePreview(f)} title={f.fileName}>
+              <span className="font-semibold text-sm text-foreground truncate cursor-pointer hover:text-white transition-colors" onClick={() => handlePreview(f)} title={f.fileName}>
                 {f.fileName}
               </span>
-              {f.isEncrypted && <span title="Vault Encrypted"><Lock size={12} className="text-sky-400 shrink-0" /></span>}
+              {f.isEncrypted && <span title="Vault Encrypted"><Lock size={12} className="text-white shrink-0" /></span>}
               {f.isBurnAfterRead && <span title="Burn After Read"><Flame size={12} className="text-orange-400 shrink-0" /></span>}
-              {f.chunkCount && <span className="text-[9px] text-sky-400/80 font-mono px-1 py-0.2 rounded glass-clear shrink-0">{f.chunkCount}x</span>}
+              {f.chunkCount && <span className="text-[9px] text-white/80 font-mono px-1 py-0.2 rounded glass-clear shrink-0">{f.chunkCount}x</span>}
             </div>
             {f.tags && f.tags.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-1">
                 {f.tags.map((t) => (
-                  <span key={t} className="px-1.5 py-0.2 glass-clear text-sky-400 rounded text-[9px] font-medium flex items-center gap-1 border border-sky-400/20">
+                  <span key={t} className="px-1.5 py-0.2 glass-clear text-white/90 rounded text-[9px] font-medium flex items-center gap-1 border border-white/15">
                     {t}
                     <X size={9} className="cursor-pointer opacity-50 hover:opacity-100 transition-opacity" onClick={(e) => { e.stopPropagation(); removeTag(f, t); }} />
                   </span>
@@ -512,7 +505,7 @@ export default function PadFiles({ slug, isLocked }: { slug: string; isLocked: b
           <button 
             onClick={() => handlePreview(f)} 
             disabled={previewLoading === f.fileId} 
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 text-sky-400 border border-sky-400/30 text-xs font-semibold transition-all shadow-sm disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white border border-white/30 text-xs font-semibold transition-all shadow-sm disabled:opacity-50"
             title="Instant Preview"
           >
             {previewLoading === f.fileId ? <Loader2 size={13} className="animate-spin" /> : <Eye size={13} />}
@@ -538,8 +531,8 @@ export default function PadFiles({ slug, isLocked }: { slug: string; isLocked: b
   const FileCard = ({ f }: { f: FileMetadata }) => {
     const category = getFileCategory(f.fileType);
     return (
-      <div className="glass-frosted border border-white/12 rounded-2xl p-4.5 flex flex-col hover:shadow-2xl hover:border-sky-400/40 transition-all duration-200 group relative overflow-hidden">
-        <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-sky-400/30 to-transparent pointer-events-none" />
+      <div className="glass-frosted border border-white/12 rounded-2xl p-4.5 flex flex-col hover:shadow-2xl hover:border-white/30 transition-all duration-200 group relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none" />
         <div className="flex items-start justify-between mb-3">
           <div className="p-2.5 glass-clear rounded-xl overflow-hidden flex items-center justify-center w-11 h-11 shrink-0 border border-white/10">
             {category === "image" && f.downloadUrl?.startsWith("data:") && !f.isEncrypted ? (
@@ -550,19 +543,19 @@ export default function PadFiles({ slug, isLocked }: { slug: string; isLocked: b
           </div>
           <div className="flex gap-1.5 items-center ml-2">
             {getCategoryBadge(category)}
-            {f.isEncrypted && <span title="Vault Encrypted"><Lock size={12} className="text-sky-400" /></span>}
+            {f.isEncrypted && <span title="Vault Encrypted"><Lock size={12} className="text-white" /></span>}
             {f.isBurnAfterRead && <span title="Burn After Read"><Flame size={12} className="text-orange-400" /></span>}
-            {f.chunkCount && <span className="text-[9px] text-sky-400/80 font-mono px-1.5 py-0.5 rounded glass-clear">{f.chunkCount}x</span>}
+            {f.chunkCount && <span className="text-[9px] text-white/80 font-mono px-1.5 py-0.5 rounded glass-clear">{f.chunkCount}x</span>}
             <button onClick={() => toggleFavorite(f)} className="p-1 hover:bg-white/10 rounded-lg transition-colors">
               <Star size={14} className={f.isFavorite ? "fill-yellow-400 text-yellow-400" : "text-gray-400"} />
             </button>
           </div>
         </div>
-        <h4 className="font-semibold text-sm line-clamp-1 break-all mb-1 text-foreground cursor-pointer hover:text-sky-400 transition-colors" onClick={() => handlePreview(f)} title={f.fileName}>{f.fileName}</h4>
+        <h4 className="font-semibold text-sm line-clamp-1 break-all mb-1 text-foreground cursor-pointer hover:text-white transition-colors" onClick={() => handlePreview(f)} title={f.fileName}>{f.fileName}</h4>
 
         <div className="flex flex-wrap gap-1 mb-2 min-h-[20px]">
           {f.tags?.map((t) => (
-            <span key={t} className="px-2 py-0.5 glass-clear text-sky-400 rounded-md text-[10px] font-medium flex items-center gap-1 border border-sky-400/20">
+            <span key={t} className="px-2 py-0.5 glass-clear text-white/90 rounded-md text-[10px] font-medium flex items-center gap-1 border border-white/15">
               {t}
               <X size={10} className="cursor-pointer opacity-50 hover:opacity-100 transition-opacity" onClick={(e) => { e.stopPropagation(); removeTag(f, t); }} />
             </span>
@@ -575,7 +568,7 @@ export default function PadFiles({ slug, isLocked }: { slug: string; isLocked: b
           <button 
             onClick={() => handlePreview(f)} 
             disabled={previewLoading === f.fileId} 
-            className="flex-1 py-1.5 bg-sky-500/15 hover:bg-sky-500/25 text-sky-400 border border-sky-400/30 rounded-xl text-xs font-semibold flex justify-center items-center gap-1.5 transition-all shadow-sm disabled:opacity-50"
+            className="flex-1 py-1.5 bg-white/15 hover:bg-white/25 text-white border border-white/30 rounded-xl text-xs font-semibold flex justify-center items-center gap-1.5 transition-all shadow-sm disabled:opacity-50"
           >
             {previewLoading === f.fileId ? <Loader2 size={13} className="animate-spin" /> : <Eye size={13} />}
             <span>{previewLoading === f.fileId ? "Loading..." : "Preview"}</span>
@@ -605,29 +598,29 @@ export default function PadFiles({ slug, isLocked }: { slug: string; isLocked: b
         {...getRootProps()}
         className={`w-full rounded-3xl p-8 sm:p-12 text-center cursor-pointer transition-all duration-300 relative overflow-hidden group glass-frosted border ${
           isDragActive 
-            ? "border-sky-400 bg-sky-500/10 shadow-[0_0_40px_rgba(56,189,248,0.25)] scale-[1.01]" 
-            : "border-white/20 dark:border-white/10 hover:border-sky-400/40 hover:shadow-[0_12px_40px_rgba(0,0,0,0.15)] dark:hover:shadow-[0_12px_40px_rgba(0,0,0,0.6)]"
+            ? "border-white/50 bg-white/10 shadow-[0_0_40px_rgba(255,255,255,0.1)] scale-[1.01]" 
+            : "border-white/15 hover:border-white/35 hover:shadow-[0_12px_40px_rgba(0,0,0,0.6)]"
         }`}
       >
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-sky-400/50 to-transparent pointer-events-none" />
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none" />
         <input {...getInputProps()} />
         <div className="flex flex-col items-center justify-center gap-4">
           <div className={`p-4 rounded-2xl transition-all duration-300 ${
             isDragActive 
-              ? "bg-sky-500 text-white scale-110 shadow-lg shadow-sky-500/30" 
-              : "bg-sky-500/10 text-sky-400 group-hover:scale-110 group-hover:bg-sky-500/20"
+              ? "bg-white text-black scale-110 shadow-lg shadow-white/20" 
+              : "bg-white/10 text-white group-hover:scale-110 group-hover:bg-white/20"
           }`}>
             <UploadCloud size={38} />
           </div>
           <div>
-            <p className="text-xl sm:text-2xl font-extrabold tracking-tight mb-1 text-foreground">
+            <p className="text-xl sm:text-2xl font-extrabold tracking-tight mb-1 text-white">
               {isDragActive ? "Drop files to upload instantly" : "Drag & Drop any file here"}
             </p>
             <p className="text-gray-400 text-sm font-medium">
               Images • Music • Video • PDF • Code • Documents • Archives
             </p>
-            <p className="text-xs text-sky-400/80 font-mono mt-1.5 flex items-center justify-center gap-2">
-              <span>Parallel Multi-Chunk Engine</span>
+            <p className="text-xs text-white/60 font-mono mt-1.5 flex items-center justify-center gap-2">
+              <span>Fast Native Upload Engine</span>
               <span>•</span>
               <span>Max 20MB</span>
               <span>•</span>
@@ -642,16 +635,16 @@ export default function PadFiles({ slug, isLocked }: { slug: string; isLocked: b
               onClick={() => setEncryptUploads(!encryptUploads)}
               className={`flex items-center gap-2.5 px-4 py-2 rounded-2xl text-xs font-semibold transition-all duration-200 border ${
                 encryptUploads
-                  ? "bg-sky-500/15 border-sky-400 text-sky-400 shadow-lg shadow-sky-500/20"
-                  : "glass-clear border-white/10 text-gray-400 hover:text-foreground hover:border-white/20"
+                  ? "bg-white/15 border-white text-white shadow-lg shadow-white/10"
+                  : "glass-clear border-white/10 text-gray-400 hover:text-white hover:border-white/20"
               }`}
             >
-              <Lock size={14} className={encryptUploads ? "text-sky-400" : "text-gray-500"} />
+              <Lock size={14} className={encryptUploads ? "text-white" : "text-gray-400"} />
               <span>Vault Mode (AES-256)</span>
               <div className={`w-7 h-4 rounded-full transition-colors flex items-center p-0.5 ${
-                encryptUploads ? "bg-sky-500 justify-end" : "bg-gray-600/40 justify-start"
+                encryptUploads ? "bg-white justify-end" : "bg-gray-600/40 justify-start"
               }`}>
-                <div className="w-3 h-3 rounded-full bg-white shadow-sm" />
+                <div className="w-3 h-3 rounded-full bg-black shadow-sm" />
               </div>
             </button>
 
@@ -661,10 +654,10 @@ export default function PadFiles({ slug, isLocked }: { slug: string; isLocked: b
               className={`flex items-center gap-2.5 px-4 py-2 rounded-2xl text-xs font-semibold transition-all duration-200 border ${
                 burnUploads
                   ? "bg-orange-500/15 border-orange-400 text-orange-400 shadow-lg shadow-orange-500/20"
-                  : "glass-clear border-white/10 text-gray-400 hover:text-foreground hover:border-white/20"
+                  : "glass-clear border-white/10 text-gray-400 hover:text-white hover:border-white/20"
               }`}
             >
-              <Flame size={14} className={burnUploads ? "text-orange-400" : "text-gray-500"} />
+              <Flame size={14} className={burnUploads ? "text-orange-400" : "text-gray-400"} />
               <span>Burn After Read</span>
               <div className={`w-7 h-4 rounded-full transition-colors flex items-center p-0.5 ${
                 burnUploads ? "bg-orange-500 justify-end" : "bg-gray-600/40 justify-start"
@@ -678,19 +671,19 @@ export default function PadFiles({ slug, isLocked }: { slug: string; isLocked: b
 
       {/* Concurrent Upload Progress */}
       {uploadingFiles.length > 0 && (
-        <div className="w-full glass-frosted border border-sky-400/30 rounded-2xl p-4.5 flex flex-col gap-3 shadow-lg animate-in fade-in slide-in-from-top-2">
-          <div className="flex items-center gap-2.5 text-sky-400">
+        <div className="w-full glass-frosted border border-white/20 rounded-2xl p-4.5 flex flex-col gap-3 shadow-lg animate-in fade-in slide-in-from-top-2">
+          <div className="flex items-center gap-2.5 text-white">
             <Loader2 className="animate-spin" size={17} />
-            <h4 className="font-bold text-xs uppercase tracking-wider">Uploading {uploadingFiles.length} file{uploadingFiles.length > 1 ? "s" : ""} (Parallel Engine)...</h4>
+            <h4 className="font-bold text-xs uppercase tracking-wider">Uploading {uploadingFiles.length} file{uploadingFiles.length > 1 ? "s" : ""}...</h4>
           </div>
           {uploadingFiles.map((f) => (
             <div key={f.id} className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between text-xs font-medium text-foreground">
-                <span className="truncate flex-1 max-w-[80%]">{f.name}</span>
-                <span className="font-mono text-sky-400 font-bold">{Math.round(f.progress)}%</span>
+                <span className="truncate flex-1 max-w-[80%] text-white">{f.name}</span>
+                <span className="font-mono text-white font-bold">{Math.round(f.progress)}%</span>
               </div>
               <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
-                <div className="bg-gradient-to-r from-sky-400 to-blue-500 h-full rounded-full transition-all duration-200" style={{ width: `${f.progress}%` }} />
+                <div className="bg-gradient-to-r from-white/40 to-white h-full rounded-full transition-all duration-200" style={{ width: `${f.progress}%` }} />
               </div>
             </div>
           ))}
@@ -708,7 +701,7 @@ export default function PadFiles({ slug, isLocked }: { slug: string; isLocked: b
                 value={search} 
                 onChange={(e) => setSearch(e.target.value)} 
                 placeholder="Search by file name or tags..." 
-                className="w-full pl-11 pr-4 py-2.5 rounded-2xl glass-frosted border border-white/15 dark:border-white/10 focus:border-sky-400 outline-none text-sm transition-all text-foreground placeholder:text-gray-500" 
+                className="w-full pl-11 pr-4 py-2.5 rounded-2xl glass-frosted border border-white/15 focus:border-white/40 outline-none text-sm transition-all text-white placeholder:text-gray-500" 
               />
             </div>
             <button 
@@ -716,7 +709,7 @@ export default function PadFiles({ slug, isLocked }: { slug: string; isLocked: b
               className={`px-4 py-2.5 rounded-2xl border flex items-center justify-center gap-2 text-xs font-semibold transition-all ${
                 showFavoritesOnly 
                   ? "bg-yellow-500/15 border-yellow-400 text-yellow-400 shadow-sm" 
-                  : "glass-frosted border-white/15 text-gray-400 hover:text-foreground"
+                  : "glass-frosted border-white/15 text-gray-400 hover:text-white"
               }`}
             >
               <Star size={14} className={showFavoritesOnly ? "fill-current" : ""} /> Starred ({files.filter(f => f.isFavorite).length})
@@ -740,13 +733,13 @@ export default function PadFiles({ slug, isLocked }: { slug: string; isLocked: b
                   onClick={() => setSelectedCategory(pill.id as any)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border flex items-center gap-1.5 ${
                     selectedCategory === pill.id
-                      ? "glass-frosted border-sky-400/50 text-sky-400 shadow-sm"
-                      : "glass-clear border-white/10 text-gray-400 hover:text-foreground hover:border-white/20"
+                      ? "glass-frosted border-white/40 text-white shadow-sm"
+                      : "glass-clear border-white/10 text-gray-400 hover:text-white hover:border-white/20"
                   }`}
                 >
                   <span>{pill.label}</span>
                   <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                    selectedCategory === pill.id ? "bg-sky-500/20 text-sky-300" : "bg-white/5 text-gray-500"
+                    selectedCategory === pill.id ? "bg-white/20 text-white" : "bg-white/5 text-gray-500"
                   }`}>
                     {pill.count}
                   </span>
@@ -759,7 +752,7 @@ export default function PadFiles({ slug, isLocked }: { slug: string; isLocked: b
               <button
                 onClick={() => setViewMode("list")}
                 className={`p-1.5 rounded-lg transition-all ${
-                  viewMode === "list" ? "glass-frosted text-sky-400 shadow-sm" : "text-gray-400 hover:text-white"
+                  viewMode === "list" ? "glass-frosted text-white shadow-sm" : "text-gray-400 hover:text-white"
                 }`}
                 title="List View"
               >
@@ -768,7 +761,7 @@ export default function PadFiles({ slug, isLocked }: { slug: string; isLocked: b
               <button
                 onClick={() => setViewMode("grid")}
                 className={`p-1.5 rounded-lg transition-all ${
-                  viewMode === "grid" ? "glass-frosted text-sky-400 shadow-sm" : "text-gray-400 hover:text-white"
+                  viewMode === "grid" ? "glass-frosted text-white shadow-sm" : "text-gray-400 hover:text-white"
                 }`}
                 title="Grid Cards View"
               >
@@ -811,7 +804,7 @@ export default function PadFiles({ slug, isLocked }: { slug: string; isLocked: b
           <div className="text-center py-12 glass-frosted border border-white/10 rounded-2xl flex flex-col items-center gap-2">
             <Search size={32} className="opacity-40 text-gray-400" />
             <p className="text-sm font-semibold text-gray-300">No files found matching this category or search.</p>
-            <button onClick={() => { setSelectedCategory("all"); setSearch(""); }} className="text-xs text-sky-400 underline hover:opacity-80">
+            <button onClick={() => { setSelectedCategory("all"); setSearch(""); }} className="text-xs text-white underline hover:opacity-80">
               Clear filters
             </button>
           </div>
@@ -819,17 +812,17 @@ export default function PadFiles({ slug, isLocked }: { slug: string; isLocked: b
 
         {files.length === 0 && (
           <div className="text-center py-16 text-gray-400 border border-dashed border-white/15 rounded-3xl flex flex-col items-center gap-3">
-            <UploadCloud size={40} className="opacity-30 text-sky-400" />
+            <UploadCloud size={40} className="opacity-30 text-white" />
             <p className="font-medium text-sm text-gray-300">No files uploaded to this pad yet.</p>
-            <p className="text-xs text-gray-500">Supports high-speed multi-chunk upload for images, audio, video, PDF, code & more</p>
+            <p className="text-xs text-gray-500">Supports fast direct upload for images, audio, video, PDF, code & more</p>
           </div>
         )}
       </div>
 
       {/* High-Performance Instant Preview Modal */}
       {previewFile && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xl flex flex-col items-center justify-center p-0 sm:p-6 animate-in fade-in duration-150">
-          <div className="w-full max-w-5xl h-full sm:max-h-[92vh] glass-frosted/95 backdrop-blur-3xl border border-white/20 dark:border-white/10 sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xl flex flex-col items-center justify-center p-0 sm:p-6 animate-in fade-in duration-150">
+          <div className="w-full max-w-5xl h-full sm:max-h-[92vh] glass-frosted/95 backdrop-blur-3xl border border-white/15 sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden">
 
             {/* Modal Header */}
             <div className="p-4 sm:p-5 border-b border-white/10 flex flex-col sm:flex-row sm:items-center justify-between shrink-0 gap-3 bg-transparent">
@@ -839,7 +832,7 @@ export default function PadFiles({ slug, isLocked }: { slug: string; isLocked: b
                 </button>
                 <div className="p-2 glass-clear rounded-xl hidden sm:flex border border-white/10">{getFileIcon(previewFile.fileType)}</div>
                 <div>
-                  <h3 className="font-bold text-sm sm:text-base leading-tight line-clamp-1 text-foreground">{previewFile.fileName}</h3>
+                  <h3 className="font-bold text-sm sm:text-base leading-tight line-clamp-1 text-white">{previewFile.fileName}</h3>
                   <p className="text-xs text-gray-400 font-mono mt-0.5">{formatSize(previewFile.fileSize)} • {previewFile.fileType} • {previewFile.totalViews} Views</p>
                 </div>
               </div>
@@ -851,39 +844,39 @@ export default function PadFiles({ slug, isLocked }: { slug: string; isLocked: b
                   const url = `${window.location.origin}/file/${id}`;
                   navigator.clipboard.writeText(url);
                   toast("One-time file link copied to clipboard!", "success");
-                }} className="px-3 py-1.5 glass-clear hover:glass-frosted text-foreground border border-white/15 rounded-xl transition-all flex items-center gap-1.5 text-xs font-semibold shrink-0">
+                }} className="px-3 py-1.5 glass-clear hover:glass-frosted text-white border border-white/15 rounded-xl transition-all flex items-center gap-1.5 text-xs font-semibold shrink-0">
                   <Download size={13} /> <span className="hidden sm:inline">Share 1-Time</span>
                 </button>
                 {/* OCR text extractor for images */}
                 {previewCategory === "image" && (
-                  <button onClick={() => handleScanText(previewFile)} disabled={ocrLoading} className="px-3 py-1.5 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-400/30 rounded-xl transition-all flex items-center gap-1.5 text-xs font-semibold shrink-0">
+                  <button onClick={() => handleScanText(previewFile)} disabled={ocrLoading} className="px-3 py-1.5 glass-clear hover:glass-frosted text-white border border-white/20 rounded-xl transition-all flex items-center gap-1.5 text-xs font-semibold shrink-0">
                     <ScanText size={13} /> <span className="hidden sm:inline">{ocrLoading ? "Scanning..." : "Scan Text"}</span>
                   </button>
                 )}
-                <button onClick={() => handleDownload(previewFile)} className="px-3.5 py-1.5 bg-sky-500 hover:bg-sky-400 text-black font-bold rounded-xl transition-all flex items-center gap-1.5 text-xs shadow-md shadow-sky-500/20 shrink-0">
+                <button onClick={() => handleDownload(previewFile)} className="px-3.5 py-1.5 bg-white hover:bg-gray-200 text-black font-bold rounded-xl transition-all flex items-center gap-1.5 text-xs shadow-md shadow-white/10 shrink-0">
                   <Download size={13} /> Download
                 </button>
               </div>
             </div>
 
             {/* Modal Body */}
-            <div className="flex-1 w-full overflow-hidden relative flex items-center justify-center bg-black/40">
+            <div className="flex-1 w-full overflow-hidden relative flex items-center justify-center bg-black/60">
               {previewFile.isEncrypted ? (
                 <div className="text-center p-8 max-w-md">
-                  <Lock size={56} className="mx-auto mb-4 text-sky-400" />
-                  <h2 className="text-xl font-bold mb-2 text-foreground">Vault Encrypted File</h2>
+                  <Lock size={56} className="mx-auto mb-4 text-white" />
+                  <h2 className="text-xl font-bold mb-2 text-white">Vault Encrypted File</h2>
                   <p className="text-gray-400 text-xs mb-5">This file was uploaded in Vault Mode. Download and use your pad password to decrypt it locally.</p>
-                  <button onClick={() => handleDownload(previewFile)} className="px-6 py-2.5 bg-sky-500 hover:bg-sky-400 text-black font-bold text-xs rounded-xl shadow-lg transition-all">Download Encrypted File</button>
+                  <button onClick={() => handleDownload(previewFile)} className="px-6 py-2.5 bg-white hover:bg-gray-200 text-black font-bold text-xs rounded-xl shadow-lg shadow-white/10 transition-all">Download Encrypted File</button>
                 </div>
               ) : previewCategory === "image" && previewBlobUrl ? (
                 <img src={previewBlobUrl} alt={previewFile.fileName} className="max-w-full max-h-full object-contain p-4 select-none" />
               ) : previewCategory === "audio" && previewBlobUrl ? (
                 <div className="flex flex-col items-center gap-6 p-8 w-full max-w-md">
-                  <div className="w-32 h-32 rounded-3xl bg-gradient-to-br from-purple-500 to-sky-500 flex items-center justify-center shadow-2xl">
-                    <Music size={52} className="text-white" />
+                  <div className="w-28 h-28 rounded-3xl glass-frosted border border-white/15 flex items-center justify-center shadow-2xl">
+                    <Music size={46} className="text-white" />
                   </div>
                   <div className="text-center">
-                    <p className="font-bold text-lg mb-1 text-foreground">{previewFile.fileName}</p>
+                    <p className="font-bold text-base mb-1 text-white">{previewFile.fileName}</p>
                     <p className="text-gray-400 text-xs font-mono">{previewFile.fileType} • {formatSize(previewFile.fileSize)}</p>
                   </div>
                   <audio ref={audioRef} controls autoPlay src={previewBlobUrl} className="w-full rounded-xl" style={{ colorScheme: "dark" }} />
@@ -895,11 +888,11 @@ export default function PadFiles({ slug, isLocked }: { slug: string; isLocked: b
               ) : previewCategory === "office" && previewBlobUrl ? (
                 <iframe src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(previewBlobUrl)}`} className="w-full h-full border-none bg-white rounded-xl" />
               ) : previewCategory === "text" && textPreviewContent !== null ? (
-                <div className="w-full h-full overflow-auto p-6 bg-black/60 relative">
+                <div className="w-full h-full overflow-auto p-6 bg-black/80 relative">
                   <div className="flex justify-end mb-2 sticky top-0">
                     <button 
                       onClick={() => { navigator.clipboard.writeText(textPreviewContent); toast("Code copied!", "success"); }}
-                      className="px-3 py-1 glass-clear hover:glass-frosted border border-white/10 rounded-lg text-xs font-mono text-sky-400 flex items-center gap-1.5"
+                      className="px-3 py-1 glass-clear hover:glass-frosted border border-white/10 rounded-lg text-xs font-mono text-white flex items-center gap-1.5"
                     >
                       <Copy size={12} /> Copy All
                     </button>
@@ -908,14 +901,14 @@ export default function PadFiles({ slug, isLocked }: { slug: string; isLocked: b
                 </div>
               ) : (
                 <div className="text-center p-8 max-w-md glass-frosted rounded-3xl border border-white/10 shadow-2xl flex flex-col items-center">
-                  <div className="p-4 rounded-2xl glass-clear text-sky-400 mb-4 border border-white/10">
+                  <div className="p-4 rounded-2xl glass-clear text-white mb-4 border border-white/10">
                     {getFileIcon(previewFile.fileType)}
                   </div>
                   <h2 className="text-lg font-bold mb-1 text-white">{previewFile.fileName}</h2>
                   <div className="flex items-center gap-2 text-xs font-mono text-gray-400 mb-5">
                     <span>{formatSize(previewFile.fileSize)}</span>
                     {previewFile.chunkCount && (
-                      <span className="px-2 py-0.5 glass-clear rounded-md text-sky-400 text-[10px]">
+                      <span className="px-2 py-0.5 glass-clear rounded-md text-white text-[10px]">
                         {previewFile.chunkCount} chunks
                       </span>
                     )}
@@ -926,7 +919,7 @@ export default function PadFiles({ slug, isLocked }: { slug: string; isLocked: b
                   <button 
                     onClick={() => handleDownload(previewFile)} 
                     disabled={downloadingFileId === previewFile.fileId}
-                    className="w-full py-2.5 bg-sky-500 hover:bg-sky-400 text-black font-bold text-xs rounded-xl shadow-lg shadow-sky-500/20 transition-all flex items-center justify-center gap-2"
+                    className="w-full py-2.5 bg-white hover:bg-gray-200 text-black font-bold text-xs rounded-xl shadow-lg shadow-white/10 transition-all flex items-center justify-center gap-2"
                   >
                     {downloadingFileId === previewFile.fileId ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
                     Download File Now
@@ -940,17 +933,17 @@ export default function PadFiles({ slug, isLocked }: { slug: string; isLocked: b
 
       {/* OCR Result Modal */}
       {ocrResultText !== null && (
-        <div className="fixed inset-0 z-[100] bg-black/75 backdrop-blur-xl flex flex-col items-center justify-center p-0 sm:p-8 animate-in fade-in duration-150">
-          <div className="w-full max-w-4xl h-full sm:max-h-[90vh] glass-frosted/95 backdrop-blur-3xl border border-white/20 dark:border-white/10 sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden">
+        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-xl flex flex-col items-center justify-center p-0 sm:p-8 animate-in fade-in duration-150">
+          <div className="w-full max-w-4xl h-full sm:max-h-[90vh] glass-frosted/95 backdrop-blur-3xl border border-white/15 sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden">
             <div className="p-4 sm:p-5 border-b border-white/10 flex items-center justify-between shrink-0 bg-transparent">
               <div className="flex items-center gap-3">
                 <button onClick={() => setOcrResultText(null)} className="p-2 -ml-2 rounded-full glass-clear hover:glass-frosted transition-colors flex items-center gap-1 font-semibold text-foreground text-xs">
                   <ChevronLeft size={20} /> <span className="hidden sm:inline">Back</span>
                 </button>
-                <ScanText className="text-sky-400 hidden sm:block" size={20} />
-                <h2 className="text-base font-bold text-foreground">Extracted Text Preview</h2>
+                <ScanText className="text-white hidden sm:block" size={20} />
+                <h2 className="text-base font-bold text-white">Extracted Text Preview</h2>
               </div>
-              <button onClick={() => { navigator.clipboard.writeText(ocrResultText); toast("Text copied!", "success"); }} className="px-4 py-1.5 bg-sky-500 hover:bg-sky-400 text-black font-bold text-xs rounded-xl transition-all shadow-md flex items-center gap-1.5">
+              <button onClick={() => { navigator.clipboard.writeText(ocrResultText); toast("Text copied!", "success"); }} className="px-4 py-1.5 bg-white hover:bg-gray-200 text-black font-bold text-xs rounded-xl transition-all shadow-md flex items-center gap-1.5">
                 <Copy size={13} /> Copy Text
               </button>
             </div>

@@ -48,7 +48,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           >
             {t.type === "success" && <CheckCircle2 className="text-green-500" size={20} />}
             {t.type === "error" && <XCircle className="text-red-500" size={20} />}
-            {t.type === "info" && <Info className="text-blue-500" size={20} />}
+            {t.type === "info" && <Info className="text-white" size={20} />}
             {t.type === "loading" && <Loader2 className="text-gray-500 animate-spin" size={20} />}
             <span className="font-semibold text-sm text-foreground">{t.message}</span>
           </div>

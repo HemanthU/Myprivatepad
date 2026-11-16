@@ -113,7 +113,7 @@ export default function SecurityModal({ slug, isOpen, onClose }: { slug: string,
               {/* Password Lock */}
               <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-white/5">
                 <div className="flex items-center gap-4">
-                  <Lock size={20} className={settings.locked ? "text-blue-500" : "text-slate-400"} />
+                  <Lock size={20} className={settings.locked ? "text-white" : "text-slate-400"} />
                   <div>
                     <h3 className="font-semibold text-sm">Password Lock</h3>
                     <p className="text-xs text-slate-500">Require password to view</p>
@@ -121,7 +121,7 @@ export default function SecurityModal({ slug, isOpen, onClose }: { slug: string,
                 </div>
                 <button 
                   onClick={handlePasswordLock}
-                  className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors ${settings.locked ? 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400' : 'bg-slate-200 dark:bg-slate-700 hover:bg-indigo-600 hover:text-white'}`}
+                  className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors ${settings.locked ? 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400' : 'bg-slate-200 dark:bg-slate-700 hover:bg-white hover:text-black'}`}
                 >
                   {settings.locked ? "Disable" : "Enable"}
                 </button>
@@ -138,7 +138,7 @@ export default function SecurityModal({ slug, isOpen, onClose }: { slug: string,
                 </div>
                 <button 
                   onClick={handleSelfDestruct}
-                  className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors ${settings.selfDelete ? 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400' : 'bg-slate-200 dark:bg-slate-700 hover:bg-indigo-600 hover:text-white'}`}
+                  className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors ${settings.selfDelete ? 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400' : 'bg-slate-200 dark:bg-slate-700 hover:bg-white hover:text-black'}`}
                 >
                   {settings.selfDelete ? "Cancel" : "Set Timer"}
                 </button>
@@ -155,7 +155,7 @@ export default function SecurityModal({ slug, isOpen, onClose }: { slug: string,
                 </div>
                 <button 
                   onClick={handleTimeLock}
-                  className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors ${settings.timeLocked ? 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400' : 'bg-slate-200 dark:bg-slate-700 hover:bg-indigo-600 hover:text-white'}`}
+                  className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors ${settings.timeLocked ? 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400' : 'bg-slate-200 dark:bg-slate-700 hover:bg-white hover:text-black'}`}
                 >
                   {settings.timeLocked ? "Cancel" : "Set Lock"}
                 </button>

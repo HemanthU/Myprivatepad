@@ -120,16 +120,14 @@ export default function NotePage() {
 
   useEffect(() => {
     const loadPad = async () => {
-      let isAdmin = false;
-      try {
-        const adminRes = await fetch('/api/admin/heartbeat', { method: 'POST' });
-        if (adminRes.ok) isAdmin = true;
-      } catch (e) {}
-
       const settingsRef = doc(db, "padSettings", slug);
-      const settingsSnap = await getDoc(settingsRef);
+      const [adminRes, settingsSnap] = await Promise.all([
+        fetch('/api/admin/heartbeat', { method: 'POST' }).catch(() => null),
+        getDoc(settingsRef).catch(() => null)
+      ]);
+      const isAdmin = !!(adminRes && adminRes.ok);
 
-      if (settingsSnap.exists()) {
+      if (settingsSnap && settingsSnap.exists()) {
         const settings = settingsSnap.data();
         setSettingsData(settings);
 
@@ -611,7 +609,7 @@ export default function NotePage() {
         {!distractionFree && (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 sm:mb-8 gap-4">
           <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white flex items-center gap-2">
-            <span className="text-sky-400 font-mono">#</span> {slug} {isDecoyMode && <span className="text-sm font-normal text-gray-400">(Decoy)</span>}
+            <span className="text-white/60 font-mono">#</span> {slug} {isDecoyMode && <span className="text-sm font-normal text-gray-400">(Decoy)</span>}
           </h2>
           {/* Glassmorphic Responsive Tabs Navigation */}
           <div className="flex glass-clear p-1.5 rounded-2xl w-full sm:w-max overflow-x-auto scrollbar-hide border border-white/10 shadow-inner">
@@ -619,7 +617,7 @@ export default function NotePage() {
               onClick={() => setActiveTab("notes")}
               className={`flex-1 sm:flex-none min-w-[85px] px-6 py-2 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 border ${
                 activeTab === 'notes' 
-                  ? 'glass-frosted text-sky-400 border-sky-400/40 shadow-lg shadow-sky-500/10' 
+                  ? 'glass-frosted text-white border-white/40 shadow-lg shadow-white/5' 
                   : 'text-gray-400 hover:text-white border-transparent hover:glass-clear'
               }`}
               title="Notes (Alt+1)"
@@ -630,7 +628,7 @@ export default function NotePage() {
               onClick={() => setActiveTab("files")}
               className={`flex-1 sm:flex-none min-w-[85px] px-6 py-2 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 border ${
                 activeTab === 'files' 
-                  ? 'glass-frosted text-sky-400 border-sky-400/40 shadow-lg shadow-sky-500/10' 
+                  ? 'glass-frosted text-white border-white/40 shadow-lg shadow-white/5' 
                   : 'text-gray-400 hover:text-white border-transparent hover:glass-clear'
               }`}
               title="Files (Alt+2)"
@@ -652,7 +650,7 @@ export default function NotePage() {
           {/* Notes Tab */}
           <div className={`col-start-1 row-start-1 w-full flex flex-col min-h-[620px] glass-frosted shadow-[0_20px_60px_rgba(0,0,0,0.6)] border border-white/12 rounded-3xl p-6 sm:p-10 transition-all duration-300 relative overflow-hidden ${activeTab === 'notes' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'}`}>
             {/* Top glass highlight line */}
-            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-sky-400/40 to-transparent pointer-events-none" />
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none" />
             <div className="flex-1 flex flex-col min-h-[400px] relative overflow-hidden">
               <CollaborativeEditor 
                 slug={slug} 
@@ -687,14 +685,14 @@ export default function NotePage() {
         <div className="fixed bottom-0 left-0 right-0 z-40 flex sm:hidden glass-frosted/95 backdrop-blur-2xl border-t border-white/10 p-2 pb-4 justify-around shadow-[0_-8px_30px_rgb(0,0,0,0.5)]">
           <button
             onClick={() => setActiveTab("notes")}
-            className={`flex-1 py-2 flex flex-col items-center justify-center gap-1 rounded-xl font-semibold text-xs transition-all ${activeTab === 'notes' ? 'text-sky-400 bg-sky-500/15' : 'text-gray-400 hover:text-white'}`}
+            className={`flex-1 py-2 flex flex-col items-center justify-center gap-1 rounded-xl font-semibold text-xs transition-all ${activeTab === 'notes' ? 'text-white bg-white/15' : 'text-gray-400 hover:text-white'}`}
           >
             <FileText size={20} />
             Notes
           </button>
           <button
             onClick={() => setActiveTab("files")}
-            className={`flex-1 py-2 flex flex-col items-center justify-center gap-1 rounded-xl font-semibold text-xs transition-all ${activeTab === 'files' ? 'text-sky-400 bg-sky-500/15' : 'text-gray-400 hover:text-white'}`}
+            className={`flex-1 py-2 flex flex-col items-center justify-center gap-1 rounded-xl font-semibold text-xs transition-all ${activeTab === 'files' ? 'text-white bg-white/15' : 'text-gray-400 hover:text-white'}`}
           >
             <UploadCloud size={20} />
             Files

@@ -58,7 +58,7 @@ export default function PromptModal({ isOpen, config, onClose }: PromptModalProp
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
                 placeholder={config.requiredConfirmText ? `Type "${config.requiredConfirmText}" to confirm` : (config.placeholder || "Type here...")}
-                className="w-full px-5 py-4 bg-white/50 dark:bg-black/30 border border-slate-200 dark:border-white/10 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all text-lg font-medium text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 shadow-inner backdrop-blur-md"
+                className="w-full px-5 py-4 bg-white/50 dark:bg-black/30 border border-slate-200 dark:border-white/10 rounded-2xl focus:border-white focus:ring-4 focus:ring-white/20 outline-none transition-all text-lg font-medium text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 shadow-inner backdrop-blur-md"
               />
             </div>
           )}
@@ -76,7 +76,7 @@ export default function PromptModal({ isOpen, config, onClose }: PromptModalProp
             <button
               type="submit"
               disabled={!!config.requiredConfirmText && value !== config.requiredConfirmText}
-              className="px-6 py-3 rounded-2xl font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:pointer-events-none"
+              className="px-6 py-3 rounded-2xl font-semibold bg-white text-black hover:bg-white/90 shadow-lg shadow-white/10 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:pointer-events-none"
             >
               {config.confirmText || (config.type === "confirm" && config.cancelText !== "hidden" ? "Confirm" : "OK")}
             </button>

@@ -48,9 +48,9 @@ export const useAppStore = create<AppSettings>()(
   persist(
     (set) => ({
       theme: 'dark',
-      accentColor: '#3b82f6', // Default blue
+      accentColor: '#ffffff', // Crisp white
       
-      glassmorphism: false,
+      glassmorphism: true,
       glassBlur: 16,
       glassOpacity: 0.65,
       
@@ -61,8 +61,8 @@ export const useAppStore = create<AppSettings>()(
 
       writingFont: 'Inter',
       codeFont: 'JetBrains Mono',
-      fontSize: 14,
-      lineHeight: 1.5,
+      fontSize: 18,
+      lineHeight: 1.65,
       letterSpacing: 0,
 
       layout: 'editor-only',
