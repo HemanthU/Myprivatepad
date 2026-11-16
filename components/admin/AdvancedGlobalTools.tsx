@@ -21,7 +21,7 @@ export default function AdvancedGlobalTools({ onClose }: AdvancedGlobalToolsProp
         {/* Sidebar */}
         <div className="w-64 bg-slate-950/50 border-r border-white/5 p-4 flex flex-col gap-2">
           <div className="px-4 py-4 mb-2">
-            <h2 className="text-xl font-bold text-white flex items-center gap-2"><Shield className="text-indigo-400" /> Advanced Tools</h2>
+            <h2 className="text-xl font-bold text-white flex items-center gap-2"><Shield className="text-white" /> Advanced Tools</h2>
           </div>
           
 
@@ -61,7 +61,7 @@ function TabButton({ active, onClick, icon: Icon, label, color = "text-slate-300
     <button 
       onClick={onClick}
       className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-sm
-        ${active ? "bg-indigo-600/20 text-indigo-400" : `hover:bg-white/5 ${color}`}`}
+        ${active ? "bg-white/15 text-white shadow-sm" : `hover:bg-white/5 ${color}`}`}
     >
       <Icon size={18} /> {label}
     </button>
@@ -88,7 +88,7 @@ function DuplicatesPanel() {
             setTimeout(() => setScanning(false), 2000); // Mock scan
           }}
           disabled={scanning}
-          className="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-colors disabled:opacity-50"
+          className="px-6 py-3 rounded-xl bg-white text-black hover:bg-white/90 font-medium transition-colors disabled:opacity-50 shadow-md"
         >
           {scanning ? "Scanning..." : "Start Scan"}
         </button>
@@ -178,7 +178,7 @@ function SessionsPanel() {
                 <tr key={log.id} className="hover:bg-white/5 transition-colors">
                   <td className="p-4 text-slate-400">{new Date(log.timestamp).toLocaleString()}</td>
                   <td className="p-4 font-medium text-emerald-400">{log.action}</td>
-                  <td className="p-4 text-indigo-300 font-mono">{log.padId}</td>
+                  <td className="p-4 text-white/90 font-mono">{log.padId}</td>
                   <td className="p-4 text-slate-300">{log.actor}</td>
                 </tr>
               ))}
@@ -187,7 +187,7 @@ function SessionsPanel() {
         )}
       </div>
       <div className="flex justify-end mt-4">
-        <a href="/admin/activity" className="text-sm font-semibold text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-2">
+        <a href="/admin/activity" className="text-sm font-semibold text-white hover:underline transition-colors flex items-center gap-2">
           View Full Persistent History &rarr;
         </a>
       </div>
@@ -239,7 +239,7 @@ function ImportPanel() {
       <p className="text-slate-400">Import previously exported PadX data. Imported data will always create a new pad.</p>
       
       <label className="mt-8 p-12 border-2 border-dashed border-white/10 rounded-3xl flex flex-col items-center justify-center text-center bg-black/20 hover:bg-black/40 transition-colors cursor-pointer group block">
-        <UploadCloud className="text-indigo-500 mb-4 group-hover:scale-110 transition-transform" size={56} />
+        <UploadCloud className="text-white mb-4 group-hover:scale-110 transition-transform" size={56} />
         <h4 className="text-xl font-bold text-white mb-2">Select JSON File</h4>
         <p className="text-slate-400">Click to browse or drag and drop a PadX export file here.</p>
         <input type="file" accept=".json" className="hidden" onChange={handleFileUpload} />
@@ -263,16 +263,16 @@ function PreferencesPanel() {
       
       <div className="space-y-4 mt-8">
         <label className="flex items-center gap-3 p-4 rounded-xl bg-white/5 border border-white/10 cursor-pointer hover:bg-white/10 transition-colors">
-          <input type="checkbox" className="w-5 h-5 rounded bg-black/50 border border-white/20 checked:bg-indigo-500" defaultChecked />
+          <input type="checkbox" className="w-5 h-5 rounded bg-black/50 border border-white/20 checked:bg-white" defaultChecked />
           <span className="text-white font-medium">Use dense tables in Pad Manager</span>
         </label>
         <label className="flex items-center gap-3 p-4 rounded-xl bg-white/5 border border-white/10 cursor-pointer hover:bg-white/10 transition-colors">
-          <input type="checkbox" className="w-5 h-5 rounded bg-black/50 border border-white/20 checked:bg-indigo-500" defaultChecked />
+          <input type="checkbox" className="w-5 h-5 rounded bg-black/50 border border-white/20 checked:bg-white" defaultChecked />
           <span className="text-white font-medium">Require strict typing for ALL bulk operations</span>
         </label>
         
         <div className="pt-6">
-          <button onClick={savePrefs} className="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-colors">Save Preferences</button>
+          <button onClick={savePrefs} className="px-6 py-3 rounded-xl bg-white text-black hover:bg-white/90 font-medium transition-colors shadow-md">Save Preferences</button>
         </div>
       </div>
     </div>

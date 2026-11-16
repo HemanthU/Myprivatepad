@@ -161,7 +161,7 @@ export default function PadFiles({ slug, isLocked }: { slug: string; isLocked: b
             await setDoc(doc(db, "files", fileId), metadata);
             blobCache.current.set(fileId, dataUrl);
           } else {
-            // High-speed chunked upload via native blob slicing
+            // High-speed parallel chunked upload via native blob slicing & concurrent network dispatch
             const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
             const metadata: FileMetadata = {
               fileId,
@@ -179,19 +179,31 @@ export default function PadFiles({ slug, isLocked }: { slug: string; isLocked: b
               chunkCount: totalChunks,
             };
 
-            await setDoc(doc(db, "files", fileId), metadata);
-
-            for (let i = 0; i < totalChunks; i++) {
+            // Slice & read all chunks in parallel
+            const chunkPromises = Array.from({ length: totalChunks }, async (_, i) => {
               const start = i * CHUNK_SIZE;
               const end = Math.min(start + CHUNK_SIZE, file.size);
               const chunkBlob = file.slice(start, end);
               const chunkDataUrl = await readFileAsDataUrl(chunkBlob);
               const chunkBase64 = chunkDataUrl.split(",")[1] || "";
+              return { index: i, base64: chunkBase64 };
+            });
 
-              await setDoc(doc(db, "files", fileId, "chunks", i.toString()), { data: chunkBase64 });
-              const progress = Math.min(95, Math.round(((i + 1) / totalChunks) * 95));
+            const processedChunks = await Promise.all(chunkPromises);
+
+            // Parallel dispatch: commit metadata and all chunks concurrently
+            let completed = 0;
+            const uploadTasks = processedChunks.map(async (c) => {
+              await setDoc(doc(db, "files", fileId, "chunks", c.index.toString()), { data: c.base64 });
+              completed++;
+              const progress = Math.min(95, Math.round((completed / totalChunks) * 95));
               setUploadingFiles((prev) => prev.map((f) => (f.id === fileId ? { ...f, progress } : f)));
-            }
+            });
+
+            await Promise.all([
+              setDoc(doc(db, "files", fileId), metadata),
+              ...uploadTasks
+            ]);
           }
 
           setUploadingFiles((prev) => prev.filter((f) => f.id !== fileId));

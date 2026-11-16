@@ -47,7 +47,7 @@ export default function AdminPadDetails({ pad, onClose }: AdminPadDetailsProps) 
 
   const getHealthStatus = () => {
     if (pad.isTrashed) return { status: "🔴 Trashed", color: "text-rose-400", bg: "bg-rose-500/20" };
-    if (pad.locked) return { status: "🔒 Locked", color: "text-blue-400", bg: "bg-blue-500/20" };
+    if (pad.locked) return { status: "🔒 Locked", color: "text-white", bg: "bg-white/20" };
     if (pad.readOnly) return { status: "👁 Read Only", color: "text-emerald-400", bg: "bg-emerald-500/20" };
     if (pad.burnAfterRead) return { status: "🔥 Burn on Read", color: "text-orange-400", bg: "bg-orange-500/20" };
     if (pad.deleteAt && new Date(pad.deleteAt).getTime() < Date.now()) return { status: "⚫ Expired", color: "text-slate-400", bg: "bg-slate-500/20" };
@@ -78,13 +78,13 @@ export default function AdminPadDetails({ pad, onClose }: AdminPadDetailsProps) 
         <div className="flex items-center justify-between p-6 border-b border-white/10 bg-slate-950/50">
           <div>
             <h2 className="text-2xl font-bold text-white flex items-center gap-3">
-              <FileText className="text-indigo-400" /> 
+              <FileText className="text-white" /> 
               {pad.name}
             </h2>
             <p className="text-slate-400 text-sm font-mono mt-1">ID: {pad.name}</p>
           </div>
           <div className="flex items-center gap-3">
-            <button onClick={handleOpenPad} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-colors text-sm font-medium">
+            <button onClick={handleOpenPad} className="flex items-center gap-2 px-4 py-2 bg-white text-black hover:bg-white/90 rounded-xl transition-colors text-sm font-medium shadow-md">
               <ExternalLink size={16} /> Open Pad
             </button>
             <button onClick={onClose} className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-full transition-colors">
@@ -133,7 +133,7 @@ export default function AdminPadDetails({ pad, onClose }: AdminPadDetailsProps) 
             {/* Metadata Section */}
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-bold text-indigo-400 flex items-center gap-2 mb-4"><Info size={18} /> Metadata</h3>
+                <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-4"><Info size={18} /> Metadata</h3>
                 <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-3 text-sm">
                   <div className="flex justify-between border-b border-white/5 pb-2">
                     <span className="text-slate-400">Pad ID / Slug</span>
@@ -194,25 +194,25 @@ export default function AdminPadDetails({ pad, onClose }: AdminPadDetailsProps) 
             {/* Timeline Section */}
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-bold text-indigo-400 flex items-center gap-2 mb-4"><Clock size={18} /> Pad Timeline</h3>
+                <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-4"><Clock size={18} /> Pad Timeline</h3>
                 <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                  <div className="relative border-l-2 border-indigo-500/30 pl-4 space-y-6">
+                  <div className="relative border-l-2 border-white/20 pl-4 space-y-6">
                     {/* We construct a timeline based on available state since historical events aren't fully tracked */}
                     <div className="relative">
-                      <div className="absolute -left-[21px] top-1 w-3 h-3 bg-indigo-500 rounded-full"></div>
+                      <div className="absolute -left-[21px] top-1 w-3 h-3 bg-white rounded-full"></div>
                       <p className="text-sm font-bold text-white">Pad Created</p>
                       <p className="text-xs text-slate-500">Not available</p>
                     </div>
                     {pad.lastOpened && (
                       <div className="relative">
-                        <div className="absolute -left-[21px] top-1 w-3 h-3 bg-indigo-500 rounded-full"></div>
+                        <div className="absolute -left-[21px] top-1 w-3 h-3 bg-white rounded-full"></div>
                         <p className="text-sm font-bold text-white">Last Accessed</p>
                         <p className="text-xs text-slate-500" suppressHydrationWarning>{new Date(pad.lastOpened).toLocaleString()}</p>
                       </div>
                     )}
                     {pad.locked && (
                       <div className="relative">
-                        <div className="absolute -left-[21px] top-1 w-3 h-3 bg-blue-500 rounded-full"></div>
+                        <div className="absolute -left-[21px] top-1 w-3 h-3 bg-white rounded-full"></div>
                         <p className="text-sm font-bold text-white">Locked</p>
                         <p className="text-xs text-slate-500">Security enabled</p>
                       </div>
@@ -229,7 +229,7 @@ export default function AdminPadDetails({ pad, onClose }: AdminPadDetailsProps) 
               </div>
 
               <div>
-                <h3 className="text-lg font-bold text-indigo-400 flex items-center gap-2 mb-4"><Shield size={18} /> Advanced Admin Tools</h3>
+                <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-4"><Shield size={18} /> Advanced Admin Tools</h3>
                 <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-3">
                   <button onClick={() => setShowPreview(!showPreview)} className="w-full flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors text-slate-300 hover:text-white">
                     <span className="flex items-center gap-2"><EyeOff size={16} /> {showPreview ? "Hide Admin Preview" : "Admin Preview (Read-Only)"}</span>

@@ -19,7 +19,7 @@ export default function AppearanceSettings() {
     { id: 'cyberpunk', label: 'Cyberpunk', icon: <Monitor size={16} /> }
   ];
 
-  const presets = ['#3b82f6', '#8b5cf6', '#10b981', '#f97316', '#ef4444', '#ec4899'];
+  const presets = ['#ffffff', '#e2e8f0', '#94a3b8', '#8b5cf6', '#10b981', '#f97316', '#ef4444', '#ec4899'];
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
@@ -34,7 +34,7 @@ export default function AppearanceSettings() {
               onClick={() => store.setTheme(t.id)}
               className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${
                 store.theme === t.id 
-                  ? 'bg-blue-500/10 border-blue-500 text-blue-500' 
+                  ? 'bg-white/10 border-white text-white' 
                   : 'bg-card border-border hover:bg-black/5 dark:hover:bg-white/5 text-foreground'
               }`}
             >
@@ -54,10 +54,10 @@ export default function AppearanceSettings() {
             <button
               key={color}
               onClick={() => store.setAccentColor(color)}
-              className="w-10 h-10 rounded-full flex items-center justify-center transition-transform hover:scale-110 shadow-sm"
+              className="w-10 h-10 rounded-full flex items-center justify-center transition-transform hover:scale-110 shadow-sm border border-white/20"
               style={{ backgroundColor: color }}
             >
-              {store.accentColor === color && <Check size={16} className="text-white" />}
+              {store.accentColor === color && <Check size={16} className={color === '#ffffff' || color === '#e2e8f0' ? "text-black" : "text-white"} />}
             </button>
           ))}
           <div className="w-[1px] h-8 bg-border mx-2" />
@@ -74,7 +74,7 @@ export default function AppearanceSettings() {
       <section className="bg-card p-5 rounded-2xl border border-border space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-500/10 text-blue-500 rounded-lg">
+            <div className="p-2 bg-white/10 text-white rounded-lg">
               <Sliders size={18} />
             </div>
             <div>
@@ -84,7 +84,7 @@ export default function AppearanceSettings() {
           </div>
           <label className="relative inline-flex items-center cursor-pointer">
             <input type="checkbox" className="sr-only peer" checked={store.glassmorphism} onChange={(e) => store.setGlassmorphism(e.target.checked)} />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-500"></div>
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-white"></div>
           </label>
         </div>
 
@@ -92,11 +92,11 @@ export default function AppearanceSettings() {
           <div className="pt-4 border-t border-border grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="text-xs font-medium text-gray-500 block mb-2">Blur Intensity: {store.glassBlur}px</label>
-              <input type="range" min="0" max="64" value={store.glassBlur} onChange={(e) => store.updateGlassSettings(Number(e.target.value), store.glassOpacity)} className="w-full accent-blue-500" />
+              <input type="range" min="0" max="64" value={store.glassBlur} onChange={(e) => store.updateGlassSettings(Number(e.target.value), store.glassOpacity)} className="w-full accent-white" />
             </div>
             <div>
               <label className="text-xs font-medium text-gray-500 block mb-2">Opacity: {Math.round(store.glassOpacity * 100)}%</label>
-              <input type="range" min="0" max="1" step="0.05" value={store.glassOpacity} onChange={(e) => store.updateGlassSettings(store.glassBlur, Number(e.target.value))} className="w-full accent-blue-500" />
+              <input type="range" min="0" max="1" step="0.05" value={store.glassOpacity} onChange={(e) => store.updateGlassSettings(store.glassBlur, Number(e.target.value))} className="w-full accent-white" />
             </div>
           </div>
         )}
@@ -117,7 +117,7 @@ export default function AppearanceSettings() {
             <select 
               value={store.writingFont} 
               onChange={(e) => store.updateFonts(e.target.value, store.codeFont)}
-              className="w-full bg-black/5 dark:bg-white/5 border border-border rounded-xl px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-blue-500/50"
+              className="w-full bg-black/5 dark:bg-white/5 border border-border rounded-xl px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-white/20"
             >
               <option value="Inter">Inter</option>
               <option value="Poppins">Poppins</option>
@@ -131,7 +131,7 @@ export default function AppearanceSettings() {
             <select 
               value={store.codeFont} 
               onChange={(e) => store.updateFonts(store.writingFont, e.target.value)}
-              className="w-full bg-black/5 dark:bg-white/5 border border-border rounded-xl px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-blue-500/50 font-mono"
+              className="w-full bg-black/5 dark:bg-white/5 border border-border rounded-xl px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-white/20 font-mono"
             >
               <option value="JetBrains Mono">JetBrains Mono</option>
               <option value="Fira Code">Fira Code</option>
@@ -143,15 +143,15 @@ export default function AppearanceSettings() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-border">
           <div>
             <label className="text-xs font-medium text-gray-500 block mb-2">Size: {store.fontSize}px</label>
-            <input type="range" min="12" max="24" value={store.fontSize} onChange={(e) => store.updateTypography(Number(e.target.value), store.lineHeight, store.letterSpacing)} className="w-full accent-blue-500" />
+            <input type="range" min="14" max="28" value={store.fontSize} onChange={(e) => store.updateTypography(Number(e.target.value), store.lineHeight, store.letterSpacing)} className="w-full accent-white" />
           </div>
           <div>
             <label className="text-xs font-medium text-gray-500 block mb-2">Line Height: {store.lineHeight}</label>
-            <input type="range" min="1" max="2.5" step="0.1" value={store.lineHeight} onChange={(e) => store.updateTypography(store.fontSize, Number(e.target.value), store.letterSpacing)} className="w-full accent-blue-500" />
+            <input type="range" min="1" max="2.5" step="0.1" value={store.lineHeight} onChange={(e) => store.updateTypography(store.fontSize, Number(e.target.value), store.letterSpacing)} className="w-full accent-white" />
           </div>
           <div>
             <label className="text-xs font-medium text-gray-500 block mb-2">Spacing: {store.letterSpacing}px</label>
-            <input type="range" min="-1" max="5" step="0.5" value={store.letterSpacing} onChange={(e) => store.updateTypography(store.fontSize, store.lineHeight, Number(e.target.value))} className="w-full accent-blue-500" />
+            <input type="range" min="-1" max="5" step="0.5" value={store.letterSpacing} onChange={(e) => store.updateTypography(store.fontSize, store.lineHeight, Number(e.target.value))} className="w-full accent-white" />
           </div>
         </div>
       </section>

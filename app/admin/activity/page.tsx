@@ -108,8 +108,8 @@ export default function AdminActivityPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans relative">
       {/* Background Gradients */}
-      <div className="fixed top-0 left-0 w-[50%] h-[50%] bg-blue-600/10 blur-[150px] rounded-full pointer-events-none" />
-      <div className="fixed bottom-0 right-0 w-[50%] h-[50%] bg-indigo-600/10 blur-[150px] rounded-full pointer-events-none" />
+      <div className="fixed top-0 left-0 w-[50%] h-[50%] bg-white/[0.03] blur-[150px] rounded-full pointer-events-none" />
+      <div className="fixed bottom-0 right-0 w-[50%] h-[50%] bg-white/[0.03] blur-[150px] rounded-full pointer-events-none" />
 
       {/* Header */}
       <header className="fixed top-6 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-5xl glass-frosted border border-white/10 rounded-3xl z-50 px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xl">
@@ -117,8 +117,8 @@ export default function AdminActivityPage() {
           <button onClick={() => router.push("/admin")} className="p-2 hover:bg-white/10 rounded-full text-slate-400 hover:text-white transition">
             <ArrowLeft size={20} />
           </button>
-          <h1 className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent flex items-center gap-3">
-            <Activity className="text-blue-400" size={24} /> Admin Activity
+          <h1 className="text-2xl font-extrabold tracking-tight text-white flex items-center gap-3">
+            <Activity className="text-white" size={24} /> Admin Activity
           </h1>
         </div>
         <ThemeToggle />
@@ -132,8 +132,8 @@ export default function AdminActivityPage() {
             <div>
               <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4 flex items-center gap-2"><Filter size={14} /> Views</h3>
               <div className="space-y-1">
-                <button onClick={() => setActiveTab("logs")} className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors ${activeTab === "logs" ? "bg-blue-600/20 text-blue-400 border border-blue-500/20" : "text-slate-400 hover:text-white hover:glass-clear"}`}>Activity Logs</button>
-                <button onClick={() => setActiveTab("sessions")} className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors ${activeTab === "sessions" ? "bg-indigo-600/20 text-indigo-400 border border-indigo-500/20" : "text-slate-400 hover:text-white hover:glass-clear"}`}>Session History</button>
+                <button onClick={() => setActiveTab("logs")} className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors ${activeTab === "logs" ? "bg-white/15 text-white border border-white/20" : "text-slate-400 hover:text-white hover:glass-clear"}`}>Activity Logs</button>
+                <button onClick={() => setActiveTab("sessions")} className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors ${activeTab === "sessions" ? "bg-white/15 text-white border border-white/20" : "text-slate-400 hover:text-white hover:glass-clear"}`}>Session History</button>
               </div>
             </div>
 
@@ -208,7 +208,7 @@ export default function AdminActivityPage() {
                               <td className="p-5 font-medium text-emerald-400 flex items-center gap-2">
                                 {log.action}
                               </td>
-                              <td className="p-5 text-indigo-300 font-mono">
+                              <td className="p-5 text-white/90 font-mono">
                                 {log.padId}
                               </td>
                               <td className="p-5 text-slate-500 font-mono text-xs">
@@ -224,7 +224,7 @@ export default function AdminActivityPage() {
               </div>
             ) : (
               <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
-                <h2 className="text-2xl font-extrabold text-white flex items-center gap-2 mb-6"><Monitor size={24} className="text-indigo-400"/> Session History</h2>
+                <h2 className="text-2xl font-extrabold text-white flex items-center gap-2 mb-6"><Monitor size={24} className="text-white"/> Session History</h2>
                 
                 <div className="glass-frosted border border-white/10 rounded-[2rem] overflow-hidden shadow-2xl">
                   {loading ? (
@@ -258,7 +258,7 @@ export default function AdminActivityPage() {
 
                             return (
                               <tr key={s.id} className="hover:glass-clear transition-colors">
-                                <td className="p-5 font-mono text-indigo-300">
+                                <td className="p-5 font-mono text-white/90">
                                   {s.sessionId}
                                 </td>
                                 <td className={`p-5 font-bold uppercase text-xs tracking-wider ${statusColor}`}>

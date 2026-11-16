@@ -28,7 +28,7 @@ import AdminHeartbeat from "@/components/admin/AdminHeartbeat";
 const StatCard = ({ icon: Icon, title, count, color, onClick, active }: { icon: any, title: string, count: string | number, color: string, onClick?: () => void, active?: boolean }) => (
   <div 
     onClick={onClick}
-    className={`glass-frosted border ${active ? 'border-indigo-500 shadow-[0_0_30px_rgba(99,102,241,0.3)] ring-1 ring-indigo-500' : 'border-white/10 dark:border-white/5 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.3)]'} rounded-3xl p-6 hover:shadow-[0_8px_40px_-12px_rgba(0,0,0,0.5)] transition-all duration-500 hover:-translate-y-1 group relative overflow-hidden ${onClick ? 'cursor-pointer' : ''}`}
+    className={`glass-frosted border ${active ? 'border-white/50 shadow-[0_0_30px_rgba(255,255,255,0.15)] ring-1 ring-white/50' : 'border-white/10 dark:border-white/5 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.3)]'} rounded-3xl p-6 hover:shadow-[0_8px_40px_-12px_rgba(0,0,0,0.5)] transition-all duration-500 hover:-translate-y-1 group relative overflow-hidden ${onClick ? 'cursor-pointer' : ''}`}
   >
     <div className={`absolute top-0 right-0 w-32 h-32 bg-${color}-500/10 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-${color}-500/20 transition-all duration-500`} />
     <div className={`flex items-center gap-3 mb-3 text-${color}-400 dark:text-${color}-400`}>
@@ -492,7 +492,7 @@ export default function AdminPage() {
 
   const recentActivity = [
     ...pads.filter(p => p.lastOpened).map(p => ({ id: p.name + '-pad', type: 'Pad', label: `Pad opened: ${p.name}`, time: new Date(p.lastOpened!).getTime(), icon: FileText, color: 'text-purple-400' })),
-    ...allFiles.map(f => ({ id: f.fileId + '-file', type: 'File', label: `File uploaded: ${f.fileName}`, time: new Date(f.uploadedAt).getTime(), icon: FileIcon, color: 'text-blue-400' }))
+    ...allFiles.map(f => ({ id: f.fileId + '-file', type: 'File', label: `File uploaded: ${f.fileName}`, time: new Date(f.uploadedAt).getTime(), icon: FileIcon, color: 'text-white/90' }))
   ].sort((a, b) => b.time - a.time).slice(0, 8);
 
   const dbStatus = (pads.length > 0 || allFiles.length > 0) ? "Operational" : "Checking...";
@@ -506,16 +506,16 @@ export default function AdminPage() {
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans relative overflow-hidden transition-colors duration-500">
       <AdminHeartbeat />
       {/* Deep premium background gradients */}
-      <div className="absolute top-0 left-0 w-[50%] h-[50%] bg-indigo-600/10 blur-[150px] rounded-full pointer-events-none animate-pulse-glow" />
-      <div className="absolute bottom-0 right-0 w-[50%] h-[50%] bg-purple-600/10 blur-[150px] rounded-full pointer-events-none animate-pulse-glow" style={{ animationDelay: "2s" }} />
+      <div className="absolute top-0 left-0 w-[50%] h-[50%] bg-white/[0.03] blur-[150px] rounded-full pointer-events-none animate-pulse-glow" />
+      <div className="absolute bottom-0 right-0 w-[50%] h-[50%] bg-white/[0.03] blur-[150px] rounded-full pointer-events-none animate-pulse-glow" style={{ animationDelay: "2s" }} />
 
       <PromptModal isOpen={isOpen} config={config} onClose={handleClose} />
       {selectedAdminPad && <AdminPadDetails pad={selectedAdminPad} onClose={() => setSelectedAdminPad(null)} />}
       {showAdvancedTools && <AdvancedGlobalTools onClose={() => setShowAdvancedTools(false)} />}
       
       <header className="fixed top-6 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-5xl glass-frosted border border-white/10 rounded-3xl z-50 px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xl">
-        <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent flex items-center gap-3">
-          <Shield className="text-indigo-400" size={30} /> Command Center
+        <h1 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
+          <Shield className="text-white" size={30} /> Command Center
         </h1>
         
         <div className="flex items-center gap-4">
@@ -536,7 +536,7 @@ export default function AdminPage() {
             {/* 1. Header */}
             <div className="flex items-center justify-between">
               <h1 className="text-3xl font-extrabold text-white tracking-tight">Hello SAM</h1>
-              <button onClick={() => setShowAdvancedTools(true)} className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/30 transition-colors border border-indigo-500/30 font-semibold shadow-lg shadow-indigo-500/10">
+              <button onClick={() => setShowAdvancedTools(true)} className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 text-white hover:bg-white/20 transition-colors border border-white/20 font-semibold shadow-lg shadow-white/5">
                 <Settings size={18} /> Advanced Tools
               </button>
             </div>
@@ -552,8 +552,8 @@ export default function AdminPage() {
                 <span className="text-2xl font-extrabold text-white">{totalPadsCount}</span>
               </div>
               <div onClick={() => { setAdminTab("pads"); setFilterMode("locked"); setShowTrash(false); }} className="min-w-[140px] flex-shrink-0 cursor-pointer glass-clear border border-white/10 hover:bg-white/10 transition-colors rounded-2xl p-4 flex flex-col items-center justify-center">
-                <span className="text-xs text-blue-400 font-bold uppercase tracking-widest mb-1 text-center">Locked</span>
-                <span className="text-2xl font-extrabold text-blue-400">{lockedPadsCount}</span>
+                <span className="text-xs text-white/90 font-bold uppercase tracking-widest mb-1 text-center">Locked</span>
+                <span className="text-2xl font-extrabold text-white">{lockedPadsCount}</span>
               </div>
               <div className="min-w-[140px] flex-shrink-0 glass-clear border border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center">
                 <span className="text-xs text-emerald-400 font-bold uppercase tracking-widest mb-1 text-center">Read Only</span>
@@ -580,7 +580,7 @@ export default function AdminPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* 3. Recent Activity */}
               <div>
-                <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-indigo-400"><Activity size={20} /> Recent Activity</h2>
+                <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-white"><Activity size={20} /> Recent Activity</h2>
                 <div className="glass-clear border border-white/10 rounded-3xl p-6 h-64 overflow-y-auto">
                   {recentActivity.length === 0 ? (
                     <p className="text-slate-500 italic text-sm">No recent activity</p>
@@ -650,29 +650,29 @@ export default function AdminPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-4">
               <button 
                 onClick={() => setAdminTab("dashboard")}
-                className="group relative overflow-hidden rounded-3xl bg-indigo-900/20 border border-indigo-500/20 p-8 text-left hover:bg-indigo-900/40 hover:border-indigo-500/40 transition-all duration-300 hover:-translate-y-1"
+                className="group relative overflow-hidden rounded-3xl bg-white/[0.04] border border-white/10 p-8 text-left hover:bg-white/[0.08] hover:border-white/20 transition-all duration-300 hover:-translate-y-1"
               >
-                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-indigo-500/20 transition-all" />
-                <h3 className="text-3xl font-extrabold text-indigo-400 mb-2 flex items-center gap-3"><Folder size={32} /> Files</h3>
-                <p className="text-indigo-200/70">Open Command Center</p>
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-white/10 transition-all" />
+                <h3 className="text-3xl font-extrabold text-white mb-2 flex items-center gap-3"><Folder size={32} /> Files</h3>
+                <p className="text-white/70">Open Command Center</p>
               </button>
               
               <button 
                 onClick={() => setAdminTab("pads")}
-                className="group relative overflow-hidden rounded-3xl bg-purple-900/20 border border-purple-500/20 p-8 text-left hover:bg-purple-900/40 hover:border-purple-500/40 transition-all duration-300 hover:-translate-y-1"
+                className="group relative overflow-hidden rounded-3xl bg-white/[0.04] border border-white/10 p-8 text-left hover:bg-white/[0.08] hover:border-white/20 transition-all duration-300 hover:-translate-y-1"
               >
-                <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-purple-500/20 transition-all" />
-                <h3 className="text-3xl font-extrabold text-purple-400 mb-2 flex items-center gap-3"><FileText size={32} /> Pads</h3>
-                <p className="text-purple-200/70">Open Pad Manager</p>
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-white/10 transition-all" />
+                <h3 className="text-3xl font-extrabold text-white mb-2 flex items-center gap-3"><FileText size={32} /> Pads</h3>
+                <p className="text-white/70">Open Pad Manager</p>
               </button>
 
               <button 
                 onClick={() => router.push("/admin/activity")}
-                className="group relative overflow-hidden rounded-3xl bg-blue-900/20 border border-blue-500/20 p-8 text-left hover:bg-blue-900/40 hover:border-blue-500/40 transition-all duration-300 hover:-translate-y-1"
+                className="group relative overflow-hidden rounded-3xl bg-white/[0.04] border border-white/10 p-8 text-left hover:bg-white/[0.08] hover:border-white/20 transition-all duration-300 hover:-translate-y-1"
               >
-                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-blue-500/20 transition-all" />
-                <h3 className="text-3xl font-extrabold text-blue-400 mb-2 flex items-center gap-3"><Activity size={32} /> Activity</h3>
-                <p className="text-blue-200/70">Historical Sessions</p>
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-white/10 transition-all" />
+                <h3 className="text-3xl font-extrabold text-white mb-2 flex items-center gap-3"><Activity size={32} /> Activity</h3>
+                <p className="text-white/70">Historical Sessions</p>
               </button>
 
               <button 
@@ -691,11 +691,11 @@ export default function AdminPage() {
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex items-center gap-4 mb-6">
               <button onClick={() => setAdminTab("landing")} className="p-2 hover:bg-white/10 rounded-full text-slate-400 hover:text-white transition"><ArrowLeft size={20} /></button>
-              <h2 className="text-xl font-bold flex items-center gap-2 text-indigo-400"><Database size={24} /> Storage Metrics</h2>
+              <h2 className="text-xl font-bold flex items-center gap-2 text-white"><Database size={24} /> Storage Metrics</h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-12">
-              <StatCard icon={FileIcon} title="Total Files" count={fileStats.totalFiles} color="blue" onClick={() => setFileFilter("all")} active={fileFilter === "all"} />
-              <StatCard icon={Database} title="Storage Used" count={`${(fileStats.storageUsed / 1024 / 1024).toFixed(2)} MB`} color="indigo" />
+              <StatCard icon={FileIcon} title="Total Files" count={fileStats.totalFiles} color="white" onClick={() => setFileFilter("all")} active={fileFilter === "all"} />
+              <StatCard icon={Database} title="Storage Used" count={`${(fileStats.storageUsed / 1024 / 1024).toFixed(2)} MB`} color="white" />
               <StatCard icon={FileText} title="PDFs" count={fileStats.pdfs} color="purple" onClick={() => setFileFilter("pdfs")} active={fileFilter === "pdfs"} />
               <StatCard icon={ImageIcon} title="Images" count={fileStats.images} color="pink" onClick={() => setFileFilter("images")} active={fileFilter === "images"} />
               <StatCard icon={FileText} title="Documents" count={fileStats.documents} color="green" onClick={() => setFileFilter("documents")} active={fileFilter === "documents"} />
@@ -721,16 +721,16 @@ export default function AdminPage() {
                     {filteredFiles.slice(0, 50).map(file => (
                       <tr key={file.fileId} className="hover:glass-clear transition-colors group">
                         <td className="p-5 flex items-center gap-4">
-                          <div className="p-2.5 glass-clear rounded-xl text-indigo-300 group-hover:scale-110 group-hover:bg-indigo-500/20 transition-all">{getFileIcon(file.fileType)}</div>
+                          <div className="p-2.5 glass-clear rounded-xl text-white group-hover:scale-110 group-hover:bg-white/20 transition-all">{getFileIcon(file.fileType)}</div>
                           <span className="font-semibold text-slate-200 truncate max-w-[200px]" title={file.fileName}>{file.fileName}</span>
                         </td>
-                        <td className="p-5 text-indigo-400 font-mono text-sm cursor-pointer hover:text-indigo-300 transition-colors" onClick={() => managePad(file.padId)}>{file.padId}</td>
+                        <td className="p-5 text-white/90 font-mono text-sm cursor-pointer hover:text-white transition-colors" onClick={() => managePad(file.padId)}>{file.padId}</td>
                         <td className="p-5 text-slate-400 text-sm">{file.fileType.split('/')[1] || file.fileType}</td>
                         <td className="p-5 text-slate-400 font-mono text-sm">{(file.fileSize / 1024 / 1024).toFixed(2)} MB</td>
                         <td className="p-5 text-slate-400 text-sm">{new Date(file.uploadedAt).toLocaleDateString()}</td>
                         <td className="p-5 text-slate-400 font-mono text-sm">{file.totalViews || 0}</td>
                         <td className="p-5 text-right pr-6">
-                          <button onClick={() => managePad(file.padId)} className="p-2 text-indigo-400 hover:bg-indigo-500/20 rounded-xl transition-colors mr-2" title="Jump to Pad to View">
+                          <button onClick={() => managePad(file.padId)} className="p-2 text-white hover:bg-white/10 rounded-xl transition-colors mr-2" title="Jump to Pad to View">
                             <ExternalLink size={18} />
                           </button>
                           <button onClick={() => deleteGlobalFile(file)} className="p-2 text-rose-400 hover:bg-rose-500/20 rounded-xl transition-colors" title="Delete File">
@@ -768,9 +768,9 @@ export default function AdminPage() {
               </div>
               <div 
                 onClick={() => { setFilterMode("locked"); setShowTrash(false); }}
-                className={`border rounded-2xl p-4 flex flex-col items-center justify-center cursor-pointer transition-all hover:-translate-y-1 ${!showTrash && filterMode === "locked" ? "bg-blue-500/20 border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.2)] ring-1 ring-blue-500/50" : "bg-blue-500/10 border-blue-500/20 hover:bg-blue-500/20"}`}>
-                <span className="text-2xl font-bold text-blue-400">{lockedPads}</span>
-                <span className="text-xs text-blue-400/70 uppercase tracking-widest mt-1">Locked</span>
+                className={`border rounded-2xl p-4 flex flex-col items-center justify-center cursor-pointer transition-all hover:-translate-y-1 ${!showTrash && filterMode === "locked" ? "bg-white/15 border-white/40 shadow-[0_0_15px_rgba(255,255,255,0.1)] ring-1 ring-white/40" : "glass-clear border-white/10 hover:bg-white/10"}`}>
+                <span className="text-2xl font-bold text-white">{lockedPads}</span>
+                <span className="text-xs text-white/70 uppercase tracking-widest mt-1">Locked</span>
               </div>
               <div 
                 onClick={() => { setFilterMode("burn"); setShowTrash(false); }}
@@ -786,9 +786,9 @@ export default function AdminPage() {
               </div>
               <div 
                 onClick={() => { setFilterMode("shadow"); setShowTrash(false); }}
-                className={`border rounded-2xl p-4 flex flex-col items-center justify-center cursor-pointer transition-all hover:-translate-y-1 ${!showTrash && filterMode === "shadow" ? "bg-indigo-500/20 border-indigo-500/50 shadow-[0_0_15px_rgba(99,102,241,0.2)] ring-1 ring-indigo-500/50" : "bg-indigo-500/10 border-indigo-500/20 hover:bg-indigo-500/20"}`}>
-                <span className="text-2xl font-bold text-indigo-400">{shadowPadsCount}</span>
-                <span className="text-xs text-indigo-400/70 uppercase tracking-widest mt-1">Shadow</span>
+                className={`border rounded-2xl p-4 flex flex-col items-center justify-center cursor-pointer transition-all hover:-translate-y-1 ${!showTrash && filterMode === "shadow" ? "bg-white/15 border-white/40 shadow-[0_0_15px_rgba(255,255,255,0.1)] ring-1 ring-white/40" : "glass-clear border-white/10 hover:bg-white/10"}`}>
+                <span className="text-2xl font-bold text-white">{shadowPadsCount}</span>
+                <span className="text-xs text-white/70 uppercase tracking-widest mt-1">Shadow</span>
               </div>
               <div 
                 onClick={() => { setShowTrash(true); setFilterMode("all"); }}
@@ -799,12 +799,12 @@ export default function AdminPage() {
             </div>
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
               <div className="relative w-full max-w-md group">
-                <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-400 transition-colors" size={20} />
+                <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-white transition-colors" size={20} />
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search network matrix..."
-                  className="w-full pl-14 pr-5 py-4 rounded-2xl bg-black/20 border border-white/10 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all text-lg text-white placeholder-slate-500 shadow-inner backdrop-blur-md"
+                  className="w-full pl-14 pr-5 py-4 rounded-2xl bg-black/20 border border-white/10 focus:border-white focus:ring-4 focus:ring-white/20 outline-none transition-all text-lg text-white placeholder-slate-500 shadow-inner backdrop-blur-md"
                 />
               </div>
 
@@ -821,11 +821,11 @@ export default function AdminPage() {
             </div>
 
             {selectedPads.length > 0 && (
-              <div className="bg-indigo-900/50 border border-indigo-500/30 rounded-2xl p-4 mb-6 flex items-center justify-between animate-in fade-in slide-in-from-top-4 flex-wrap gap-4">
-                <span className="text-indigo-200 font-medium">{selectedPads.length} pads selected</span>
+              <div className="bg-white/10 border border-white/20 rounded-2xl p-4 mb-6 flex items-center justify-between animate-in fade-in slide-in-from-top-4 flex-wrap gap-4">
+                <span className="text-white font-medium">{selectedPads.length} pads selected</span>
                 <div className="flex flex-wrap gap-3">
                   <button onClick={() => setSelectedPads([])} className="px-4 py-2 text-sm font-semibold text-slate-300 hover:text-white transition-colors">Cancel</button>
-                  <button onClick={() => handleBulkAction("lock")} className="px-3 py-2 text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 transition-colors shadow-lg shadow-blue-500/20">
+                  <button onClick={() => handleBulkAction("lock")} className="px-3 py-2 text-sm font-bold bg-white text-black hover:bg-white/90 rounded-lg flex items-center gap-2 transition-colors shadow-lg shadow-white/10">
                     <Lock size={16} /> Lock
                   </button>
                   <button onClick={() => handleBulkAction("burn")} className="px-3 py-2 text-sm font-bold bg-orange-600 hover:bg-orange-700 text-white rounded-lg flex items-center gap-2 transition-colors shadow-lg shadow-orange-500/20">
@@ -846,8 +846,8 @@ export default function AdminPage() {
 
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 px-2 gap-4">
               <label className="flex items-center gap-3 cursor-pointer group select-none">
-                <div className={`w-5 h-5 rounded flex items-center justify-center border transition-colors ${selectedPads.length === filteredPads.length && filteredPads.length > 0 ? 'bg-indigo-600 border-indigo-600' : 'border-slate-600 bg-black/20 group-hover:border-indigo-500'}`}>
-                  {selectedPads.length === filteredPads.length && filteredPads.length > 0 && <span className="text-white text-xs">✓</span>}
+                <div className={`w-5 h-5 rounded flex items-center justify-center border transition-colors ${selectedPads.length === filteredPads.length && filteredPads.length > 0 ? 'bg-white text-black border-white' : 'border-slate-600 bg-black/20 group-hover:border-white'}`}>
+                  {selectedPads.length === filteredPads.length && filteredPads.length > 0 && <span className="text-black text-xs font-bold">✓</span>}
                 </div>
                 <input type="checkbox" className="hidden" checked={selectedPads.length === filteredPads.length && filteredPads.length > 0} onChange={toggleSelectAll} />
                 <span className="text-sm font-medium text-slate-400 group-hover:text-slate-300 transition-colors">Select All ({filteredPads.length})</span>
@@ -857,7 +857,7 @@ export default function AdminPage() {
                 <select 
                   value={filterMode} 
                   onChange={(e) => setFilterMode(e.target.value as any)}
-                  className="bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-sm text-slate-300 outline-none focus:border-indigo-500"
+                  className="bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-sm text-slate-300 outline-none focus:border-white"
                 >
                   <option value="all">All Types</option>
                   <option value="locked">Locked</option>
@@ -869,7 +869,7 @@ export default function AdminPage() {
                 <select 
                   value={sortMode} 
                   onChange={(e) => setSortMode(e.target.value as any)}
-                  className="bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-sm text-slate-300 outline-none focus:border-indigo-500"
+                  className="bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-sm text-slate-300 outline-none focus:border-white"
                 >
                   <option value="recent">Last Opened</option>
                   <option value="opens">Most Opens</option>
@@ -886,15 +886,15 @@ export default function AdminPage() {
               {filteredPads.map((pad) => (
                   <div
                   key={pad.name}
-                  className={`bg-slate-900/40 backdrop-blur-2xl border rounded-[2rem] p-8 shadow-xl hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)] hover:-translate-y-2 transition-all duration-500 flex flex-col group relative overflow-hidden ${pad.isTrashed ? 'border-rose-500/30 bg-rose-950/10' : 'border-white/10 hover:border-indigo-500/50'}`}
+                  className={`bg-slate-900/40 backdrop-blur-2xl border rounded-[2rem] p-8 shadow-xl hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)] hover:-translate-y-2 transition-all duration-500 flex flex-col group relative overflow-hidden ${pad.isTrashed ? 'border-rose-500/30 bg-rose-950/10' : 'border-white/10 hover:border-white/30'}`}
                 >
                   {/* Glass highlight effect on hover */}
                   <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
                   
                   <div className="absolute top-4 left-4 z-10">
                     <label className="cursor-pointer group flex items-center justify-center w-6 h-6">
-                      <div className={`w-5 h-5 rounded flex items-center justify-center border transition-colors ${selectedPads.includes(pad.name) ? 'bg-indigo-600 border-indigo-600' : 'border-slate-500 bg-black/40 opacity-0 group-hover:opacity-100'}`}>
-                        {selectedPads.includes(pad.name) && <span className="text-white text-xs">✓</span>}
+                      <div className={`w-5 h-5 rounded flex items-center justify-center border transition-colors ${selectedPads.includes(pad.name) ? 'bg-white text-black border-white' : 'border-slate-500 bg-black/40 opacity-0 group-hover:opacity-100'}`}>
+                        {selectedPads.includes(pad.name) && <span className="text-black text-xs font-bold">✓</span>}
                       </div>
                       <input 
                         type="checkbox" 
@@ -912,12 +912,12 @@ export default function AdminPage() {
                   </div>
 
                   <div className="flex items-start justify-between mb-4 pl-8">
-                    <h2 className="text-2xl font-bold break-all flex-1 pr-4 line-clamp-1 text-white group-hover:text-indigo-300 transition-colors">
+                    <h2 className="text-2xl font-bold break-all flex-1 pr-4 line-clamp-1 text-white group-hover:text-white transition-colors">
                       {pad.name}
                     </h2>
                     <div className="flex flex-col gap-2 shrink-0">
                       {pad.locked && (
-                        <span className="text-xs font-semibold bg-blue-500/20 text-blue-400 px-2 py-1 rounded-md flex items-center gap-1 w-max">
+                        <span className="text-xs font-semibold bg-white/15 text-white px-2 py-1 rounded-md flex items-center gap-1 w-max border border-white/20">
                           <Lock size={12} /> Locked
                         </span>
                       )}
@@ -927,7 +927,7 @@ export default function AdminPage() {
                         </span>
                       )}
                       {pad.shadowMode && (
-                        <span className="text-xs font-semibold bg-indigo-500/20 text-indigo-400 px-2 py-1 rounded-md flex items-center gap-1 w-max">
+                        <span className="text-xs font-semibold bg-white/15 text-white px-2 py-1 rounded-md flex items-center gap-1 w-max border border-white/20">
                           <EyeOff size={12} /> Shadow
                         </span>
                       )}
@@ -949,8 +949,8 @@ export default function AdminPage() {
                       <>
                         <button onClick={() => setSelectedAdminPad(pad)} className="p-2 rounded-xl bg-purple-500/20 text-purple-400 hover:bg-purple-500/40 transition-colors border border-purple-500/20" title="Admin Details"><MoreVertical size={20} /></button>
                         <button onClick={() => managePad(pad.name)} className="p-2 rounded-xl glass-clear hover:bg-white/10 transition-colors text-gray-300 hover:text-white border border-white/5" title="Open Pad"><ExternalLink size={20} /></button>
-                        <button onClick={() => setHistoryPad(pad.name)} className="p-2 rounded-xl bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/40 transition-colors border border-indigo-500/20" title="Time Machine"><Clock size={20} /></button>
-                        <button onClick={() => pad.locked ? unlockPad(pad.name) : lockPad(pad.name)} className="p-2 rounded-xl bg-blue-500/20 text-blue-400 hover:bg-blue-500/40 transition-colors border border-blue-500/20" title="Lock/Unlock"><Lock size={20} /></button>
+                        <button onClick={() => setHistoryPad(pad.name)} className="p-2 rounded-xl bg-white/10 text-white hover:bg-white/20 transition-colors border border-white/20" title="Time Machine"><Clock size={20} /></button>
+                        <button onClick={() => pad.locked ? unlockPad(pad.name) : lockPad(pad.name)} className="p-2 rounded-xl bg-white/10 text-white hover:bg-white/20 transition-colors border border-white/20" title="Lock/Unlock"><Lock size={20} /></button>
                         <button onClick={() => selfDeleteControls(pad.name)} className="p-2 rounded-xl bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/40 transition-colors border border-yellow-500/20" title="Self Delete"><Trash size={20} /></button>
                         <button onClick={() => deletePad(pad.name, false)} className="p-2 rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500/40 transition-colors ml-auto border border-red-500/20" title="Move to Trash"><Trash size={20} /></button>
                       </>

@@ -61,7 +61,7 @@ export const useAppStore = create<AppSettings>()(
 
       writingFont: 'Inter',
       codeFont: 'JetBrains Mono',
-      fontSize: 18,
+      fontSize: 20,
       lineHeight: 1.65,
       letterSpacing: 0,
 
@@ -82,6 +82,18 @@ export const useAppStore = create<AppSettings>()(
     }),
     {
       name: 'padx-settings',
+      version: 2,
+      migrate: (persistedState: any, version: number) => {
+        if (version < 2 || !persistedState) {
+          return {
+            ...persistedState,
+            accentColor: '#ffffff',
+            fontSize: 20,
+            lineHeight: 1.65,
+          };
+        }
+        return persistedState;
+      },
     }
   )
 );

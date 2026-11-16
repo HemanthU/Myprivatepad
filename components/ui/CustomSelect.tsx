@@ -58,7 +58,7 @@ export default function CustomSelect({ options, value, onChange, placeholder = "
                 }}
                 className={`flex items-center w-full px-4 py-3 text-sm font-medium transition-colors ${
                   value === opt.value
-                    ? "bg-indigo-50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400"
+                    ? "bg-white/15 text-white font-semibold"
                     : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5"
                 }`}
               >

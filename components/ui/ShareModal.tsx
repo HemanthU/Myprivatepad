@@ -56,11 +56,11 @@ export default function ShareModal({ slug, isOpen, onClose }: ShareModalProps) {
         className="w-full max-w-sm bg-white/70 dark:bg-slate-900/70 backdrop-blur-3xl border border-white/60 dark:border-white/10 rounded-[2rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] dark:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-500 ease-out relative"
       >
         {/* Decorative ambient light */}
-        <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-indigo-500/10 to-transparent pointer-events-none" />
+        <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
 
         <div className="flex items-center justify-between p-6 border-b border-slate-200/50 dark:border-white/5 relative z-10">
           <h2 className="text-xl font-extrabold flex items-center gap-2 text-slate-900 dark:text-slate-100 tracking-tight">
-            <Share2 className="text-indigo-500" /> Share Pad
+            <Share2 className="text-white" /> Share Pad
           </h2>
           <button 
             onClick={onClose}
@@ -94,7 +94,7 @@ export default function ShareModal({ slug, isOpen, onClose }: ShareModalProps) {
                 <button
                   key={mode}
                   onClick={() => handleModeChange(mode)}
-                  className={`flex-1 py-1.5 px-2 text-xs font-medium rounded-lg transition-all ${sharingMode === mode ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'}`}
+                  className={`flex-1 py-1.5 px-2 text-xs font-medium rounded-lg transition-all ${sharingMode === mode ? 'bg-white text-black dark:bg-white/20 dark:text-white shadow-sm font-semibold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'}`}
                 >
                   {mode.charAt(0).toUpperCase() + mode.slice(1)}
                 </button>
@@ -109,7 +109,7 @@ export default function ShareModal({ slug, isOpen, onClose }: ShareModalProps) {
             <input 
               readOnly 
               value={shareUrl} 
-              className="w-full bg-white/80 dark:bg-black/30 border border-slate-200/80 dark:border-slate-800 rounded-2xl py-4 px-4 text-sm font-mono text-slate-600 dark:text-slate-300 outline-none pr-12 shadow-inner backdrop-blur-md transition-all group-hover:border-indigo-500/50"
+              className="w-full bg-white/80 dark:bg-black/30 border border-slate-200/80 dark:border-slate-800 rounded-2xl py-4 px-4 text-sm font-mono text-slate-600 dark:text-slate-300 outline-none pr-12 shadow-inner backdrop-blur-md transition-all group-hover:border-white/50"
             />
             <button 
               onClick={handleCopy}

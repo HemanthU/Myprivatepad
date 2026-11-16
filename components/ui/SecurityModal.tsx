@@ -94,7 +94,7 @@ export default function SecurityModal({ slug, isOpen, onClose }: { slug: string,
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl">
         <div className="p-6 border-b border-slate-200 dark:border-white/10 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400 rounded-xl">
+            <div className="p-2 bg-white/10 text-white rounded-xl">
               <Shield size={24} />
             </div>
             <h2 className="text-xl font-bold">Advanced Security</h2>
@@ -105,7 +105,7 @@ export default function SecurityModal({ slug, isOpen, onClose }: { slug: string,
         </div>
 
         {loading ? (
-          <div className="p-12 flex justify-center"><div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" /></div>
+          <div className="p-12 flex justify-center"><div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin" /></div>
         ) : (
           <div className="p-6 space-y-4">
             
@@ -194,7 +194,7 @@ export default function SecurityModal({ slug, isOpen, onClose }: { slug: string,
               {/* Read Only Mode */}
               <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-white/5">
                 <div className="flex items-center gap-4">
-                  <EyeOff size={20} className={settings.readOnly ? "text-cyan-500" : "text-slate-400"} />
+                  <EyeOff size={20} className={settings.readOnly ? "text-white" : "text-slate-400"} />
                   <div>
                     <h3 className="font-semibold text-sm">Read Only</h3>
                     <p className="text-xs text-slate-500">Prevent further edits to this pad</p>
@@ -202,14 +202,14 @@ export default function SecurityModal({ slug, isOpen, onClose }: { slug: string,
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" className="sr-only peer" checked={!!settings.readOnly} onChange={() => updateSetting("readOnly", !settings.readOnly)} />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-cyan-500"></div>
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-white"></div>
                 </label>
               </div>
 
               {/* Decoy Mode */}
               <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-white/5">
                 <div className="flex items-center gap-4">
-                  <EyeOff size={20} className={settings.decoyPassword ? "text-indigo-500" : "text-slate-400"} />
+                  <EyeOff size={20} className={settings.decoyPassword ? "text-white" : "text-slate-400"} />
                   <div>
                     <h3 className="font-semibold text-sm">Decoy Mode</h3>
                     <p className="text-xs text-slate-500">Secondary password shows fake pad</p>
@@ -217,7 +217,7 @@ export default function SecurityModal({ slug, isOpen, onClose }: { slug: string,
                 </div>
                 <button 
                   onClick={handleDecoyMode}
-                  className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors ${settings.decoyPassword ? 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400' : 'bg-slate-200 dark:bg-slate-700 hover:bg-indigo-600 hover:text-white'}`}
+                  className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors ${settings.decoyPassword ? 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400' : 'bg-slate-200 dark:bg-slate-700 hover:bg-white hover:text-black'}`}
                 >
                   {settings.decoyPassword ? "Disable" : "Setup"}
                 </button>

@@ -26,8 +26,9 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
       root.classList.remove("dark");
     }
 
-    // Apply accent color
-    root.style.setProperty("--color-accent", accentColor);
+    // Apply accent color (pure white default, eliminate old blue cache)
+    const effectiveAccent = (!accentColor || accentColor === "#0284c7" || accentColor === "#38bdf8" || accentColor === "#3b82f6" || accentColor.toLowerCase().includes("blue") || accentColor.toLowerCase().includes("sky")) ? "#ffffff" : accentColor;
+    root.style.setProperty("--color-accent", effectiveAccent);
     
     // Apply Glassmorphism
     if (glassmorphism) {

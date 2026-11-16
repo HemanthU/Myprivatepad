@@ -551,7 +551,7 @@ export default function NotePage() {
                 <div 
                   key={i} 
                   className="w-8 h-8 rounded-full border-2 border-slate-900 flex items-center justify-center text-white text-xs font-bold shadow-sm"
-                  style={{ backgroundColor: user.color || '#3b82f6' }}
+                  style={{ backgroundColor: user.color || '#ffffff', color: '#000000' }}
                   title={user.name}
                 >
                   {user.name ? user.name.charAt(0).toUpperCase() : 'G'}

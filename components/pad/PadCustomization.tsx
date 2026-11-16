@@ -24,14 +24,14 @@ export const DEFAULT_CUSTOMIZATION: PadCustomizationSettings = {
 };
 
 const ACCENTS = [
-  { value: "", label: "Default Edge Blue", color: "#38bdf8" },
-  { value: "#3b82f6", label: "Sapphire", color: "#3b82f6" },
+  { value: "", label: "Pure White", color: "#ffffff" },
+  { value: "#e2e8f0", label: "Silver Mist", color: "#e2e8f0" },
+  { value: "#94a3b8", label: "Slate", color: "#94a3b8" },
   { value: "#8b5cf6", label: "Violet", color: "#8b5cf6" },
   { value: "#ec4899", label: "Pink", color: "#ec4899" },
   { value: "#ef4444", label: "Crimson", color: "#ef4444" },
   { value: "#f97316", label: "Amber", color: "#f97316" },
   { value: "#10b981", label: "Emerald", color: "#10b981" },
-  { value: "#14b8a6", label: "Teal", color: "#14b8a6" },
 ];
 
 const BACKGROUND_TINTS = [
@@ -51,10 +51,10 @@ const FONTS = [
 ];
 
 const FONT_SIZES = [
-  { value: "small", label: "S", px: "13px" },
-  { value: "medium", label: "M", px: "15px" },
-  { value: "large", label: "L", px: "18px" },
-  { value: "xl", label: "XL", px: "22px" },
+  { value: "small", label: "S", px: "16px" },
+  { value: "medium", label: "M", px: "20px" },
+  { value: "large", label: "L", px: "22px" },
+  { value: "xl", label: "XL", px: "26px" },
 ];
 
 const LINE_SPACINGS = [
@@ -92,7 +92,7 @@ export default function PadCustomization({ settings, onChange, onClose }: PadCus
   const Section = ({ icon: Icon, title, children }: { icon: any; title: string; children: React.ReactNode }) => (
     <div className="space-y-2.5">
       <div className="flex items-center gap-2">
-        <Icon size={14} className="text-sky-400" />
+        <Icon size={14} className="text-white" />
         <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-400">{title}</span>
       </div>
       {children}
@@ -106,7 +106,7 @@ export default function PadCustomization({ settings, onChange, onClose }: PadCus
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4.5 border-b border-white/10 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center shadow-lg shadow-sky-500/20">
+            <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center shadow-lg border border-white/20">
               <Palette size={18} className="text-white" />
             </div>
             <div>
@@ -122,7 +122,7 @@ export default function PadCustomization({ settings, onChange, onClose }: PadCus
             )}
             <button 
               onClick={onClose} 
-              className="w-8 h-8 rounded-full glass-clear hover:glass-frosted flex items-center justify-center text-foreground hover:text-sky-400 transition-colors"
+              className="w-8 h-8 rounded-full glass-clear hover:glass-frosted flex items-center justify-center text-foreground hover:text-white transition-colors"
             >
               <X size={16} />
             </button>
@@ -142,7 +142,7 @@ export default function PadCustomization({ settings, onChange, onClose }: PadCus
                   onClick={() => update("icon", icon)}
                   className={`w-10 h-10 rounded-xl text-lg flex items-center justify-center transition-all border ${
                     settings.icon === icon
-                      ? "border-sky-400 bg-sky-500/20 scale-110 shadow-md shadow-sky-500/20"
+                      ? "border-white bg-white/20 scale-110 shadow-md shadow-white/10"
                       : "border-white/10 glass-clear hover:border-white/20 hover:scale-105"
                   }`}
                 >
@@ -163,7 +163,7 @@ export default function PadCustomization({ settings, onChange, onClose }: PadCus
                   title={label}
                   className={`w-8 h-8 rounded-full transition-all border-2 flex items-center justify-center ${
                     settings.accent === value 
-                      ? "scale-110 border-white shadow-lg ring-2 ring-sky-400/50" 
+                      ? "scale-110 border-white shadow-lg ring-2 ring-white/50" 
                       : "border-transparent hover:scale-105 hover:border-white/40"
                   }`}
                   style={{ backgroundColor: color }}
@@ -184,7 +184,7 @@ export default function PadCustomization({ settings, onChange, onClose }: PadCus
                   onClick={() => update("background", b.value)}
                   className={`p-2 rounded-xl border text-xs font-medium transition-all flex items-center gap-2 ${
                     settings.background === b.value
-                      ? "border-sky-400 bg-sky-500/15 text-foreground shadow-sm"
+                      ? "border-white bg-white/15 text-foreground shadow-sm"
                       : "border-white/10 glass-clear text-gray-400 hover:text-foreground hover:border-white/20"
                   }`}
                 >
@@ -208,7 +208,7 @@ export default function PadCustomization({ settings, onChange, onClose }: PadCus
                   onClick={() => update("font", f.value)}
                   className={`p-3 rounded-xl border text-left transition-all ${
                     settings.font === f.value
-                      ? "border-sky-400 bg-sky-500/15 text-foreground shadow-sm"
+                      ? "border-white bg-white/15 text-foreground shadow-sm"
                       : "border-white/10 glass-clear text-gray-400 hover:text-foreground hover:border-white/20"
                   }`}
                 >
@@ -231,7 +231,7 @@ export default function PadCustomization({ settings, onChange, onClose }: PadCus
                   onClick={() => update("fontSize", f.value)}
                   className={`py-2 rounded-xl border text-sm font-bold transition-all ${
                     settings.fontSize === f.value
-                      ? "border-sky-400 bg-sky-500/15 text-foreground shadow-sm"
+                      ? "border-white bg-white/15 text-foreground shadow-sm"
                       : "border-white/10 glass-clear text-gray-400 hover:text-foreground hover:border-white/20"
                   }`}
                 >
@@ -251,7 +251,7 @@ export default function PadCustomization({ settings, onChange, onClose }: PadCus
                   onClick={() => update("lineSpacing", s.value)}
                   className={`py-2.5 rounded-xl border text-xs font-semibold transition-all ${
                     settings.lineSpacing === s.value
-                      ? "border-sky-400 bg-sky-500/15 text-foreground shadow-sm"
+                      ? "border-white bg-white/15 text-foreground shadow-sm"
                       : "border-white/10 glass-clear text-gray-400 hover:text-foreground hover:border-white/20"
                   }`}
                 >
@@ -271,7 +271,7 @@ export default function PadCustomization({ settings, onChange, onClose }: PadCus
                   onClick={() => update("width", w.value)}
                   className={`py-2 rounded-xl border text-xs font-semibold transition-all ${
                     settings.width === w.value
-                      ? "border-sky-400 bg-sky-500/15 text-foreground shadow-sm"
+                      ? "border-white bg-white/15 text-foreground shadow-sm"
                       : "border-white/10 glass-clear text-gray-400 hover:text-foreground hover:border-white/20"
                   }`}
                 >
@@ -295,7 +295,7 @@ export default function PadCustomization({ settings, onChange, onClose }: PadCus
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-black font-bold text-xs transition-all shadow-md shadow-sky-500/20 active:scale-95"
+            className="px-5 py-2 rounded-xl bg-white hover:bg-white/90 text-black font-bold text-xs transition-all shadow-md shadow-white/10 active:scale-95"
           >
             Done
           </button>

@@ -29,7 +29,7 @@ export default function SecurityCenter() {
       <header className="border-b border-border bg-card/50 backdrop-blur-xl sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl">
+            <div className="p-2 bg-white/10 text-white rounded-xl">
               <Shield size={24} />
             </div>
             <div>
@@ -38,7 +38,7 @@ export default function SecurityCenter() {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <button onClick={() => router.push("/")} className="text-sm font-medium hover:text-blue-500 transition-colors">
+            <button onClick={() => router.push("/")} className="text-sm font-medium hover:text-white transition-colors">
               Back to App
             </button>
             <ThemeToggle />
@@ -80,12 +80,12 @@ export default function SecurityCenter() {
           {/* Active Sessions */}
           <section>
             <h2 className="text-xl font-bold flex items-center gap-2 mb-6">
-              <Activity size={20} className="text-blue-500" />
+              <Activity size={20} className="text-white" />
               Active Sessions
             </h2>
             <div className="space-y-4">
               {activeSessions.map((session) => (
-                <div key={session.id} className="bg-card border border-border rounded-2xl p-5 flex items-start sm:items-center justify-between flex-col sm:flex-row gap-4 transition-all hover:border-blue-500/50">
+                <div key={session.id} className="bg-card border border-border rounded-2xl p-5 flex items-start sm:items-center justify-between flex-col sm:flex-row gap-4 transition-all hover:border-white/30">
                   <div className="flex items-center gap-4">
                     <div className="p-3 bg-black/5 dark:bg-white/5 rounded-xl">
                       {session.device.includes("MacBook") || session.device.includes("Desktop") ? <Monitor size={24} className="text-gray-500" /> : <Smartphone size={24} className="text-gray-500" />}
@@ -93,7 +93,7 @@ export default function SecurityCenter() {
                     <div>
                       <h3 className="font-semibold flex items-center gap-2">
                         {session.device}
-                        {session.current && <span className="text-[10px] uppercase tracking-wider bg-blue-500/10 text-blue-500 px-2 py-0.5 rounded-full font-bold">Current</span>}
+                        {session.current && <span className="text-[10px] uppercase tracking-wider bg-white/10 text-white px-2 py-0.5 rounded-full font-bold">Current</span>}
                       </h3>
                       <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
                         <Server size={14} /> {session.ip} • {session.location}
@@ -113,7 +113,7 @@ export default function SecurityCenter() {
                 </div>
               ))}
             </div>
-            <button className="mt-4 text-sm text-blue-500 font-medium hover:underline">
+            <button className="mt-4 text-sm text-white/80 font-medium hover:underline hover:text-white">
               Sign out of all other devices
             </button>
           </section>

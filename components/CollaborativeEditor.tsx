@@ -14,7 +14,7 @@ import { encryptText, decryptText, hashRoomName } from "@/lib/clientCrypto";
 import { defineMonacoThemes } from "@/lib/monacoThemes";
 
 const getRandomColor = () => {
-  const colors = ["#ef4444", "#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899", "#14b8a6"];
+  const colors = ["#ef4444", "#ffffff", "#10b981", "#f59e0b", "#d946ef", "#a855f7", "#14b8a6"];
   return colors[Math.floor(Math.random() * colors.length)];
 };
 
@@ -224,7 +224,7 @@ export default function CollaborativeEditor({
 
   // Generous, beautiful typography for comfortable writing
   let activeFontFamily = codeFont || "'JetBrains Mono', 'Fira Code', 'Cascadia Code', Menlo, Monaco, Consolas, monospace";
-  let activeFontSize = fontSize && fontSize >= 16 ? fontSize : 18;
+  let activeFontSize = fontSize && fontSize >= 18 ? fontSize : 20;
   let activeLineHeight = Math.round(activeFontSize * 1.65);
 
   if (customization) {
@@ -232,10 +232,10 @@ export default function CollaborativeEditor({
     else if (customization.font === 'mono') activeFontFamily = "'JetBrains Mono', 'Fira Code', ui-monospace, monospace";
     else if (customization.font === 'cursive') activeFontFamily = 'cursive';
 
-    if (customization.fontSize === 'small') activeFontSize = 15;
-    else if (customization.fontSize === 'medium' || customization.fontSize === 'default') activeFontSize = 18;
-    else if (customization.fontSize === 'large') activeFontSize = 20;
-    else if (customization.fontSize === 'xl') activeFontSize = 24;
+    if (customization.fontSize === 'small') activeFontSize = 16;
+    else if (customization.fontSize === 'medium' || customization.fontSize === 'default') activeFontSize = 20;
+    else if (customization.fontSize === 'large') activeFontSize = 22;
+    else if (customization.fontSize === 'xl') activeFontSize = 26;
 
     activeLineHeight = Math.round(activeFontSize * 1.65);
   }
@@ -251,8 +251,8 @@ export default function CollaborativeEditor({
         minimap: { enabled: minimap },
         wordWrap: wordWrap ? "on" : "off",
         lineNumbers: "on",
-        lineDecorationsWidth: 0,
-        lineNumbersMinChars: 3,
+        lineDecorationsWidth: 20,
+        lineNumbersMinChars: 4,
         glyphMargin: false,
         folding: false,
         renderLineHighlight: "none",
@@ -340,8 +340,8 @@ export default function CollaborativeEditor({
             minimap: { enabled: minimap },
             wordWrap: wordWrap ? "on" : "off",
             lineNumbers: "on",
-            lineDecorationsWidth: 0,
-            lineNumbersMinChars: 3,
+            lineDecorationsWidth: 20,
+            lineNumbersMinChars: 4,
             glyphMargin: false,
             folding: false,
             renderLineHighlight: "none",

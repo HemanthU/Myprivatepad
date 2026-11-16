@@ -46,7 +46,7 @@ export default function AdminEditPad() {
         <AlertTriangle className="text-rose-500 mb-4" size={48} />
         <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
         <p className="text-slate-400 mb-6">You must be authenticated as Super Admin to use Admin Edit Mode.</p>
-        <button onClick={() => router.push("/")} className="px-6 py-2 bg-indigo-600 rounded-xl hover:bg-indigo-700 transition">Return Home</button>
+        <button onClick={() => router.push("/")} className="px-6 py-2 bg-white text-black font-semibold rounded-xl hover:bg-white/90 transition shadow-md">Return Home</button>
       </div>
     );
   }

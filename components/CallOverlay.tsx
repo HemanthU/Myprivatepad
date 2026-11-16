@@ -39,7 +39,7 @@ export default function CallOverlay({ slug, isEnabled, onClose }: { slug: string
         ))}
       </div>
       
-      <div className="w-48 h-32 bg-black rounded-xl overflow-hidden shadow-xl border-2 border-indigo-500 relative pointer-events-auto group">
+      <div className="w-48 h-32 bg-black rounded-xl overflow-hidden shadow-xl border-2 border-white/30 relative pointer-events-auto group">
         <video 
           ref={localVideoRef} 
           autoPlay 

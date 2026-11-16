@@ -127,7 +127,7 @@ export default function VersionHistory({ slug, currentText, onClose, onRestore }
       <div className="bg-card/95 backdrop-blur-3xl border border-white/20 dark:border-white/10 rounded-3xl w-full max-w-6xl h-full sm:h-[90vh] overflow-hidden shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] flex flex-col">
         <div className="p-4 sm:p-6 border-b border-border flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400 rounded-xl">
+            <div className="p-2 bg-white/10 text-white rounded-xl">
               <Clock size={24} />
             </div>
             <h2 className="text-2xl font-bold">Version History</h2>
@@ -137,7 +137,7 @@ export default function VersionHistory({ slug, currentText, onClose, onRestore }
               onClick={() => setCompareMode(!compareMode)}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all border ${
                 compareMode
-                  ? 'bg-indigo-600 text-white border-indigo-600'
+                  ? 'bg-white text-black border-white shadow-md'
                   : 'bg-transparent text-gray-600 dark:text-gray-300 border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/5'
               }`}
             >
@@ -154,7 +154,7 @@ export default function VersionHistory({ slug, currentText, onClose, onRestore }
           {/* Sidebar */}
           <div className="w-full lg:w-72 border-b lg:border-b-0 lg:border-r border-border flex flex-col bg-slate-50/50 dark:bg-slate-900/50">
             <div className="p-4 border-b border-border">
-              <button onClick={saveCurrentVersion} className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-colors text-sm shadow-md flex items-center justify-center gap-2">
+              <button onClick={saveCurrentVersion} className="w-full py-2.5 bg-white text-black hover:bg-white/90 font-bold rounded-xl transition-colors text-sm shadow-md flex items-center justify-center gap-2">
                 <Save size={16} /> Snapshot Current State
               </button>
             </div>
@@ -168,7 +168,7 @@ export default function VersionHistory({ slug, currentText, onClose, onRestore }
                         key={v.id}
                         className={`p-3 rounded-xl border cursor-pointer transition-all ${
                           selectedIndex === idx
-                            ? 'bg-indigo-100 border-indigo-300 dark:bg-indigo-900/40 dark:border-indigo-500/50'
+                            ? 'bg-white/15 border-white/30 text-white shadow-sm'
                             : compareMode && compareIndex === idx
                             ? 'bg-orange-100 border-orange-300 dark:bg-orange-900/40 dark:border-orange-500/50'
                             : 'bg-white dark:bg-gray-800 border-transparent hover:border-gray-200 dark:hover:border-gray-700'
@@ -242,7 +242,7 @@ export default function VersionHistory({ slug, currentText, onClose, onRestore }
                   {selectedVersion && !selectedVersion.isCurrent && (
                     <button
                       onClick={() => handleRestore(selectedVersion.text, new Date(selectedVersion.createdAt).toLocaleString())}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold transition-colors"
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-white text-black hover:bg-white/90 rounded-lg text-xs font-semibold transition-colors shadow-sm"
                     >
                       <RotateCcw size={12} /> Restore This Version
                     </button>

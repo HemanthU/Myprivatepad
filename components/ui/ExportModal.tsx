@@ -79,7 +79,7 @@ export default function ExportModal({ slug, content, metadata, isOpen, onClose }
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
         <div className="p-5 border-b border-slate-200 dark:border-white/10 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
           <h2 className="text-xl font-bold flex items-center gap-2">
-            <Download size={20} className="text-indigo-500" /> Export Pad
+            <Download size={20} className="text-white" /> Export Pad
           </h2>
           <button onClick={onClose} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors">
             <X size={20} />
@@ -88,28 +88,28 @@ export default function ExportModal({ slug, content, metadata, isOpen, onClose }
 
         <div className="p-5 space-y-4">
           <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-            <input type="checkbox" className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500" checked={includeMetadata} onChange={(e) => setIncludeMetadata(e.target.checked)} />
+            <input type="checkbox" className="w-4 h-4 rounded text-white focus:ring-white" checked={includeMetadata} onChange={(e) => setIncludeMetadata(e.target.checked)} />
             <span className="text-sm font-medium">Include Pad Metadata header</span>
           </label>
 
           <div className="grid grid-cols-2 gap-3">
-            <button onClick={() => handleExport("txt")} className="flex items-center gap-2 p-3 bg-slate-100 dark:bg-slate-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 rounded-xl transition-colors font-semibold text-sm">
-              <FileText size={18} className="text-slate-500" /> .TXT
+            <button onClick={() => handleExport("txt")} className="flex items-center gap-2 p-3 bg-slate-100 dark:bg-slate-800 hover:bg-white/15 dark:hover:bg-white/15 rounded-xl transition-colors font-semibold text-sm">
+              <FileText size={18} className="text-slate-400" /> .TXT
             </button>
-            <button onClick={() => handleExport("md")} className="flex items-center gap-2 p-3 bg-slate-100 dark:bg-slate-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 rounded-xl transition-colors font-semibold text-sm">
-              <FileText size={18} className="text-blue-500" /> .MD
+            <button onClick={() => handleExport("md")} className="flex items-center gap-2 p-3 bg-slate-100 dark:bg-slate-800 hover:bg-white/15 dark:hover:bg-white/15 rounded-xl transition-colors font-semibold text-sm">
+              <FileText size={18} className="text-white" /> .MD
             </button>
-            <button onClick={() => handleExport("html")} className="flex items-center gap-2 p-3 bg-slate-100 dark:bg-slate-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 rounded-xl transition-colors font-semibold text-sm">
-              <FileCode size={18} className="text-orange-500" /> .HTML
+            <button onClick={() => handleExport("html")} className="flex items-center gap-2 p-3 bg-slate-100 dark:bg-slate-800 hover:bg-white/15 dark:hover:bg-white/15 rounded-xl transition-colors font-semibold text-sm">
+              <FileCode size={18} className="text-orange-400" /> .HTML
             </button>
-            <button onClick={() => handleExport("json")} className="flex items-center gap-2 p-3 bg-slate-100 dark:bg-slate-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 rounded-xl transition-colors font-semibold text-sm">
-              <FileJson size={18} className="text-yellow-500" /> .JSON
+            <button onClick={() => handleExport("json")} className="flex items-center gap-2 p-3 bg-slate-100 dark:bg-slate-800 hover:bg-white/15 dark:hover:bg-white/15 rounded-xl transition-colors font-semibold text-sm">
+              <FileJson size={18} className="text-yellow-400" /> .JSON
             </button>
-            <button onClick={() => handleExport("pdf")} className="flex items-center gap-2 p-3 bg-slate-100 dark:bg-slate-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 rounded-xl transition-colors font-semibold text-sm">
-              <FileText size={18} className="text-red-500" /> .PDF
+            <button onClick={() => handleExport("pdf")} className="flex items-center gap-2 p-3 bg-slate-100 dark:bg-slate-800 hover:bg-white/15 dark:hover:bg-white/15 rounded-xl transition-colors font-semibold text-sm">
+              <FileText size={18} className="text-rose-400" /> .PDF
             </button>
-            <button onClick={() => handleExport("clipboard")} className="flex items-center gap-2 p-3 bg-slate-100 dark:bg-slate-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 rounded-xl transition-colors font-semibold text-sm">
-              <Copy size={18} className="text-green-500" /> Clipboard
+            <button onClick={() => handleExport("clipboard")} className="flex items-center gap-2 p-3 bg-slate-100 dark:bg-slate-800 hover:bg-white/15 dark:hover:bg-white/15 rounded-xl transition-colors font-semibold text-sm">
+              <Copy size={18} className="text-emerald-400" /> Clipboard
             </button>
           </div>
         </div>

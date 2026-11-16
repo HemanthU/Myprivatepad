@@ -91,7 +91,7 @@ export default function Sidebar({ currentSlug }: { currentSlug: string }) {
               <div className="group flex items-center justify-between px-2 py-1.5 hover:bg-slate-200 dark:hover:bg-white/5 rounded-lg cursor-pointer text-slate-700 dark:text-slate-300">
                 <div className="flex items-center gap-1.5 flex-1" onClick={() => toggleFolder(folder.id)}>
                   {expandedFolders[folder.id] ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                  <FolderIcon size={14} className="text-indigo-400" fill="currentColor" />
+                  <FolderIcon size={14} className="text-white/80" fill="currentColor" />
                   <span className="text-sm font-medium truncate">{folder.name}</span>
                 </div>
                 <button onClick={() => setActiveMenu(activeMenu === `f-${folder.id}` ? null : `f-${folder.id}`)} className="opacity-0 group-hover:opacity-100 p-1 hover:bg-slate-300 dark:hover:bg-white/10 rounded">
@@ -117,9 +117,9 @@ export default function Sidebar({ currentSlug }: { currentSlug: string }) {
                       <div key={slug} className="group relative">
                         <div 
                           onClick={() => { if (currentSlug !== slug) router.push(`/${slug}`); }}
-                          className={`flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer text-sm ${currentSlug === slug ? 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 font-semibold' : 'hover:bg-slate-200 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400'}`}
+                          className={`flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer text-sm ${currentSlug === slug ? 'bg-white/15 text-white font-semibold border border-white/20' : 'hover:bg-slate-200 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400'}`}
                         >
-                          <FileText size={14} className={currentSlug === slug ? 'text-indigo-500' : ''} />
+                          <FileText size={14} className={currentSlug === slug ? 'text-white' : ''} />
                           <span className="truncate flex-1">{pad.label}</span>
                           <button onClick={(e) => { e.stopPropagation(); setActiveMenu(activeMenu === `p-${slug}` ? null : `p-${slug}`); }} className="opacity-0 group-hover:opacity-100 p-1 hover:bg-slate-300 dark:hover:bg-white/10 rounded">
                             <MoreVertical size={14} />
@@ -153,9 +153,9 @@ export default function Sidebar({ currentSlug }: { currentSlug: string }) {
                 <div key={pad.slug} className="group relative">
                   <div 
                     onClick={() => { if (currentSlug !== pad.slug) router.push(`/${pad.slug}`); }}
-                    className={`flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer text-sm ${currentSlug === pad.slug ? 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 font-semibold' : 'hover:bg-slate-200 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400'}`}
+                    className={`flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer text-sm ${currentSlug === pad.slug ? 'bg-white/15 text-white font-semibold border border-white/20' : 'hover:bg-slate-200 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400'}`}
                   >
-                    <FileText size={14} className={currentSlug === pad.slug ? 'text-indigo-500' : ''} />
+                    <FileText size={14} className={currentSlug === pad.slug ? 'text-white' : ''} />
                     <span className="truncate flex-1">{pad.label}</span>
                     <button onClick={(e) => { e.stopPropagation(); setActiveMenu(activeMenu === `p-${pad.slug}` ? null : `p-${pad.slug}`); }} className="opacity-0 group-hover:opacity-100 p-1 hover:bg-slate-300 dark:hover:bg-white/10 rounded">
                       <MoreVertical size={14} />
