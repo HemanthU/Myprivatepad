@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { doc, onSnapshot, setDoc, getDoc, deleteDoc } from "firebase/firestore";
-import { FileText, Search, Shield, Clock, Unlock, Lock, EyeOff, Save, Key, User, ArrowLeft, Trash, Eye, Ghost, Database, Settings, PenTool, ChevronLeft, Play, X, Terminal, Share2, Palette } from "lucide-react";
+import { FileText, Search, Shield, Clock, Unlock, Lock, EyeOff, Save, Key, User, ArrowLeft, Trash, Eye, Ghost, Settings, ChevronLeft, Play, X, Share2, UploadCloud } from "lucide-react";
 import { db } from "@/lib/firebase";
 import ThemeToggle from "@/components/ThemeToggle";
 import PadFiles from "@/components/PadFiles";
@@ -13,14 +13,14 @@ import PromptModal from "@/components/ui/PromptModal";
 import CommandPalette from "@/components/ui/CommandPalette";
 import CollaborativeEditor from "@/components/CollaborativeEditor";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import Sidebar from "@/components/Sidebar";
+
 import { useWorkspaceStore } from "@/lib/workspaceStore";
 import TabBar from "@/components/TabBar";
 import ShareModal from "@/components/ui/ShareModal";
 import SecurityModal from "@/components/ui/SecurityModal";
 import ExportModal from "@/components/ui/ExportModal";
-import PadCustomization, { PadCustomizationSettings, DEFAULT_CUSTOMIZATION } from "@/components/pad/PadCustomization";
-import PadTypeSelector from "@/components/pad/PadTypeSelector";
+
+
 import { logAccessEvent } from "@/lib/accessLogger";
 import { QRCodeSVG } from "qrcode.react";
 
@@ -39,8 +39,8 @@ export default function NotePage() {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   
   const [settingsData, setSettingsData] = useState<any>({});
-  const [isCustomizationOpen, setIsCustomizationOpen] = useState(false);
-  const { addRecentPad, toggleExplorer, isExplorerOpen } = useWorkspaceStore();
+
+  const { addRecentPad } = useWorkspaceStore();
 
   useEffect(() => {
     addRecentPad(slug);
@@ -66,18 +66,6 @@ export default function NotePage() {
   const [activeTab, setActiveTab] = useState<"notes" | "files">("notes");
 
   const padType = settingsData.type || 'text';
-  const customization = settingsData.customization || DEFAULT_CUSTOMIZATION;
-
-  const handleCustomizationChange = async (newSettings: PadCustomizationSettings) => {
-    try {
-      await setDoc(doc(db, "padSettings", slug), {
-        customization: newSettings
-      }, { merge: true });
-      setSettingsData((prev: any) => ({ ...prev, customization: newSettings }));
-    } catch (e) {
-      toast("Failed to save customization", "error");
-    }
-  };
 
   const textRef = useRef(localText);
   useEffect(() => {
@@ -532,51 +520,39 @@ export default function NotePage() {
 
   return (
     <ErrorBoundary>
-    <div className="flex h-screen overflow-hidden w-full">
-      <Sidebar currentSlug={slug} />
-      
-      <div className="flex-1 h-full overflow-y-auto bg-transparent text-foreground transition-colors duration-300 flex flex-col items-center font-sans relative">
-        <PromptModal isOpen={isOpen} config={config} onClose={handleClose} />
+    <div className="min-h-screen w-full bg-transparent text-foreground flex flex-col items-center font-sans relative overflow-x-hidden">
+      <PromptModal isOpen={isOpen} config={config} onClose={handleClose} />
       <CommandPalette isOpen={showPalette} onClose={() => setShowPalette(false)} currentSlug={slug} />
       {!distractionFree && <TabBar currentSlug={slug} />}
       {isBurned && (
-        <div className="w-full bg-red-600 text-white py-2 text-center text-sm font-semibold z-50 shadow-md">
+        <div className="w-full bg-red-600/90 backdrop-blur-md text-white py-2.5 text-center text-sm font-semibold z-50 shadow-lg border-b border-red-500/30">
           🔥 Burn After Read active: This pad has been deleted from the server. It will vanish forever when you leave this page.
         </div>
       )}
       {!distractionFree && (
       <header className="w-full max-w-[1400px] flex items-center justify-between p-4 sm:p-8 mb-2">
         <div className="flex items-center gap-2">
-          {!isExplorerOpen && (
-            <button 
-              onClick={toggleExplorer}
-              className="p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              title="Toggle Explorer"
-            >
-              <Database size={24} />
-            </button>
-          )}
           <button 
             onClick={() => router.push("/")}
-            className="p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="p-2 -ml-2 rounded-full glass-clear hover:glass-frosted border border-white/10 transition-colors"
             title="Back to Home"
           >
-            <ChevronLeft size={24} />
+            <ChevronLeft size={22} />
           </button>
           <h1 
             onClick={() => router.push("/")}
-            className="text-2xl font-extrabold cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-2"
+            className="text-2xl font-extrabold cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-2 tracking-tight text-white"
           >
             PadX
           </h1>
         </div>
-        <div className="flex items-center gap-3 sm:gap-4">
+        <div className="flex items-center gap-2.5 sm:gap-3.5">
           {activeUsers.length > 0 && (
             <div className="flex items-center -space-x-2 mr-2">
               {activeUsers.map((user, i) => (
                 <div 
                   key={i} 
-                  className="w-8 h-8 rounded-full border-2 border-white dark:border-slate-900 flex items-center justify-center text-white text-xs font-bold shadow-sm"
+                  className="w-8 h-8 rounded-full border-2 border-slate-900 flex items-center justify-center text-white text-xs font-bold shadow-sm"
                   style={{ backgroundColor: user.color || '#3b82f6' }}
                   title={user.name}
                 >
@@ -587,42 +563,43 @@ export default function NotePage() {
           )}
           <button 
             onClick={handleSwitchPad}
-            className="flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-sm font-semibold hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors border border-transparent shadow-sm"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full glass-clear hover:glass-frosted text-sm font-semibold text-gray-300 hover:text-white transition-all border border-white/10 shadow-sm"
             title="Switch Pad (Ctrl+K)"
           >
-            <Search size={16} className="sm:hidden" />
+            <Search size={15} />
             <span className="hidden sm:inline">Switch Pad</span>
           </button>
           <button
             onClick={() => setIsSecurityModalOpen(true)}
-            className="p-2 rounded-full bg-slate-100 dark:bg-slate-900/30 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-900/50 transition-colors"
+            className="p-2 rounded-full glass-clear hover:glass-frosted text-gray-300 hover:text-white border border-white/10 transition-colors"
             title="Advanced Security"
           >
-            <Shield size={18} />
+            <Shield size={17} />
           </button>
           
           {deleteAtDate && timeLeft && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-sm font-semibold animate-pulse" title="Time until self-destruct">
-              <Clock size={16} />
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-500/15 border border-red-500/30 text-red-400 text-sm font-semibold animate-pulse" title="Time until self-destruct">
+              <Clock size={15} />
               {timeLeft}
             </div>
           )}
 
           <button
-            onClick={() => setIsCustomizationOpen(true)}
-            className="p-2 rounded-full bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400 hover:bg-pink-200 dark:hover:bg-pink-900/50 transition-colors"
-            title="Customize Pad"
-          >
-            <Palette size={18} />
-          </button>
-          <button
             onClick={() => setIsShareModalOpen(true)}
-            className="p-2 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-200 dark:hover:bg-indigo-900/50 transition-colors"
+            className="p-2 rounded-full glass-clear hover:glass-frosted text-gray-300 hover:text-white border border-white/10 transition-colors"
             title="Share Pad"
           >
-            <Share2 size={18} />
+            <Share2 size={17} />
           </button>
-          <span className={`hidden sm:flex text-sm font-semibold px-3 py-1.5 rounded-full items-center gap-1.5 ${connectionStatus === 'Synced' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : connectionStatus === 'Saving...' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' : connectionStatus === 'Connecting...' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'}`}>
+          <span className={`hidden sm:flex text-xs font-semibold px-3 py-1.5 rounded-full items-center gap-1.5 border ${
+            connectionStatus === 'Synced' 
+              ? 'glass-clear border-emerald-500/30 text-emerald-400' 
+              : connectionStatus === 'Saving...' 
+              ? 'glass-clear border-yellow-500/30 text-yellow-400 animate-pulse' 
+              : connectionStatus === 'Connecting...' 
+              ? 'glass-clear border-orange-500/30 text-orange-400' 
+              : 'glass-clear border-red-500/30 text-red-400'
+          }`}>
             {isBurned ? "🔥 Burned" : connectionStatus === "Synced" ? "🟢 Synced" : connectionStatus === "Saving..." ? "🟡 Saving..." : connectionStatus === "Connecting..." ? "🟠 Connecting..." : connectionStatus === "Offline" ? "🔴 Offline" : "🔴 Sync Error"}
           </span>
           <ThemeToggle />
@@ -630,48 +607,40 @@ export default function NotePage() {
       </header>
       )}
 
-      <main 
-        className="w-full px-4 sm:px-8 flex-1 flex flex-col mx-auto"
-        style={{
-          fontFamily: customization.font === 'serif' ? 'ui-serif, Georgia, serif' : 
-                      customization.font === 'mono' ? 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace' : 
-                      customization.font === 'cursive' ? 'cursive' : 'inherit',
-          fontSize: customization.fontSize === 'small' ? '0.875rem' :
-                    customization.fontSize === 'large' ? '1.125rem' :
-                    customization.fontSize === 'xl' ? '1.25rem' : '1rem',
-          lineHeight: customization.lineSpacing === 'compact' ? '1.2' :
-                      customization.lineSpacing === 'relaxed' ? '1.75' :
-                      customization.lineSpacing === 'loose' ? '2' : '1.5',
-          maxWidth: customization.width === 'narrow' ? '800px' :
-                    customization.width === 'wide' ? '1200px' :
-                    customization.width === 'full' ? '100%' : '1400px',
-        }}
-      >
+      <main className="w-full max-w-[1400px] px-4 sm:px-8 flex-1 flex flex-col mx-auto">
         {!distractionFree && (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 sm:mb-8 gap-4">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 dark:text-gray-200">
-            # {slug} {isDecoyMode && <span className="text-sm font-normal text-gray-500">(Decoy)</span>}
+          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white flex items-center gap-2">
+            <span className="text-sky-400 font-mono">#</span> {slug} {isDecoyMode && <span className="text-sm font-normal text-gray-400">(Decoy)</span>}
           </h2>
-          {/* Responsive Tabs Navigation */}
-          <div className="flex bg-gray-100/80 dark:bg-gray-800/80 backdrop-blur-md p-1.5 rounded-2xl w-full sm:w-max overflow-x-auto scrollbar-hide shadow-inner border border-white/20 dark:border-white/5">
+          {/* Glassmorphic Responsive Tabs Navigation */}
+          <div className="flex glass-clear p-1.5 rounded-2xl w-full sm:w-max overflow-x-auto scrollbar-hide border border-white/10 shadow-inner">
             <button
               onClick={() => setActiveTab("notes")}
-              className={`flex-1 sm:flex-none min-w-[80px] px-6 py-2.5 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 ${activeTab === 'notes' ? 'bg-white dark:bg-black shadow-[0_2px_10px_-3px_rgba(0,0,0,0.1)] dark:shadow-none border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-white/50 dark:hover:bg-black/50 border border-transparent'}`}
+              className={`flex-1 sm:flex-none min-w-[85px] px-6 py-2 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 border ${
+                activeTab === 'notes' 
+                  ? 'glass-frosted text-sky-400 border-sky-400/40 shadow-lg shadow-sky-500/10' 
+                  : 'text-gray-400 hover:text-white border-transparent hover:glass-clear'
+              }`}
               title="Notes (Alt+1)"
             >
               Notes
             </button>
             <button
               onClick={() => setActiveTab("files")}
-              className={`flex-1 sm:flex-none min-w-[80px] px-6 py-2.5 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 ${activeTab === 'files' ? 'bg-white dark:bg-black shadow-[0_2px_10px_-3px_rgba(0,0,0,0.1)] dark:shadow-none border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-white/50 dark:hover:bg-black/50 border border-transparent'}`}
+              className={`flex-1 sm:flex-none min-w-[85px] px-6 py-2 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 border ${
+                activeTab === 'files' 
+                  ? 'glass-frosted text-sky-400 border-sky-400/40 shadow-lg shadow-sky-500/10' 
+                  : 'text-gray-400 hover:text-white border-transparent hover:glass-clear'
+              }`}
               title="Files (Alt+2)"
             >
               Files
             </button>
-            <div className="hidden sm:block border-l border-gray-300 dark:border-gray-700 mx-1"></div>
+            <div className="hidden sm:block border-l border-white/10 mx-1"></div>
             <button
               onClick={() => setIsExportModalOpen(true)}
-              className="flex-1 sm:flex-none min-w-[80px] px-6 py-2.5 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-white/50 dark:hover:bg-black/50 border border-transparent"
+              className="flex-1 sm:flex-none min-w-[85px] px-6 py-2 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 text-gray-400 hover:text-white border border-transparent hover:glass-clear"
             >
               Export
             </button>
@@ -681,32 +650,29 @@ export default function NotePage() {
 
         <div className="flex-1 w-full grid grid-cols-1 grid-rows-1 mb-8">
           {/* Notes Tab */}
-          <div 
-            style={customization?.background ? { backgroundColor: customization.background } : undefined}
-            className={`col-start-1 row-start-1 w-full flex flex-col min-h-[620px] glass-frosted shadow-[0_16px_50px_rgba(0,0,0,0.1)] dark:shadow-[0_16px_50px_rgba(0,0,0,0.5)] border border-white/25 dark:border-white/10 rounded-3xl p-6 sm:p-10 transition-all duration-300 relative overflow-hidden ${activeTab === 'notes' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'}`}>
+          <div className={`col-start-1 row-start-1 w-full flex flex-col min-h-[620px] glass-frosted shadow-[0_20px_60px_rgba(0,0,0,0.6)] border border-white/12 rounded-3xl p-6 sm:p-10 transition-all duration-300 relative overflow-hidden ${activeTab === 'notes' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'}`}>
             {/* Top glass highlight line */}
             <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-sky-400/40 to-transparent pointer-events-none" />
-              <div className="flex-1 flex flex-col min-h-[400px] relative overflow-hidden">
-                <CollaborativeEditor 
-                  slug={slug} 
-                  isBurned={isBurned || isReadOnly} 
-                  isDecoyMode={isDecoyMode}
-                  isLocked={settingsData?.locked || false}
-                  initialText={isBurned ? localText : undefined}
-                  customization={customization}
-                  language="plaintext"
-                  onStatsChange={(words, chars, text) => {
-                    setWordCount(words);
-                    setCharCount(chars);
-                    setLocalText(text);
-                  }}
-                  onUsersChange={setActiveUsers}
-                  onStatusChange={setConnectionStatus}
-                />
-              </div>
-              <div className="mt-6 pt-4 border-t border-border flex justify-end text-sm font-medium text-gray-500 dark:text-gray-400">
-                {wordCount} words • {charCount} chars
-              </div>
+            <div className="flex-1 flex flex-col min-h-[400px] relative overflow-hidden">
+              <CollaborativeEditor 
+                slug={slug} 
+                isBurned={isBurned || isReadOnly} 
+                isDecoyMode={isDecoyMode}
+                isLocked={settingsData?.locked || false}
+                initialText={isBurned ? localText : undefined}
+                language="plaintext"
+                onStatsChange={(words, chars, text) => {
+                  setWordCount(words);
+                  setCharCount(chars);
+                  setLocalText(text);
+                }}
+                onUsersChange={setActiveUsers}
+                onStatusChange={setConnectionStatus}
+              />
+            </div>
+            <div className="mt-6 pt-4 border-t border-white/10 flex justify-end text-xs font-mono text-gray-400">
+              {wordCount} words • {charCount} chars
+            </div>
           </div>
 
           {/* Files Tab */}
@@ -716,21 +682,21 @@ export default function NotePage() {
         </div>
       </main>
 
-        {/* Mobile Bottom Navigation */}
+      {/* Mobile Bottom Navigation */}
       {!distractionFree && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 flex sm:hidden glass-frosted/90 backdrop-blur-xl border-t border-border p-2 pb-4 justify-around shadow-[0_-8px_30px_rgb(0,0,0,0.12)]">
+        <div className="fixed bottom-0 left-0 right-0 z-40 flex sm:hidden glass-frosted/95 backdrop-blur-2xl border-t border-white/10 p-2 pb-4 justify-around shadow-[0_-8px_30px_rgb(0,0,0,0.5)]">
           <button
             onClick={() => setActiveTab("notes")}
-            className={`flex-1 py-2 flex flex-col items-center justify-center gap-1 rounded-xl font-semibold text-xs transition-all ${activeTab === 'notes' ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30' : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-200'}`}
+            className={`flex-1 py-2 flex flex-col items-center justify-center gap-1 rounded-xl font-semibold text-xs transition-all ${activeTab === 'notes' ? 'text-sky-400 bg-sky-500/15' : 'text-gray-400 hover:text-white'}`}
           >
             <FileText size={20} />
             Notes
           </button>
           <button
             onClick={() => setActiveTab("files")}
-            className={`flex-1 py-2 flex flex-col items-center justify-center gap-1 rounded-xl font-semibold text-xs transition-all ${activeTab === 'files' ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30' : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-200'}`}
+            className={`flex-1 py-2 flex flex-col items-center justify-center gap-1 rounded-xl font-semibold text-xs transition-all ${activeTab === 'files' ? 'text-sky-400 bg-sky-500/15' : 'text-gray-400 hover:text-white'}`}
           >
-            <Database size={20} />
+            <UploadCloud size={20} />
             Files
           </button>
         </div>
@@ -739,8 +705,6 @@ export default function NotePage() {
       <ShareModal slug={slug} isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} />
       <SecurityModal slug={slug} isOpen={isSecurityModalOpen} onClose={() => setIsSecurityModalOpen(false)} />
       <ExportModal slug={slug} content={localText} metadata={settingsData} isOpen={isExportModalOpen} onClose={() => setIsExportModalOpen(false)} />
-      {isCustomizationOpen && <PadCustomization settings={customization} onChange={handleCustomizationChange} onClose={() => setIsCustomizationOpen(false)} />}
-      </div>
     </div>
     </ErrorBoundary>
   );

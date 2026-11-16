@@ -44,7 +44,7 @@ export default function TabBar({ currentSlug }: { currentSlug: string }) {
          <div 
            key={t} 
            onClick={() => router.push('/' + t)} 
-           className={`px-4 py-2 rounded-t-lg flex items-center gap-2 cursor-pointer transition-colors whitespace-nowrap text-sm ${t === currentSlug ? 'bg-white dark:bg-black font-bold text-black dark:text-white shadow-sm border-t border-l border-r border-border -mb-[1px]' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-black dark:hover:text-white border border-transparent'}`}
+           className={`px-4 py-2 rounded-t-xl flex items-center gap-2 cursor-pointer transition-all whitespace-nowrap text-sm border-t border-l border-r -mb-[1px] ${t === currentSlug ? 'glass-frosted font-bold text-sky-400 border-sky-400/30 shadow-md' : 'glass-clear text-gray-400 hover:text-foreground border-white/10'}`}
          >
            #{t}
            <div 

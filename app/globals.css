@@ -14,18 +14,18 @@
 }
 
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
-  --card: rgba(255, 255, 255, 0.75);
-  --border: rgba(226, 232, 240, 0.8);
-  --color-accent: #3b82f6;
+  --background: #05070e;
+  --foreground: #f1f5f9;
+  --card: rgba(13, 19, 35, 0.7);
+  --border: rgba(255, 255, 255, 0.1);
+  --color-accent: #38bdf8;
 }
 
 html.dark, html[data-theme="dark"] {
-  --background: #020617;
-  --foreground: #f8fafc;
-  --card: rgba(15, 23, 42, 0.65);
-  --border: rgba(51, 65, 85, 0.4);
+  --background: #05070e;
+  --foreground: #f1f5f9;
+  --card: rgba(13, 19, 35, 0.7);
+  --border: rgba(255, 255, 255, 0.1);
 }
 
 html[data-theme="amoled"] {
@@ -124,22 +124,13 @@ code, pre, .cm-editor, .monaco-editor {
   to { opacity: 1; transform: translateY(0); }
 }
 
-html .bg-card {
-  backdrop-filter: blur(32px);
-  -webkit-backdrop-filter: blur(32px);
+html .bg-card, html:not(.dark) .bg-card, html.dark .bg-card {
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  background-color: rgba(13, 19, 35, 0.7);
+  box-shadow: 0 16px 40px 0 rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
-
-html:not(.dark) .bg-card {
-  box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.05), 0 2px 8px -1px rgba(0, 0, 0, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-}
-
-html.dark .bg-card {
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-
 
 body {
   background: var(--background);
@@ -147,31 +138,14 @@ body {
   transition: background-color 0.4s ease, color 0.4s ease;
 }
 
-/* Premium animated mesh gradient for light mode */
-html:not(.dark) body {
-  background-color: #f8fafc;
+/* Premium Black & Whitish Frosted Glass Theme Mesh Gradient */
+body, html:not(.dark) body, html.dark body {
+  background-color: #05070e;
   background-image: 
-    radial-gradient(at 40% 20%, hsla(28,100%,74%,0.15) 0px, transparent 50%),
-    radial-gradient(at 80% 0%, hsla(189,100%,56%,0.15) 0px, transparent 50%),
-    radial-gradient(at 0% 50%, hsla(355,100%,93%,0.15) 0px, transparent 50%),
-    radial-gradient(at 80% 50%, hsla(340,100%,76%,0.15) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, hsla(22,100%,77%,0.15) 0px, transparent 50%),
-    radial-gradient(at 80% 100%, hsla(242,100%,70%,0.15) 0px, transparent 50%),
-    radial-gradient(at 0% 0%, hsla(343,100%,76%,0.15) 0px, transparent 50%);
-  background-attachment: fixed;
-}
-
-/* Premium animated mesh gradient for dark mode */
-html.dark body {
-  background-color: #020617;
-  background-image: 
-    radial-gradient(at 40% 20%, hsla(228,100%,74%,0.08) 0px, transparent 50%),
-    radial-gradient(at 80% 0%, hsla(189,100%,56%,0.08) 0px, transparent 50%),
-    radial-gradient(at 0% 50%, hsla(255,100%,93%,0.08) 0px, transparent 50%),
-    radial-gradient(at 80% 50%, hsla(240,100%,76%,0.08) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, hsla(22,100%,77%,0.08) 0px, transparent 50%),
-    radial-gradient(at 80% 100%, hsla(282,100%,70%,0.08) 0px, transparent 50%),
-    radial-gradient(at 0% 0%, hsla(343,100%,76%,0.08) 0px, transparent 50%);
+    radial-gradient(at 20% 15%, rgba(56, 189, 248, 0.08) 0px, transparent 40%),
+    radial-gradient(at 80% 20%, rgba(139, 92, 246, 0.08) 0px, transparent 40%),
+    radial-gradient(at 50% 80%, rgba(56, 189, 248, 0.05) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(15, 23, 42, 0.6) 0px, transparent 60%);
   background-attachment: fixed;
 }
 
@@ -277,32 +251,19 @@ html.dark body {
 }
 
 /* Glassmorphism Overhaul - Black & Whitish Frosted Glass Theme */
-.glass-clear { 
-  background: rgba(255, 255, 255, 0.08) !important; 
-  border: 1px solid rgba(255, 255, 255, 0.15) !important; 
+.glass-clear, .dark .glass-clear { 
+  background: rgba(255, 255, 255, 0.05) !important; 
+  border: 1px solid rgba(255, 255, 255, 0.1) !important; 
   backdrop-filter: blur(16px) !important; 
   -webkit-backdrop-filter: blur(16px) !important;
 }
-.dark .glass-clear { 
-  background: rgba(15, 23, 42, 0.4) !important; 
-  border: 1px solid rgba(255, 255, 255, 0.1) !important; 
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-}
 
-.glass-frosted { 
-  background: rgba(255, 255, 255, 0.7) !important; 
-  border: 1px solid rgba(255, 255, 255, 0.4) !important; 
-  backdrop-filter: blur(28px) saturate(180%) !important; 
-  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.06), inset 0 1px 1px 0 rgba(255, 255, 255, 0.6) !important; 
-}
-.dark .glass-frosted { 
-  background: rgba(10, 15, 29, 0.65) !important; 
-  border: 1px solid rgba(255, 255, 255, 0.08) !important; 
-  backdrop-filter: blur(28px) saturate(180%) !important; 
-  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), inset 0 1px 1px 0 rgba(255, 255, 255, 0.05) !important; 
+.glass-frosted, .dark .glass-frosted { 
+  background: rgba(13, 19, 35, 0.7) !important; 
+  border: 1px solid rgba(255, 255, 255, 0.12) !important; 
+  backdrop-filter: blur(28px) saturate(190%) !important; 
+  -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
+  box-shadow: 0 16px 40px 0 rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.1) !important; 
 }
 
 /* Monaco Editor Complete Glassmorphism & Clean Line Numbers */
