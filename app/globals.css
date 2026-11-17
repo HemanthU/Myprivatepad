@@ -132,60 +132,9 @@ body {
 }
 
 /* Light Theme Global Text & Element Colors */
-html:not(.dark),
-html[data-theme="light"] {
-  color: #090d16;
-}
-
 html:not(.dark) body,
 html[data-theme="light"] body {
-  color: #090d16 !important;
-}
-
-/* Prevent white-on-white text when page theme is light */
-html:not(.dark) h1.text-white,
-html:not(.dark) h2.text-white,
-html:not(.dark) h3.text-white,
-html:not(.dark) h4.text-white,
-html:not(.dark) span.text-white,
-html:not(.dark) p.text-white,
-html:not(.dark) div.text-white,
-html:not(.dark) button.text-white,
-html:not(.dark) a.text-white,
-html[data-theme="light"] h1.text-white,
-html[data-theme="light"] h2.text-white,
-html[data-theme="light"] h3.text-white,
-html[data-theme="light"] h4.text-white,
-html[data-theme="light"] span.text-white,
-html[data-theme="light"] p.text-white,
-html[data-theme="light"] div.text-white,
-html[data-theme="light"] button.text-white,
-html[data-theme="light"] a.text-white {
-  color: #090d16 !important;
-}
-
-html:not(.dark) .text-gray-400,
-html:not(.dark) .text-gray-300,
-html:not(.dark) .text-slate-400,
-html[data-theme="light"] .text-gray-400,
-html[data-theme="light"] .text-gray-300,
-html[data-theme="light"] .text-slate-400 {
-  color: #475569 !important;
-}
-
-html:not(.dark) .text-white\/60,
-html[data-theme="light"] .text-white\/60 {
-  color: rgba(9, 13, 22, 0.6) !important;
-}
-
-html:not(.dark) .glass-frosted,
-html[data-theme="light"] .glass-frosted {
-  color: #090d16 !important;
-}
-
-html:not(.dark) .glass-clear,
-html[data-theme="light"] .glass-clear {
-  color: #090d16 !important;
+  color: #090d16;
 }
 
 /* Light Theme Background */
@@ -429,6 +378,9 @@ html.dark .glass-frosted, .glass-frosted {
   border: none !important;
 }
 
+.editor-theme-dark,
+.editor-theme-dark textarea,
+.editor-theme-dark .monaco-editor,
 .editor-theme-dark .monaco-editor .view-line,
 .editor-theme-dark .monaco-editor .view-line span,
 .editor-theme-dark .monaco-editor .mtk1 {
@@ -467,6 +419,9 @@ html.dark .glass-frosted, .glass-frosted {
   border: none !important;
 }
 
+.editor-theme-light,
+.editor-theme-light textarea,
+.editor-theme-light .monaco-editor,
 .editor-theme-light .monaco-editor .view-line,
 .editor-theme-light .monaco-editor .view-line span,
 .editor-theme-light .monaco-editor .mtk1 {

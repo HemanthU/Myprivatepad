@@ -680,8 +680,8 @@ export default function NotePage() {
           {/* Notes Tab */}
           <div className={`col-start-1 row-start-1 w-full flex flex-col min-h-[620px] rounded-3xl p-6 sm:p-10 transition-all duration-300 relative overflow-hidden ${
             editorTheme === 'light'
-              ? 'bg-white text-slate-900 border border-slate-200 dark:border-white/50 shadow-[0_25px_80px_rgba(0,0,0,0.06)] dark:shadow-[0_25px_80px_rgba(0,0,0,0.5)]'
-              : 'glass-frosted text-foreground border border-white/12 shadow-[0_20px_60px_rgba(0,0,0,0.6)]'
+              ? 'bg-white text-slate-900 border border-slate-300 shadow-[0_25px_80px_rgba(0,0,0,0.1)]'
+              : 'bg-[#070b14] text-white border border-white/20 shadow-[0_25px_80px_rgba(0,0,0,0.6)]'
           } ${activeTab === 'notes' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'}`}>
 
             {/* Quick Actions Header above the editor */}
