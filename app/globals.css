@@ -14,11 +14,11 @@
 }
 
 :root {
-  --background: #05070e;
-  --foreground: #f1f5f9;
-  --card: rgba(13, 19, 35, 0.7);
-  --border: rgba(255, 255, 255, 0.1);
-  --color-accent: #ffffff;
+  --background: #f8fafc;
+  --foreground: #090d16;
+  --card: rgba(255, 255, 255, 0.85);
+  --border: rgba(0, 0, 0, 0.1);
+  --color-accent: #0f172a;
 }
 
 html.dark, html[data-theme="dark"] {
@@ -26,6 +26,7 @@ html.dark, html[data-theme="dark"] {
   --foreground: #f1f5f9;
   --card: rgba(13, 19, 35, 0.7);
   --border: rgba(255, 255, 255, 0.1);
+  --color-accent: #ffffff;
 }
 
 html[data-theme="amoled"] {
@@ -124,22 +125,25 @@ code, pre, .cm-editor, .monaco-editor {
   to { opacity: 1; transform: translateY(0); }
 }
 
-html .bg-card, html:not(.dark) .bg-card, html.dark .bg-card {
-  backdrop-filter: blur(28px);
-  -webkit-backdrop-filter: blur(28px);
-  background-color: rgba(13, 19, 35, 0.7);
-  box-shadow: 0 16px 40px 0 rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  transition: background-color 0.4s ease, color 0.4s ease;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Premium Pure Black & Whitish Frosted Glass Theme Mesh Gradient */
-body, html:not(.dark) body, html.dark body {
+/* Light Theme Background */
+html:not(.dark) body, html[data-theme="light"] body {
+  background-color: #f1f5f9;
+  background-image: 
+    radial-gradient(at 20% 15%, rgba(0, 0, 0, 0.03) 0px, transparent 40%),
+    radial-gradient(at 80% 20%, rgba(0, 0, 0, 0.02) 0px, transparent 40%),
+    radial-gradient(at 50% 80%, rgba(0, 0, 0, 0.02) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(226, 232, 240, 0.8) 0px, transparent 60%);
+  background-attachment: fixed;
+}
+
+/* Dark Theme Background */
+html.dark body, html[data-theme="dark"] body {
   background-color: #05070e;
   background-image: 
     radial-gradient(at 20% 15%, rgba(255, 255, 255, 0.05) 0px, transparent 40%),
@@ -147,6 +151,24 @@ body, html:not(.dark) body, html.dark body {
     radial-gradient(at 50% 80%, rgba(255, 255, 255, 0.03) 0px, transparent 50%),
     radial-gradient(at 0% 100%, rgba(10, 15, 25, 0.8) 0px, transparent 60%);
   background-attachment: fixed;
+}
+
+/* Card glassmorphism for light mode */
+html:not(.dark) .bg-card {
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  background-color: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 16px 40px 0 rgba(0, 0, 0, 0.06), inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* Card glassmorphism for dark mode */
+html.dark .bg-card, .bg-card {
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  background-color: rgba(13, 19, 35, 0.7);
+  box-shadow: 0 16px 40px 0 rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* Custom Scrollbar */
@@ -251,14 +273,29 @@ body, html:not(.dark) body, html.dark body {
 }
 
 /* Glassmorphism Overhaul - Black & Whitish Frosted Glass Theme */
-.glass-clear, .dark .glass-clear { 
+html:not(.dark) .glass-clear {
+  background: rgba(0, 0, 0, 0.03) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+}
+
+html:not(.dark) .glass-frosted {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  backdrop-filter: blur(28px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
+  box-shadow: 0 16px 40px 0 rgba(0, 0, 0, 0.06), inset 0 1px 0 0 rgba(255, 255, 255, 0.9) !important;
+}
+
+html.dark .glass-clear, .glass-clear { 
   background: rgba(255, 255, 255, 0.05) !important; 
   border: 1px solid rgba(255, 255, 255, 0.1) !important; 
   backdrop-filter: blur(16px) !important; 
   -webkit-backdrop-filter: blur(16px) !important;
 }
 
-.glass-frosted, .dark .glass-frosted { 
+html.dark .glass-frosted, .glass-frosted { 
   background: rgba(13, 19, 35, 0.7) !important; 
   border: 1px solid rgba(255, 255, 255, 0.12) !important; 
   backdrop-filter: blur(28px) saturate(190%) !important; 
@@ -279,8 +316,7 @@ body, html:not(.dark) body, html.dark body {
   background: transparent !important;
 }
 
-.editor-theme-dark .monaco-editor .view-line,
-.editor-theme-dark .monaco-editor .view-line span {
+.editor-theme-dark .monaco-editor .view-line {
   color: #ffffff !important;
 }
 
@@ -313,8 +349,7 @@ body, html:not(.dark) body, html.dark body {
   background: #ffffff !important;
 }
 
-.editor-theme-light .monaco-editor .view-line,
-.editor-theme-light .monaco-editor .view-line span {
+.editor-theme-light .monaco-editor .view-line {
   color: #0f172a !important;
 }
 

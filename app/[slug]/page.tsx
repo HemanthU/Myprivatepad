@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { doc, onSnapshot, setDoc, getDoc, deleteDoc } from "firebase/firestore";
-import { FileText, Search, Shield, Clock, Unlock, Lock, EyeOff, Save, Key, User, ArrowLeft, Trash, Eye, Ghost, Settings, ChevronLeft, Play, X, Share2, UploadCloud, Sun, Moon, Copy } from "lucide-react";
+import { FileText, Search, Shield, Clock, Unlock, Lock, EyeOff, Save, Key, User, ArrowLeft, Trash, Eye, Ghost, Settings, ChevronLeft, Play, X, Share2, UploadCloud, Sun, Moon, Copy, CheckSquare, Clipboard, ChevronDown, FileCode } from "lucide-react";
 import { db } from "@/lib/firebase";
 import ThemeToggle from "@/components/ThemeToggle";
 import PadFiles from "@/components/PadFiles";
@@ -11,7 +11,7 @@ import { usePrompt } from "@/hooks/usePrompt";
 import { useToast } from "@/hooks/useToast";
 import PromptModal from "@/components/ui/PromptModal";
 import CommandPalette from "@/components/ui/CommandPalette";
-import CollaborativeEditor from "@/components/CollaborativeEditor";
+import CollaborativeEditor, { CollaborativeEditorHandle } from "@/components/CollaborativeEditor";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { useAppStore } from "@/lib/store";
 
@@ -41,6 +41,22 @@ export default function NotePage() {
   
   const [settingsData, setSettingsData] = useState<any>({});
   const { editorTheme, setEditorTheme } = useAppStore();
+
+  const editorHandleRef = useRef<CollaborativeEditorHandle>(null);
+  const [activeLanguage, setActiveLanguage] = useState("plaintext");
+  const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
+
+  const LANGUAGES = [
+    { id: "plaintext", label: "Plain Text" },
+    { id: "javascript", label: "JavaScript" },
+    { id: "typescript", label: "TypeScript" },
+    { id: "python", label: "Python" },
+    { id: "html", label: "HTML" },
+    { id: "css", label: "CSS" },
+    { id: "json", label: "JSON" },
+    { id: "markdown", label: "Markdown" },
+    { id: "sql", label: "SQL" },
+  ];
 
   const { addRecentPad } = useWorkspaceStore();
 
@@ -667,16 +683,12 @@ export default function NotePage() {
               ? 'bg-white text-slate-900 border border-white/50 shadow-[0_25px_80px_rgba(0,0,0,0.5)]'
               : 'glass-frosted text-white border border-white/12 shadow-[0_20px_60px_rgba(0,0,0,0.6)]'
           } ${activeTab === 'notes' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'}`}>
-            {/* Top glass highlight line */}
-            <div className={`absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent ${
-              editorTheme === 'light' ? 'via-slate-300' : 'via-white/30'
-            } to-transparent pointer-events-none`} />
 
             {/* Quick Actions Header above the editor */}
             <div className={`flex flex-wrap items-center justify-between pb-3.5 mb-4 border-b gap-3 shrink-0 ${
               editorTheme === 'light' ? 'border-slate-200' : 'border-white/10'
             }`}>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 {/* Independent Editor Theme Switcher */}
                 <button
                   onClick={() => setEditorTheme(editorTheme === 'dark' ? 'light' : 'dark')}
@@ -691,22 +703,108 @@ export default function NotePage() {
                   <span>Editor: {editorTheme === 'light' ? 'Light' : 'Dark'}</span>
                 </button>
 
+                {/* Language Syntax Selector Pill Dropdown */}
+                <div className="relative">
+                  <button
+                    onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border shadow-sm ${
+                      editorTheme === 'light'
+                        ? 'bg-slate-100 text-slate-900 border-slate-300 hover:bg-slate-200'
+                        : 'glass-clear text-white border-white/20 hover:bg-white/10'
+                    }`}
+                    title="Switch Language Syntax Highlighting"
+                  >
+                    <FileCode size={13} />
+                    <span>{LANGUAGES.find((l) => l.id === activeLanguage)?.label || 'Plain Text'}</span>
+                    <ChevronDown size={13} className={`transition-transform duration-200 ${isLangMenuOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {isLangMenuOpen && (
+                    <div
+                      className={`absolute left-0 mt-1.5 w-44 rounded-2xl p-1.5 z-50 border shadow-2xl backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-100 ${
+                        editorTheme === 'light'
+                          ? 'bg-white/95 border-slate-300 text-slate-900 shadow-[0_15px_35px_rgba(0,0,0,0.15)]'
+                          : 'glass-frosted border-white/20 text-white shadow-[0_20px_40px_rgba(0,0,0,0.7)]'
+                      }`}
+                    >
+                      {LANGUAGES.map((lang) => (
+                        <button
+                          key={lang.id}
+                          onClick={() => {
+                            setActiveLanguage(lang.id);
+                            setIsLangMenuOpen(false);
+                            toast(`Syntax set to ${lang.label}`, "info");
+                          }}
+                          className={`w-full text-left px-3 py-1.5 rounded-xl text-xs font-medium transition-colors flex items-center justify-between ${
+                            activeLanguage === lang.id
+                              ? editorTheme === 'light'
+                                ? 'bg-slate-200 font-bold text-slate-950'
+                                : 'bg-white/20 font-bold text-white'
+                              : editorTheme === 'light'
+                              ? 'hover:bg-slate-100 text-slate-700'
+                              : 'hover:bg-white/10 text-gray-300'
+                          }`}
+                        >
+                          <span>{lang.label}</span>
+                          {activeLanguage === lang.id && <span className="text-[10px] opacity-70">✓</span>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Floating Find & Replace Toggle */}
                 <button
-                  onClick={() => {
-                    if (localText) {
-                      navigator.clipboard.writeText(localText);
-                      toast("Pad content copied to clipboard!", "success");
-                    }
-                  }}
+                  onClick={() => editorHandleRef.current?.toggleFind()}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border ${
                     editorTheme === 'light'
                       ? 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
                       : 'glass-clear text-gray-300 hover:text-white border-white/10 hover:border-white/20'
                   }`}
-                  title="Copy All Content"
+                  title="Find & Replace (Ctrl+F)"
+                >
+                  <Search size={13} />
+                  <span>Find</span>
+                </button>
+
+                {/* Mobile & Desktop Quick Selection & Clipboard Tools */}
+                <button
+                  onClick={() => editorHandleRef.current?.selectAll()}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border ${
+                    editorTheme === 'light'
+                      ? 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
+                      : 'glass-clear text-gray-300 hover:text-white border-white/10 hover:border-white/20'
+                  }`}
+                  title="Select All Text (Tap to Select All)"
+                >
+                  <CheckSquare size={13} />
+                  <span>Select All</span>
+                </button>
+
+                <button
+                  onClick={() => editorHandleRef.current?.copy()}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border ${
+                    editorTheme === 'light'
+                      ? 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
+                      : 'glass-clear text-gray-300 hover:text-white border-white/10 hover:border-white/20'
+                  }`}
+                  title="Copy Selection or Content"
                 >
                   <Copy size={13} />
                   <span>Copy</span>
+                </button>
+
+                <button
+                  onClick={() => editorHandleRef.current?.paste()}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border ${
+                    editorTheme === 'light'
+                      ? 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
+                      : 'glass-clear text-gray-300 hover:text-white border-white/10 hover:border-white/20'
+                  }`}
+                  title="Paste from Clipboard"
+                >
+                  <Clipboard size={13} />
+                  <span>Paste</span>
                 </button>
               </div>
 
@@ -722,12 +820,13 @@ export default function NotePage() {
 
             <div className="flex-1 flex flex-col min-h-[400px] relative overflow-hidden">
               <CollaborativeEditor 
+                ref={editorHandleRef}
                 slug={slug} 
                 isBurned={isBurned || isReadOnly} 
                 isDecoyMode={isDecoyMode}
                 isLocked={settingsData?.locked || false}
                 initialText={isBurned ? localText : undefined}
-                language="plaintext"
+                language={activeLanguage}
                 onStatsChange={(words, chars, text) => {
                   setWordCount(words);
                   setCharCount(chars);

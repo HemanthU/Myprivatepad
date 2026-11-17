@@ -845,7 +845,7 @@ export default function PadFiles({ slug, isLocked }: { slug: string; isLocked: b
                 <div className="p-2 glass-clear rounded-xl hidden sm:flex border border-white/10">{getFileIcon(previewFile.fileType)}</div>
                 <div>
                   <h3 className="font-bold text-sm sm:text-base leading-tight line-clamp-1 text-white">{previewFile.fileName}</h3>
-                  <p className="text-xs text-gray-400 font-mono mt-0.5">{formatSize(previewFile.fileSize)} • {previewFile.fileType} • {previewFile.totalViews} Views</p>
+                  <p className="text-xs text-gray-400 font-mono mt-0.5">{formatSize(previewFile.fileSize)} • {previewFile.fileType}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">

@@ -2,38 +2,39 @@
 
 import { useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
+import { useAppStore } from "@/lib/store";
 
 export default function ThemeToggle() {
-  const [isDark, setIsDark] = useState(false);
+  const { theme, setTheme } = useAppStore();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Read the current theme from HTML class
-    const isDarkMode = document.documentElement.classList.contains("dark");
-    setIsDark(isDarkMode);
+    setMounted(true);
   }, []);
 
+  if (!mounted) {
+    return (
+      <button className="p-2 rounded-xl text-foreground opacity-50" aria-label="Toggle Page Theme">
+        <Sun size={18} />
+      </button>
+    );
+  }
+
+  const isDark = theme !== "light";
+
   const toggleTheme = () => {
-    const root = document.documentElement;
-    const currentIsDark = root.classList.contains("dark");
-    
-    if (currentIsDark) {
-      root.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-      setIsDark(false);
-    } else {
-      root.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-      setIsDark(true);
-    }
+    const next = isDark ? "light" : "dark";
+    setTheme(next);
   };
 
   return (
     <button
       onClick={toggleTheme}
-      className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors text-foreground"
-      aria-label="Toggle Theme"
+      className="p-2 rounded-xl glass-frosted hover:glass-clear border border-white/10 dark:border-white/10 border-black/10 transition-colors text-foreground flex items-center justify-center shadow-sm"
+      aria-label="Toggle Page Theme"
+      title={isDark ? "Switch to Light Theme" : "Switch to Dark Theme"}
     >
-      {isDark ? <Sun size={20} /> : <Moon size={20} />}
+      {isDark ? <Sun size={18} /> : <Moon size={18} />}
     </button>
   );
 }
