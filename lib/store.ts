@@ -2,10 +2,13 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 export type ThemeType = 'light' | 'dark' | 'amoled' | 'glass' | 'nord' | 'dracula' | 'solarized' | 'catppuccin' | 'cyberpunk';
+export type EditorThemeType = 'dark' | 'light';
 
 export interface AppSettings {
-  // Appearance
+  // Appearance (Page Theme)
   theme: ThemeType;
+  // Independent Editor Theme (Dark vs Light canvas)
+  editorTheme: EditorThemeType;
   accentColor: string;
   
   // Glassmorphism
@@ -33,6 +36,7 @@ export interface AppSettings {
 
   // Actions
   setTheme: (theme: ThemeType) => void;
+  setEditorTheme: (editorTheme: EditorThemeType) => void;
   setAccentColor: (color: string) => void;
   setGlassmorphism: (enabled: boolean) => void;
   updateGlassSettings: (blur: number, opacity: number) => void;
@@ -48,6 +52,7 @@ export const useAppStore = create<AppSettings>()(
   persist(
     (set) => ({
       theme: 'dark',
+      editorTheme: 'dark',
       accentColor: '#ffffff', // Crisp white
       
       glassmorphism: true,
@@ -70,6 +75,7 @@ export const useAppStore = create<AppSettings>()(
       minimap: false,
 
       setTheme: (theme) => set({ theme }),
+      setEditorTheme: (editorTheme) => set({ editorTheme }),
       setAccentColor: (color) => set({ accentColor: color }),
       setGlassmorphism: (enabled) => set({ glassmorphism: enabled }),
       updateGlassSettings: (blur, opacity) => set({ glassBlur: blur, glassOpacity: opacity }),
@@ -82,11 +88,12 @@ export const useAppStore = create<AppSettings>()(
     }),
     {
       name: 'padx-settings',
-      version: 2,
+      version: 3,
       migrate: (persistedState: any, version: number) => {
-        if (version < 2 || !persistedState) {
+        if (version < 3 || !persistedState) {
           return {
             ...persistedState,
+            editorTheme: persistedState?.editorTheme || 'dark',
             accentColor: '#ffffff',
             fontSize: 20,
             lineHeight: 1.65,

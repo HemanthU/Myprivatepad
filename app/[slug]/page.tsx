@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { doc, onSnapshot, setDoc, getDoc, deleteDoc } from "firebase/firestore";
-import { FileText, Search, Shield, Clock, Unlock, Lock, EyeOff, Save, Key, User, ArrowLeft, Trash, Eye, Ghost, Settings, ChevronLeft, Play, X, Share2, UploadCloud } from "lucide-react";
+import { FileText, Search, Shield, Clock, Unlock, Lock, EyeOff, Save, Key, User, ArrowLeft, Trash, Eye, Ghost, Settings, ChevronLeft, Play, X, Share2, UploadCloud, Sun, Moon, Copy } from "lucide-react";
 import { db } from "@/lib/firebase";
 import ThemeToggle from "@/components/ThemeToggle";
 import PadFiles from "@/components/PadFiles";
@@ -13,6 +13,7 @@ import PromptModal from "@/components/ui/PromptModal";
 import CommandPalette from "@/components/ui/CommandPalette";
 import CollaborativeEditor from "@/components/CollaborativeEditor";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { useAppStore } from "@/lib/store";
 
 import { useWorkspaceStore } from "@/lib/workspaceStore";
 import TabBar from "@/components/TabBar";
@@ -39,6 +40,7 @@ export default function NotePage() {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   
   const [settingsData, setSettingsData] = useState<any>({});
+  const { editorTheme, setEditorTheme } = useAppStore();
 
   const { addRecentPad } = useWorkspaceStore();
 
@@ -600,6 +602,18 @@ export default function NotePage() {
           }`}>
             {isBurned ? "🔥 Burned" : connectionStatus === "Synced" ? "🟢 Synced" : connectionStatus === "Saving..." ? "🟡 Saving..." : connectionStatus === "Connecting..." ? "🟠 Connecting..." : connectionStatus === "Offline" ? "🔴 Offline" : "🔴 Sync Error"}
           </span>
+          {/* Independent Editor Canvas Theme Toggle */}
+          <button
+            onClick={() => setEditorTheme(editorTheme === 'dark' ? 'light' : 'dark')}
+            className={`p-2 rounded-full transition-all border ${
+              editorTheme === 'light'
+                ? 'bg-white text-black border-white/50 shadow-sm hover:bg-slate-100'
+                : 'glass-clear text-gray-300 hover:text-white border-white/10 hover:bg-white/10'
+            }`}
+            title={`Canvas: ${editorTheme === 'light' ? 'Light Canvas' : 'Dark Canvas'} (Click to toggle)`}
+          >
+            {editorTheme === 'light' ? <Sun size={17} className="text-amber-500" /> : <Moon size={17} />}
+          </button>
           <ThemeToggle />
         </div>
       </header>
@@ -648,9 +662,64 @@ export default function NotePage() {
 
         <div className="flex-1 w-full grid grid-cols-1 grid-rows-1 mb-8">
           {/* Notes Tab */}
-          <div className={`col-start-1 row-start-1 w-full flex flex-col min-h-[620px] glass-frosted shadow-[0_20px_60px_rgba(0,0,0,0.6)] border border-white/12 rounded-3xl p-6 sm:p-10 transition-all duration-300 relative overflow-hidden ${activeTab === 'notes' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'}`}>
+          <div className={`col-start-1 row-start-1 w-full flex flex-col min-h-[620px] rounded-3xl p-6 sm:p-10 transition-all duration-300 relative overflow-hidden ${
+            editorTheme === 'light'
+              ? 'bg-white text-slate-900 border border-white/50 shadow-[0_25px_80px_rgba(0,0,0,0.5)]'
+              : 'glass-frosted text-white border border-white/12 shadow-[0_20px_60px_rgba(0,0,0,0.6)]'
+          } ${activeTab === 'notes' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'}`}>
             {/* Top glass highlight line */}
-            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none" />
+            <div className={`absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent ${
+              editorTheme === 'light' ? 'via-slate-300' : 'via-white/30'
+            } to-transparent pointer-events-none`} />
+
+            {/* Quick Actions Header above the editor */}
+            <div className={`flex flex-wrap items-center justify-between pb-3.5 mb-4 border-b gap-3 shrink-0 ${
+              editorTheme === 'light' ? 'border-slate-200' : 'border-white/10'
+            }`}>
+              <div className="flex items-center gap-2">
+                {/* Independent Editor Theme Switcher */}
+                <button
+                  onClick={() => setEditorTheme(editorTheme === 'dark' ? 'light' : 'dark')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border shadow-sm ${
+                    editorTheme === 'light'
+                      ? 'bg-slate-100 text-slate-900 border-slate-300 hover:bg-slate-200'
+                      : 'glass-clear text-white border-white/20 hover:bg-white/10'
+                  }`}
+                  title="Toggle Editor Canvas Theme (Dark / Light)"
+                >
+                  {editorTheme === 'light' ? <Sun size={14} className="text-amber-500" /> : <Moon size={14} className="text-white" />}
+                  <span>Editor: {editorTheme === 'light' ? 'Light' : 'Dark'}</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    if (localText) {
+                      navigator.clipboard.writeText(localText);
+                      toast("Pad content copied to clipboard!", "success");
+                    }
+                  }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border ${
+                    editorTheme === 'light'
+                      ? 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
+                      : 'glass-clear text-gray-300 hover:text-white border-white/10 hover:border-white/20'
+                  }`}
+                  title="Copy All Content"
+                >
+                  <Copy size={13} />
+                  <span>Copy</span>
+                </button>
+              </div>
+
+              {/* Status and Metrics Pill */}
+              <div className={`text-xs font-mono flex items-center gap-2 ${editorTheme === 'light' ? 'text-slate-500' : 'text-gray-400'}`}>
+                <span>{wordCount} words</span>
+                <span>•</span>
+                <span>{charCount} chars</span>
+                <span>•</span>
+                <span>{Math.max(1, Math.ceil(wordCount / 200))} min read</span>
+              </div>
+            </div>
+
             <div className="flex-1 flex flex-col min-h-[400px] relative overflow-hidden">
               <CollaborativeEditor 
                 slug={slug} 
@@ -668,8 +737,14 @@ export default function NotePage() {
                 onStatusChange={setConnectionStatus}
               />
             </div>
-            <div className="mt-6 pt-4 border-t border-white/10 flex justify-end text-xs font-mono text-gray-400">
-              {wordCount} words • {charCount} chars
+            <div className={`mt-4 pt-3 border-t flex justify-between items-center text-xs font-mono ${
+              editorTheme === 'light' ? 'border-slate-200 text-slate-500' : 'border-white/10 text-gray-400'
+            }`}>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                Real-Time Auto-Save Active
+              </span>
+              <span>Monaco Engine</span>
             </div>
           </div>
 

@@ -30,7 +30,7 @@ export default function CollaborativeEditor({
   const editorRef = useRef<any>(null);
   const bindingRef = useRef<any>(null);
   const monaco = useMonaco();
-  const { theme, codeFont, fontSize, lineHeight, letterSpacing, wordWrap, minimap } = useAppStore();
+  const { theme, editorTheme, setEditorTheme, codeFont, fontSize, lineHeight, letterSpacing, wordWrap, minimap } = useAppStore();
 
   useEffect(() => {
     // Map custom themes to Monaco themes
@@ -39,32 +39,42 @@ export default function CollaborativeEditor({
       monaco.editor.defineTheme('padX-dark', {
         base: 'vs-dark',
         inherit: true,
-        rules: [],
+        rules: [
+          { token: '', foreground: 'ffffff' },
+          { token: 'text', foreground: 'ffffff' },
+          { token: 'string', foreground: 'e2e8f0' },
+          { token: 'comment', foreground: '94a3b8' },
+        ],
         colors: {
           'editor.background': transparentBackground,
-          'editor.foreground': '#f8fafc',
+          'editor.foreground': '#ffffff',
           'editorGutter.background': transparentBackground,
-          'editorLineNumber.foreground': 'rgba(255, 255, 255, 0.3)',
+          'editorLineNumber.foreground': 'rgba(255, 255, 255, 0.4)',
           'editorLineNumber.activeForeground': '#ffffff',
           'editorCursor.foreground': '#ffffff',
-          'editor.selectionBackground': 'rgba(255, 255, 255, 0.15)',
+          'editor.selectionBackground': 'rgba(255, 255, 255, 0.2)',
           'editor.lineHighlightBackground': transparentBackground,
           'editor.lineHighlightBorder': transparentBackground,
           'editorOverviewRuler.border': transparentBackground,
         }
       });
       monaco.editor.defineTheme('padX-light', {
-        base: 'vs-dark',
+        base: 'vs',
         inherit: true,
-        rules: [{ token: '', foreground: 'f8fafc' }],
+        rules: [
+          { token: '', foreground: '0f172a' },
+          { token: 'text', foreground: '0f172a' },
+          { token: 'string', foreground: '1e293b' },
+          { token: 'comment', foreground: '64748b' },
+        ],
         colors: {
-          'editor.background': transparentBackground,
-          'editor.foreground': '#f8fafc',
-          'editorGutter.background': transparentBackground,
-          'editorLineNumber.foreground': 'rgba(255, 255, 255, 0.3)',
-          'editorLineNumber.activeForeground': '#ffffff',
-          'editorCursor.foreground': '#ffffff',
-          'editor.selectionBackground': 'rgba(255, 255, 255, 0.15)',
+          'editor.background': '#ffffff',
+          'editor.foreground': '#0f172a',
+          'editorGutter.background': '#ffffff',
+          'editorLineNumber.foreground': 'rgba(15, 23, 42, 0.45)',
+          'editorLineNumber.activeForeground': '#0f172a',
+          'editorCursor.foreground': '#0f172a',
+          'editor.selectionBackground': 'rgba(0, 0, 0, 0.12)',
           'editor.lineHighlightBackground': transparentBackground,
           'editor.lineHighlightBorder': transparentBackground,
           'editorOverviewRuler.border': transparentBackground,
@@ -218,7 +228,7 @@ export default function CollaborativeEditor({
   };
 
   const customThemes = ['amoled', 'nord', 'dracula', 'solarized', 'catppuccin', 'cyberpunk', 'glass'];
-  const monacoTheme = customThemes.includes(theme) ? theme : (theme === 'light' ? 'padX-light' : 'padX-dark');
+  const monacoTheme = editorTheme === 'light' ? 'padX-light' : (customThemes.includes(theme) ? theme : 'padX-dark');
 
   const mappedLanguage = language === 'plaintext' ? 'text' : language;
 
@@ -257,6 +267,9 @@ export default function CollaborativeEditor({
         folding: false,
         renderLineHighlight: "none",
         renderLineHighlightOnlyWhenFocus: false,
+        selectionHighlight: false,
+        occurrencesHighlight: "off",
+        matchBrackets: "never",
         overviewRulerBorder: false,
         overviewRulerLanes: 0,
         hideCursorInOverviewRuler: true,
@@ -296,7 +309,9 @@ export default function CollaborativeEditor({
   if (!provider) return <div className="animate-pulse flex-1 bg-gray-100 dark:bg-gray-800 rounded-xl" />;
 
   return (
-    <div className="w-full flex-1 flex flex-col custom-monaco-wrapper relative">
+    <div className={`w-full flex-1 flex flex-col custom-monaco-wrapper relative transition-all duration-300 rounded-2xl overflow-hidden ${
+      editorTheme === 'light' ? 'editor-theme-light bg-white text-slate-900 shadow-md' : 'editor-theme-dark text-white'
+    }`}>
       {isOffline && (
         <div className="absolute top-2 right-2 z-50 glass-frosted text-yellow-500 rounded-full px-3 py-1 flex items-center gap-2 text-xs font-semibold shadow-md backdrop-blur-md">
           <WifiOff size={14} />
@@ -306,7 +321,9 @@ export default function CollaborativeEditor({
       {isMobile ? (
         <textarea
           readOnly={isBurned}
-          className="w-full h-full flex-1 resize-none bg-transparent outline-none p-4 text-foreground selection:bg-white/20"
+          className={`w-full h-full flex-1 resize-none outline-none p-4 ${
+            editorTheme === 'light' ? 'bg-white text-slate-900 selection:bg-slate-200' : 'bg-transparent text-white selection:bg-white/20'
+          }`}
           style={{
             fontFamily: activeFontFamily,
             fontSize: activeFontSize,
@@ -345,6 +362,10 @@ export default function CollaborativeEditor({
             glyphMargin: false,
             folding: false,
             renderLineHighlight: "none",
+            renderLineHighlightOnlyWhenFocus: false,
+            selectionHighlight: false,
+            occurrencesHighlight: "off",
+            matchBrackets: "never",
             overviewRulerBorder: false,
             overviewRulerLanes: 0,
             hideCursorInOverviewRuler: true,

@@ -266,41 +266,91 @@ body, html:not(.dark) body, html.dark body {
   box-shadow: 0 16px 40px 0 rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.1) !important; 
 }
 
-/* Monaco Editor Complete Glassmorphism & Clean Line Numbers */
-.custom-monaco-wrapper,
-.monaco-editor,
-.monaco-editor .overflow-guard,
-.monaco-editor .monaco-scrollable-element,
-.monaco-editor-background,
-.monaco-editor .inputarea.ime-input,
-.monaco-editor .margin {
+/* Monaco Editor Complete Glassmorphism & Theme Styles */
+/* Dark Editor Mode */
+.editor-theme-dark,
+.editor-theme-dark .monaco-editor,
+.editor-theme-dark .monaco-editor .overflow-guard,
+.editor-theme-dark .monaco-editor .monaco-scrollable-element,
+.editor-theme-dark .monaco-editor-background,
+.editor-theme-dark .monaco-editor .inputarea.ime-input,
+.editor-theme-dark .monaco-editor .margin {
   background-color: transparent !important;
   background: transparent !important;
 }
 
-.monaco-editor .margin {
-  background: transparent !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
+.editor-theme-dark .monaco-editor .view-line,
+.editor-theme-dark .monaco-editor .view-line span {
+  color: #ffffff !important;
 }
 
-.monaco-editor .line-numbers {
-  color: rgba(148, 163, 184, 0.4) !important;
+.editor-theme-dark .monaco-editor .margin {
+  background: transparent !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.editor-theme-dark .monaco-editor .line-numbers {
+  color: rgba(255, 255, 255, 0.4) !important;
   font-family: inherit !important;
   font-size: 0.82em !important;
   padding-right: 14px !important;
 }
 
-.monaco-editor .line-numbers.active-line-number {
-  color: #ffffff !important; /* Pure Crisp White */
+.editor-theme-dark .monaco-editor .line-numbers.active-line-number {
+  color: #ffffff !important;
   font-weight: 700 !important;
 }
 
-/* Strip line highlight background boxes */
+/* Light Editor Mode (Pure White Canvas with Solid Black Text) */
+.editor-theme-light,
+.editor-theme-light .monaco-editor,
+.editor-theme-light .monaco-editor .overflow-guard,
+.editor-theme-light .monaco-editor .monaco-scrollable-element,
+.editor-theme-light .monaco-editor-background,
+.editor-theme-light .monaco-editor .inputarea.ime-input,
+.editor-theme-light .monaco-editor .margin {
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+}
+
+.editor-theme-light .monaco-editor .view-line,
+.editor-theme-light .monaco-editor .view-line span {
+  color: #0f172a !important;
+}
+
+.editor-theme-light .monaco-editor .margin {
+  background: #ffffff !important;
+  border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+.editor-theme-light .monaco-editor .line-numbers {
+  color: rgba(15, 23, 42, 0.45) !important;
+  font-family: inherit !important;
+  font-size: 0.82em !important;
+  padding-right: 14px !important;
+}
+
+.editor-theme-light .monaco-editor .line-numbers.active-line-number {
+  color: #0f172a !important;
+  font-weight: 700 !important;
+}
+
+/* Strip line highlight background boxes and ruled border lines */
 .monaco-editor .current-line,
+.monaco-editor .current-line-both,
+.monaco-editor .current-line-margin,
 .monaco-editor .current-line-exact,
 .monaco-editor .view-overlays .current-line,
-.monaco-editor .view-overlays .current-line-exact {
+.monaco-editor .view-overlays .current-line-both,
+.monaco-editor .view-overlays .current-line-exact,
+.monaco-editor .margin-view-overlays .current-line,
+.monaco-editor .margin-view-overlays .current-line-margin,
+.monaco-editor .margin-view-overlays .current-line-margin-both {
   border: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
+  outline: none !important;
+  box-shadow: none !important;
   background: transparent !important;
   background-color: transparent !important;
 }
