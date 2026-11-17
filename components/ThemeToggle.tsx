@@ -5,7 +5,7 @@ import { Moon, Sun } from "lucide-react";
 import { useAppStore } from "@/lib/store";
 
 export default function ThemeToggle() {
-  const { theme, setTheme } = useAppStore();
+  const { theme, setTheme, setEditorTheme } = useAppStore();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -25,6 +25,7 @@ export default function ThemeToggle() {
   const toggleTheme = () => {
     const next = isDark ? "light" : "dark";
     setTheme(next);
+    setEditorTheme(next);
   };
 
   return (

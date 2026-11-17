@@ -557,7 +557,7 @@ export default function NotePage() {
           </button>
           <h1 
             onClick={() => router.push("/")}
-            className="text-2xl font-extrabold cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-2 tracking-tight text-white"
+            className="text-2xl font-extrabold cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-2 tracking-tight text-foreground"
           >
             PadX
           </h1>
@@ -568,7 +568,7 @@ export default function NotePage() {
               {activeUsers.map((user, i) => (
                 <div 
                   key={i} 
-                  className="w-8 h-8 rounded-full border-2 border-slate-900 flex items-center justify-center text-white text-xs font-bold shadow-sm"
+                  className="w-8 h-8 rounded-full border-2 border-slate-900 flex items-center justify-center text-xs font-bold shadow-sm"
                   style={{ backgroundColor: user.color || '#ffffff', color: '#000000' }}
                   title={user.name}
                 >
@@ -579,7 +579,7 @@ export default function NotePage() {
           )}
           <button 
             onClick={handleSwitchPad}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full glass-clear hover:glass-frosted text-sm font-semibold text-gray-300 hover:text-white transition-all border border-white/10 shadow-sm"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full glass-clear hover:glass-frosted text-sm font-semibold text-foreground/70 hover:text-foreground transition-all border border-white/10 dark:border-white/10 border-black/10 shadow-sm"
             title="Switch Pad (Ctrl+K)"
           >
             <Search size={15} />
@@ -587,7 +587,7 @@ export default function NotePage() {
           </button>
           <button
             onClick={() => setIsSecurityModalOpen(true)}
-            className="p-2 rounded-full glass-clear hover:glass-frosted text-gray-300 hover:text-white border border-white/10 transition-colors"
+            className="p-2 rounded-full glass-clear hover:glass-frosted text-foreground/70 hover:text-foreground border border-white/10 dark:border-white/10 border-black/10 transition-colors"
             title="Advanced Security"
           >
             <Shield size={17} />
@@ -602,7 +602,7 @@ export default function NotePage() {
 
           <button
             onClick={() => setIsShareModalOpen(true)}
-            className="p-2 rounded-full glass-clear hover:glass-frosted text-gray-300 hover:text-white border border-white/10 transition-colors"
+            className="p-2 rounded-full glass-clear hover:glass-frosted text-foreground/70 hover:text-foreground border border-white/10 dark:border-white/10 border-black/10 transition-colors"
             title="Share Pad"
           >
             <Share2 size={17} />
@@ -623,8 +623,8 @@ export default function NotePage() {
             onClick={() => setEditorTheme(editorTheme === 'dark' ? 'light' : 'dark')}
             className={`p-2 rounded-full transition-all border ${
               editorTheme === 'light'
-                ? 'bg-white text-black border-white/50 shadow-sm hover:bg-slate-100'
-                : 'glass-clear text-gray-300 hover:text-white border-white/10 hover:bg-white/10'
+                ? 'bg-white text-black border-slate-300 shadow-sm hover:bg-slate-100'
+                : 'glass-clear text-foreground/70 hover:text-foreground border-white/10 hover:bg-white/10'
             }`}
             title={`Canvas: ${editorTheme === 'light' ? 'Light Canvas' : 'Dark Canvas'} (Click to toggle)`}
           >
@@ -638,17 +638,17 @@ export default function NotePage() {
       <main className="w-full max-w-[1400px] px-4 sm:px-8 flex-1 flex flex-col mx-auto">
         {!distractionFree && (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 sm:mb-8 gap-4">
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white flex items-center gap-2">
-            <span className="text-white/60 font-mono">#</span> {slug} {isDecoyMode && <span className="text-sm font-normal text-gray-400">(Decoy)</span>}
+          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
+            <span className="text-foreground/50 font-mono">#</span> {slug} {isDecoyMode && <span className="text-sm font-normal text-foreground/50">(Decoy)</span>}
           </h2>
           {/* Glassmorphic Responsive Tabs Navigation */}
-          <div className="flex glass-clear p-1.5 rounded-2xl w-full sm:w-max overflow-x-auto scrollbar-hide border border-white/10 shadow-inner">
+          <div className="flex glass-clear p-1.5 rounded-2xl w-full sm:w-max overflow-x-auto scrollbar-hide border border-white/10 dark:border-white/10 border-black/10 shadow-inner">
             <button
               onClick={() => setActiveTab("notes")}
               className={`flex-1 sm:flex-none min-w-[85px] px-6 py-2 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 border ${
                 activeTab === 'notes' 
-                  ? 'glass-frosted text-white border-white/40 shadow-lg shadow-white/5' 
-                  : 'text-gray-400 hover:text-white border-transparent hover:glass-clear'
+                  ? 'glass-frosted text-foreground border-foreground/20 shadow-md' 
+                  : 'text-foreground/60 hover:text-foreground border-transparent hover:glass-clear'
               }`}
               title="Notes (Alt+1)"
             >
@@ -658,17 +658,17 @@ export default function NotePage() {
               onClick={() => setActiveTab("files")}
               className={`flex-1 sm:flex-none min-w-[85px] px-6 py-2 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 border ${
                 activeTab === 'files' 
-                  ? 'glass-frosted text-white border-white/40 shadow-lg shadow-white/5' 
-                  : 'text-gray-400 hover:text-white border-transparent hover:glass-clear'
+                  ? 'glass-frosted text-foreground border-foreground/20 shadow-md' 
+                  : 'text-foreground/60 hover:text-foreground border-transparent hover:glass-clear'
               }`}
               title="Files (Alt+2)"
             >
               Files
             </button>
-            <div className="hidden sm:block border-l border-white/10 mx-1"></div>
+            <div className="hidden sm:block border-l border-white/10 dark:border-white/10 border-black/10 mx-1"></div>
             <button
               onClick={() => setIsExportModalOpen(true)}
-              className="flex-1 sm:flex-none min-w-[85px] px-6 py-2 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 text-gray-400 hover:text-white border border-transparent hover:glass-clear"
+              className="flex-1 sm:flex-none min-w-[85px] px-6 py-2 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 text-foreground/60 hover:text-foreground border border-transparent hover:glass-clear"
             >
               Export
             </button>
@@ -680,8 +680,8 @@ export default function NotePage() {
           {/* Notes Tab */}
           <div className={`col-start-1 row-start-1 w-full flex flex-col min-h-[620px] rounded-3xl p-6 sm:p-10 transition-all duration-300 relative overflow-hidden ${
             editorTheme === 'light'
-              ? 'bg-white text-slate-900 border border-white/50 shadow-[0_25px_80px_rgba(0,0,0,0.5)]'
-              : 'glass-frosted text-white border border-white/12 shadow-[0_20px_60px_rgba(0,0,0,0.6)]'
+              ? 'bg-white text-slate-900 border border-slate-200 dark:border-white/50 shadow-[0_25px_80px_rgba(0,0,0,0.06)] dark:shadow-[0_25px_80px_rgba(0,0,0,0.5)]'
+              : 'glass-frosted text-foreground border border-white/12 shadow-[0_20px_60px_rgba(0,0,0,0.6)]'
           } ${activeTab === 'notes' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'}`}>
 
             {/* Quick Actions Header above the editor */}
