@@ -807,15 +807,6 @@ export default function NotePage() {
                   <span>Paste</span>
                 </button>
               </div>
-
-              {/* Status and Metrics Pill */}
-              <div className={`text-xs font-mono flex items-center gap-2 ${editorTheme === 'light' ? 'text-slate-500' : 'text-gray-400'}`}>
-                <span>{wordCount} words</span>
-                <span>•</span>
-                <span>{charCount} chars</span>
-                <span>•</span>
-                <span>{Math.max(1, Math.ceil(wordCount / 200))} min read</span>
-              </div>
             </div>
 
             <div className="flex-1 flex flex-col min-h-[400px] relative overflow-hidden">
@@ -835,15 +826,6 @@ export default function NotePage() {
                 onUsersChange={setActiveUsers}
                 onStatusChange={setConnectionStatus}
               />
-            </div>
-            <div className={`mt-4 pt-3 border-t flex justify-between items-center text-xs font-mono ${
-              editorTheme === 'light' ? 'border-slate-200 text-slate-500' : 'border-white/10 text-gray-400'
-            }`}>
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                Real-Time Auto-Save Active
-              </span>
-              <span>Monaco Engine</span>
             </div>
           </div>
 

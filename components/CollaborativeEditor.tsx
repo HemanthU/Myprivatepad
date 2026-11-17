@@ -180,64 +180,88 @@ const CollaborativeEditor = forwardRef<CollaborativeEditorHandle, CollaborativeE
     }
   }));
 
-  // Define custom Monaco themes
+  // Register custom Monaco themes
+  const registerThemes = (monacoInstance: any) => {
+    if (!monacoInstance) return;
+    monacoInstance.editor.defineTheme('padX-dark', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [
+        { token: '', foreground: 'ffffff' },
+        { token: 'text', foreground: 'ffffff' },
+        { token: 'keyword', foreground: 'f472b6' },
+        { token: 'string', foreground: 'e2e8f0' },
+        { token: 'number', foreground: '38bdf8' },
+        { token: 'comment', foreground: '94a3b8' },
+        { token: 'type', foreground: 'a78bfa' },
+        { token: 'function', foreground: '60a5fa' },
+        { token: 'variable', foreground: 'ffffff' },
+      ],
+      colors: {
+        'editor.background': '#070b14',
+        'editor.foreground': '#ffffff',
+        'editorGutter.background': '#070b14',
+        'editorLineNumber.foreground': 'rgba(255, 255, 255, 0.4)',
+        'editorLineNumber.activeForeground': '#ffffff',
+        'editorCursor.foreground': '#ffffff',
+        'editor.selectionBackground': 'rgba(255, 255, 255, 0.25)',
+        'editor.lineHighlightBackground': '#00000000',
+        'editor.lineHighlightBorder': '#00000000',
+        'editorOverviewRuler.border': '#00000000',
+        'focusBorder': '#00000000',
+        'editor.focusBorder': '#00000000',
+        'editorWidget.border': 'rgba(255, 255, 255, 0.15)',
+        'editorWidget.background': '#070b14',
+      }
+    });
+    monacoInstance.editor.defineTheme('padX-light', {
+      base: 'vs',
+      inherit: true,
+      rules: [
+        { token: '', foreground: '0f172a' },
+        { token: 'text', foreground: '0f172a' },
+        { token: 'keyword', foreground: 'c026d3' },
+        { token: 'string', foreground: '059669' },
+        { token: 'number', foreground: '0284c7' },
+        { token: 'comment', foreground: '64748b' },
+        { token: 'type', foreground: '7c3aed' },
+        { token: 'function', foreground: '2563eb' },
+        { token: 'variable', foreground: '0f172a' },
+      ],
+      colors: {
+        'editor.background': '#ffffff',
+        'editor.foreground': '#0f172a',
+        'editorGutter.background': '#ffffff',
+        'editorLineNumber.foreground': 'rgba(15, 23, 42, 0.45)',
+        'editorLineNumber.activeForeground': '#0f172a',
+        'editorCursor.foreground': '#0f172a',
+        'editor.selectionBackground': 'rgba(0, 0, 0, 0.12)',
+        'editor.lineHighlightBackground': '#00000000',
+        'editor.lineHighlightBorder': '#00000000',
+        'editorOverviewRuler.border': '#00000000',
+        'focusBorder': '#00000000',
+        'editor.focusBorder': '#00000000',
+        'editorWidget.border': 'rgba(0, 0, 0, 0.1)',
+        'editorWidget.background': '#ffffff',
+      }
+    });
+    defineMonacoThemes(monacoInstance);
+  };
+
   useEffect(() => {
     if (monaco) {
-      monaco.editor.defineTheme('padX-dark', {
-        base: 'vs-dark',
-        inherit: true,
-        rules: [
-          { token: '', foreground: 'ffffff' },
-          { token: 'keyword', foreground: 'f472b6' },
-          { token: 'string', foreground: 'e2e8f0' },
-          { token: 'number', foreground: '38bdf8' },
-          { token: 'comment', foreground: '94a3b8' },
-          { token: 'type', foreground: 'a78bfa' },
-          { token: 'function', foreground: '60a5fa' },
-          { token: 'variable', foreground: 'ffffff' },
-        ],
-        colors: {
-          'editor.background': '#070b14',
-          'editor.foreground': '#ffffff',
-          'editorGutter.background': '#070b14',
-          'editorLineNumber.foreground': 'rgba(255, 255, 255, 0.4)',
-          'editorLineNumber.activeForeground': '#ffffff',
-          'editorCursor.foreground': '#ffffff',
-          'editor.selectionBackground': 'rgba(255, 255, 255, 0.2)',
-          'editor.lineHighlightBackground': '#00000000',
-          'editor.lineHighlightBorder': '#00000000',
-          'editorOverviewRuler.border': '#00000000',
-        }
-      });
-      monaco.editor.defineTheme('padX-light', {
-        base: 'vs',
-        inherit: true,
-        rules: [
-          { token: '', foreground: '0f172a' },
-          { token: 'keyword', foreground: 'c026d3' },
-          { token: 'string', foreground: '059669' },
-          { token: 'number', foreground: '0284c7' },
-          { token: 'comment', foreground: '64748b' },
-          { token: 'type', foreground: '7c3aed' },
-          { token: 'function', foreground: '2563eb' },
-          { token: 'variable', foreground: '0f172a' },
-        ],
-        colors: {
-          'editor.background': '#ffffff',
-          'editor.foreground': '#0f172a',
-          'editorGutter.background': '#ffffff',
-          'editorLineNumber.foreground': 'rgba(15, 23, 42, 0.45)',
-          'editorLineNumber.activeForeground': '#0f172a',
-          'editorCursor.foreground': '#0f172a',
-          'editor.selectionBackground': 'rgba(0, 0, 0, 0.12)',
-          'editor.lineHighlightBackground': '#00000000',
-          'editor.lineHighlightBorder': '#00000000',
-          'editorOverviewRuler.border': '#00000000',
-        }
-      });
-      defineMonacoThemes(monaco);
+      registerThemes(monaco);
     }
   }, [monaco]);
+
+  const customThemes = ['amoled', 'nord', 'dracula', 'solarized', 'catppuccin', 'cyberpunk', 'glass'];
+  const monacoTheme = editorTheme === 'light' ? 'padX-light' : customThemes.includes(theme) ? theme : 'padX-dark';
+
+  useEffect(() => {
+    if (monaco) {
+      monaco.editor.setTheme(monacoTheme);
+    }
+  }, [monacoTheme, monaco]);
 
   // Synchronize language syntax dynamically
   useEffect(() => {
@@ -506,20 +530,63 @@ const CollaborativeEditor = forwardRef<CollaborativeEditorHandle, CollaborativeE
 
   const handleEditorDidMount = (editor: any, monacoInstance: any) => {
     editorRef.current = editor;
-    if (provider) {
-      const ytext = ydoc.getText("monaco");
-      bindingRef.current = new MonacoBinding(ytext, editor.getModel(), new Set([editor]), provider.awareness);
-    }
 
     // Bind Ctrl+F inside Monaco
     editor.addCommand(monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.KeyF, () => {
       setIsFindOpen(true);
       setTimeout(() => searchInputRef.current?.focus(), 60);
     });
+
+    if (provider) {
+      const ytext = ydoc.getText("monaco");
+      if (bindingRef.current) bindingRef.current.destroy();
+      bindingRef.current = new MonacoBinding(ytext, editor.getModel(), new Set([editor]), provider.awareness);
+    }
   };
 
-  const customThemes = ['amoled', 'nord', 'dracula', 'solarized', 'catppuccin', 'cyberpunk', 'glass'];
-  const monacoTheme = editorTheme === 'light' ? 'padX-light' : customThemes.includes(theme) ? theme : 'padX-dark';
+  // Re-bind Monaco when provider becomes available asynchronously
+  useEffect(() => {
+    if (!editorRef.current || !provider) return;
+
+    const ytext = ydoc.getText("monaco");
+    const model = editorRef.current.getModel();
+    if (!model) return;
+
+    if (bindingRef.current) {
+      bindingRef.current.destroy();
+    }
+
+    bindingRef.current = new MonacoBinding(
+      ytext,
+      model,
+      new Set([editorRef.current]),
+      provider.awareness
+    );
+
+    // Initial content and stats synchronization
+    const initialContent = model.getValue() || ytext.toString();
+    if (!model.getValue() && ytext.toString()) {
+      model.setValue(ytext.toString());
+    }
+    const words = initialContent.trim() === "" ? 0 : initialContent.trim().split(/\s+/).length;
+    onStatsChange(words, initialContent.length, initialContent);
+
+    // Live listener on Monaco model changes to guarantee instant stats update
+    const disposable = editorRef.current.onDidChangeModelContent(() => {
+      const text = editorRef.current.getValue();
+      const w = text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
+      onStatsChange(w, text.length, text);
+    });
+
+    return () => {
+      disposable.dispose();
+      if (bindingRef.current) {
+        bindingRef.current.destroy();
+        bindingRef.current = null;
+      }
+    };
+  }, [provider, ydoc]);
+
   const mappedLanguage = language === 'plaintext' ? 'text' : language;
 
   let activeFontFamily = codeFont || "'JetBrains Mono', 'Fira Code', 'Cascadia Code', Menlo, Monaco, Consolas, monospace";
@@ -766,6 +833,7 @@ const CollaborativeEditor = forwardRef<CollaborativeEditorHandle, CollaborativeE
         />
       ) : (
         <Editor
+          beforeMount={registerThemes}
           height="100%"
           language={mappedLanguage}
           theme={monacoTheme}

@@ -351,6 +351,11 @@ html.dark .glass-frosted, .glass-frosted {
   );
 }
 
+/* Purge any blue focus rings, focus borders or outlines */
+*:focus {
+  outline: none !important;
+}
+
 /* Monaco Editor Complete Glassmorphism & Theme Styles */
 /* Dark Editor Mode */
 .editor-theme-dark,
@@ -362,9 +367,14 @@ html.dark .glass-frosted, .glass-frosted {
 .editor-theme-dark .monaco-editor .margin {
   background-color: transparent !important;
   background: transparent !important;
+  --vscode-focusBorder: transparent !important;
+  outline: none !important;
+  border: none !important;
 }
 
-.editor-theme-dark .monaco-editor .view-line {
+.editor-theme-dark .monaco-editor .view-line,
+.editor-theme-dark .monaco-editor .view-line span,
+.editor-theme-dark .monaco-editor .mtk1 {
   color: #ffffff !important;
 }
 
@@ -395,9 +405,14 @@ html.dark .glass-frosted, .glass-frosted {
 .editor-theme-light .monaco-editor .margin {
   background-color: #ffffff !important;
   background: #ffffff !important;
+  --vscode-focusBorder: transparent !important;
+  outline: none !important;
+  border: none !important;
 }
 
-.editor-theme-light .monaco-editor .view-line {
+.editor-theme-light .monaco-editor .view-line,
+.editor-theme-light .monaco-editor .view-line span,
+.editor-theme-light .monaco-editor .mtk1 {
   color: #0f172a !important;
 }
 

@@ -44,7 +44,7 @@ export default function PromptModal({ isOpen, config, onClose }: PromptModalProp
       <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-3xl border border-white/80 dark:border-white/10 w-full max-w-md rounded-[2rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] dark:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] p-8 animate-in zoom-in-95 slide-in-from-bottom-4 duration-500 ease-out relative overflow-hidden">
         
         {/* Decorative ambient light */}
-        <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-blue-500/10 to-transparent pointer-events-none" />
+        <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-white/10 to-transparent pointer-events-none" />
 
         <h3 className="text-2xl font-extrabold mb-3 text-slate-900 dark:text-white tracking-tight relative z-10">{config.title}</h3>
         {config.message && <p className="text-slate-600 dark:text-slate-300 mb-8 font-medium text-sm leading-relaxed relative z-10">{config.message}</p>}
