@@ -14,7 +14,7 @@ import { encryptText, decryptText, hashRoomName } from "@/lib/clientCrypto";
 import { defineMonacoThemes } from "@/lib/monacoThemes";
 
 const getRandomColor = () => {
-  const colors = ["#ef4444", "#ffffff", "#10b981", "#f59e0b", "#d946ef", "#a855f7", "#14b8a6"];
+  const colors = ["#ffffff", "#e2e8f0", "#cbd5e1", "#94a3b8", "#64748b"];
   return colors[Math.floor(Math.random() * colors.length)];
 };
 
@@ -204,7 +204,9 @@ const CollaborativeEditor = forwardRef<CollaborativeEditorHandle, CollaborativeE
         'editorLineNumber.foreground': 'rgba(255, 255, 255, 0.4)',
         'editorLineNumber.activeForeground': '#ffffff',
         'editorCursor.foreground': '#ffffff',
-        'editor.selectionBackground': 'rgba(255, 255, 255, 0.25)',
+        'editor.selectionBackground': 'rgba(255, 255, 255, 0.28)',
+        'editor.inactiveSelectionBackground': 'rgba(255, 255, 255, 0.16)',
+        'editor.selectionHighlightBackground': 'rgba(255, 255, 255, 0.2)',
         'editor.lineHighlightBackground': '#00000000',
         'editor.lineHighlightBorder': '#00000000',
         'editorOverviewRuler.border': '#00000000',
@@ -235,7 +237,9 @@ const CollaborativeEditor = forwardRef<CollaborativeEditorHandle, CollaborativeE
         'editorLineNumber.foreground': 'rgba(15, 23, 42, 0.45)',
         'editorLineNumber.activeForeground': '#0f172a',
         'editorCursor.foreground': '#0f172a',
-        'editor.selectionBackground': 'rgba(0, 0, 0, 0.12)',
+        'editor.selectionBackground': 'rgba(15, 23, 42, 0.16)',
+        'editor.inactiveSelectionBackground': 'rgba(15, 23, 42, 0.08)',
+        'editor.selectionHighlightBackground': 'rgba(15, 23, 42, 0.12)',
         'editor.lineHighlightBackground': '#00000000',
         'editor.lineHighlightBorder': '#00000000',
         'editorOverviewRuler.border': '#00000000',
@@ -809,8 +813,8 @@ const CollaborativeEditor = forwardRef<CollaborativeEditorHandle, CollaborativeE
           readOnly={isBurned}
           className={`w-full h-full flex-1 resize-none outline-none p-4 transition-colors ${
             editorTheme === 'light'
-              ? 'bg-white text-slate-900 selection:bg-slate-200'
-              : 'bg-[#070b14] text-white selection:bg-white/20'
+              ? 'bg-white text-slate-900 selection:bg-slate-300 selection:text-slate-950'
+              : 'bg-[#070b14] text-white selection:bg-white/25 selection:text-white'
           }`}
           style={{
             fontFamily: activeFontFamily,
