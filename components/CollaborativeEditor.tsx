@@ -63,6 +63,7 @@ export interface CollaborativeEditorProps {
 export interface CollaborativeEditorHandle {
   selectAll: () => void;
   copy: () => void;
+  copyAll: () => void;
   paste: () => void;
   toggleFind: () => void;
 }
@@ -105,6 +106,53 @@ const CollaborativeEditor = forwardRef<CollaborativeEditorHandle, CollaborativeE
   const [matchesCount, setMatchesCount] = useState(0);
   const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
 
+  const fallbackCopy = (text: string) => {
+    try {
+      const el = document.createElement("textarea");
+      el.value = text;
+      el.setAttribute("readonly", "");
+      el.style.position = "absolute";
+      el.style.left = "-9999px";
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand("copy");
+      document.body.removeChild(el);
+      return true;
+    } catch (err) {
+      console.warn("Fallback copy failed", err);
+      return false;
+    }
+  };
+
+  const copyTextToClipboard = async (text: string, successMessage: string) => {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        fallbackCopy(text);
+      }
+      toast(successMessage, "success");
+    } catch {
+      fallbackCopy(text);
+      toast(successMessage, "success");
+    }
+  };
+
+  const getFullDocumentText = () => {
+    if (editorRef.current) {
+      return editorRef.current.getValue();
+    }
+    if (textareaRef.current) {
+      return textareaRef.current.value;
+    }
+    return ydoc.getText("monaco").toString();
+  };
+
+  const copyEntirePad = () => {
+    const text = getFullDocumentText();
+    copyTextToClipboard(text, "Entire pad copied to clipboard! (Ctrl+D)");
+  };
+
   // Expose imperative handle for toolbar buttons
   useImperativeHandle(ref, () => ({
     selectAll: () => {
@@ -139,9 +187,11 @@ const CollaborativeEditor = forwardRef<CollaborativeEditorHandle, CollaborativeE
         }
       }
       if (textToCopy) {
-        navigator.clipboard.writeText(textToCopy);
-        toast("Copied to clipboard!", "success");
+        copyTextToClipboard(textToCopy, "Copied to clipboard!");
       }
+    },
+    copyAll: () => {
+      copyEntirePad();
     },
     paste: async () => {
       try {
@@ -278,13 +328,16 @@ const CollaborativeEditor = forwardRef<CollaborativeEditorHandle, CollaborativeE
     }
   }, [language, monaco]);
 
-  // Global Ctrl+F / Cmd+F & Escape handler
+  // Global Ctrl+F / Cmd+F, Ctrl+D / Cmd+D & Escape handler
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
         e.preventDefault();
         setIsFindOpen(true);
         setTimeout(() => searchInputRef.current?.focus(), 60);
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
+        e.preventDefault();
+        copyEntirePad();
       } else if (e.key === 'Escape' && isFindOpen) {
         setIsFindOpen(false);
         if (editorRef.current) editorRef.current.focus();
@@ -541,6 +594,11 @@ const CollaborativeEditor = forwardRef<CollaborativeEditorHandle, CollaborativeE
       setTimeout(() => searchInputRef.current?.focus(), 60);
     });
 
+    // Bind Ctrl+D inside Monaco to copy entire pad text
+    editor.addCommand(monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.KeyD, () => {
+      copyEntirePad();
+    });
+
     if (provider) {
       const ytext = ydoc.getText("monaco");
       if (bindingRef.current) bindingRef.current.destroy();
@@ -629,6 +687,12 @@ const CollaborativeEditor = forwardRef<CollaborativeEditorHandle, CollaborativeE
         selectionHighlight: false,
         occurrencesHighlight: "off",
         matchBrackets: "never",
+        contextmenu: false,
+        dragAndDrop: false,
+        quickSuggestions: false,
+        parameterHints: { enabled: false },
+        hover: { enabled: false },
+        links: false,
         overviewRulerBorder: false,
         overviewRulerLanes: 0,
         hideCursorInOverviewRuler: true,
@@ -657,7 +721,16 @@ const CollaborativeEditor = forwardRef<CollaborativeEditorHandle, CollaborativeE
   }, []);
 
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    const checkMobile = () => {
+      const isTouch = typeof window !== 'undefined' && (
+        'ontouchstart' in window ||
+        (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) ||
+        (window.matchMedia && window.matchMedia('(pointer: coarse)').matches)
+      );
+      const isNarrow = window.innerWidth < 768;
+      const hasFinePointer = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(pointer: fine)').matches;
+      setIsMobile(isNarrow || (Boolean(isTouch) && !hasFinePointer));
+    };
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
@@ -811,20 +884,24 @@ const CollaborativeEditor = forwardRef<CollaborativeEditorHandle, CollaborativeE
         <textarea
           ref={textareaRef}
           readOnly={isBurned}
-          className={`w-full h-full flex-1 resize-none outline-none p-4 transition-colors ${
+          className={`w-full h-full flex-1 resize-none outline-none p-4 transition-colors select-text ${
             editorTheme === 'light'
               ? 'bg-white text-slate-900 selection:bg-slate-300 selection:text-slate-950'
-              : 'bg-[#070b14] text-white selection:bg-white/25 selection:text-white'
+              : 'bg-[#070b14] text-white selection:bg-white/28 selection:text-white'
           }`}
           style={{
             fontFamily: activeFontFamily,
             fontSize: activeFontSize,
             lineHeight: `${activeLineHeight}px`,
             letterSpacing: letterSpacing,
-            touchAction: 'pan-y',
+            touchAction: 'manipulation',
             WebkitUserSelect: 'text',
             userSelect: 'text'
           }}
+          spellCheck={false}
+          autoCapitalize="off"
+          autoComplete="off"
+          autoCorrect="off"
           value={mobileText}
           onChange={(e) => {
             if (isBurned) return;
@@ -860,6 +937,12 @@ const CollaborativeEditor = forwardRef<CollaborativeEditorHandle, CollaborativeE
             selectionHighlight: false,
             occurrencesHighlight: "off",
             matchBrackets: "never",
+            contextmenu: false,
+            dragAndDrop: false,
+            quickSuggestions: false,
+            parameterHints: { enabled: false },
+            hover: { enabled: false },
+            links: false,
             overviewRulerBorder: false,
             overviewRulerLanes: 0,
             hideCursorInOverviewRuler: true,

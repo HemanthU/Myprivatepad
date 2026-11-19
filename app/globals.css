@@ -105,11 +105,6 @@ code, pre, .cm-editor, .monaco-editor {
 .accent-border { border-color: var(--color-accent) !important; }
 .accent-ring { --tw-ring-color: var(--color-accent) !important; }
 
-::selection {
-  background: var(--color-accent) !important;
-  color: #fff !important;
-}
-
 @keyframes float {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-10px); }

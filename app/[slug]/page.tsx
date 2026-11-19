@@ -497,6 +497,11 @@ export default function NotePage() {
         toast("One-time link copied to clipboard!", "success");
       }
 
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "d") {
+        e.preventDefault();
+        editorHandleRef.current?.copyAll();
+      }
+
       if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "m") {
         e.preventDefault();
         const confirmTrash = await confirm({ title: "Move to Trash", message: "Move this pad to trash?" });
@@ -788,7 +793,7 @@ export default function NotePage() {
                       ? 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
                       : 'glass-clear text-gray-300 hover:text-white border-white/10 hover:border-white/20'
                   }`}
-                  title="Copy Selection or Content"
+                  title="Copy (Ctrl+D to copy entire pad)"
                 >
                   <Copy size={13} />
                   <span>Copy</span>

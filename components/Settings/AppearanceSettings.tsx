@@ -19,7 +19,7 @@ export default function AppearanceSettings() {
     { id: 'cyberpunk', label: 'Cyberpunk', icon: <Monitor size={16} /> }
   ];
 
-  const presets = ['#ffffff', '#e2e8f0', '#94a3b8', '#8b5cf6', '#10b981', '#f97316', '#ef4444', '#ec4899'];
+  const presets = ['#ffffff', '#f1f5f9', '#e2e8f0', '#cbd5e1', '#94a3b8', '#64748b', '#475569', '#334155'];
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
