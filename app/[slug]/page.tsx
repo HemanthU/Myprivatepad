@@ -497,11 +497,6 @@ export default function NotePage() {
         toast("One-time link copied to clipboard!", "success");
       }
 
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "d") {
-        e.preventDefault();
-        editorHandleRef.current?.copyAll();
-      }
-
       if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "m") {
         e.preventDefault();
         const confirmTrash = await confirm({ title: "Move to Trash", message: "Move this pad to trash?" });

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useRef, ReactNode } from "react";
 import { CheckCircle2, XCircle, Info, Loader2 } from "lucide-react";
 
 export type ToastType = "success" | "error" | "info" | "loading";
@@ -21,10 +21,22 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const lastToastRef = useRef<{ message: string; timestamp: number }>({ message: "", timestamp: 0 });
 
   const toast = useCallback((message: string, type: ToastType = "info", duration: number = 3000) => {
+    const now = Date.now();
+    // Deduplicate rapid identical toasts within 1000ms
+    if (lastToastRef.current.message === message && now - lastToastRef.current.timestamp < 1000) {
+      return;
+    }
+    lastToastRef.current = { message, timestamp: now };
+
     const id = Math.random().toString(36).substring(2, 9);
-    setToasts((prev) => [...prev, { id, message, type, duration }]);
+    setToasts((prev) => {
+      // Remove any existing identical toast before appending to prevent duplicate stacking
+      const deduplicated = prev.filter((t) => t.message !== message);
+      return [...deduplicated, { id, message, type, duration }];
+    });
 
     if (duration > 0) {
       setTimeout(() => {

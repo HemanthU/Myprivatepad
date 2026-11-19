@@ -105,6 +105,14 @@ const CollaborativeEditor = forwardRef<CollaborativeEditorHandle, CollaborativeE
   const [showReplace, setShowReplace] = useState(false);
   const [matchesCount, setMatchesCount] = useState(0);
   const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
+  const lastCopyTimestampRef = useRef<number>(0);
+
+  const reportStats = (text: string) => {
+    const safeText = text || "";
+    const trimmed = safeText.trim();
+    const words = trimmed === "" ? 0 : trimmed.split(/\s+/).length;
+    onStatsChange(words, safeText.length, safeText);
+  };
 
   const fallbackCopy = (text: string) => {
     try {
@@ -149,6 +157,12 @@ const CollaborativeEditor = forwardRef<CollaborativeEditorHandle, CollaborativeE
   };
 
   const copyEntirePad = () => {
+    const now = Date.now();
+    // Guard against multiple rapid keydown / command triggers
+    if (now - lastCopyTimestampRef.current < 1000) {
+      return;
+    }
+    lastCopyTimestampRef.current = now;
     const text = getFullDocumentText();
     copyTextToClipboard(text, "Entire pad copied to clipboard! (Ctrl+D)");
   };
@@ -337,6 +351,7 @@ const CollaborativeEditor = forwardRef<CollaborativeEditorHandle, CollaborativeE
         setTimeout(() => searchInputRef.current?.focus(), 60);
       } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
         e.preventDefault();
+        e.stopPropagation();
         copyEntirePad();
       } else if (e.key === 'Escape' && isFindOpen) {
         setIsFindOpen(false);
@@ -347,6 +362,12 @@ const CollaborativeEditor = forwardRef<CollaborativeEditorHandle, CollaborativeE
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isFindOpen]);
+
+  useEffect(() => {
+    if (initialText) {
+      reportStats(initialText);
+    }
+  }, [initialText]);
 
   // Find logic for Monaco Editor
   const handleFind = (term: string, forward = true) => {
@@ -485,6 +506,7 @@ const CollaborativeEditor = forwardRef<CollaborativeEditorHandle, CollaborativeE
         if (initialText) {
           if (ytext.toString() === "") ytext.insert(0, initialText);
           setMobileText(initialText);
+          reportStats(initialText);
           initRef.current = true;
           onStatusChange?.("Synced");
         } else {
@@ -502,7 +524,12 @@ const CollaborativeEditor = forwardRef<CollaborativeEditorHandle, CollaborativeE
                 }
                 ytext.insert(0, content);
                 setMobileText(content);
+                reportStats(content);
+              } else {
+                reportStats("");
               }
+            } else {
+              reportStats(ytext.toString());
             }
           } catch (err) {
             console.error("Failed to load pad content", err);
@@ -515,8 +542,7 @@ const CollaborativeEditor = forwardRef<CollaborativeEditorHandle, CollaborativeE
 
       observer = (event: Y.YTextEvent, transaction: Y.Transaction) => {
         const currentText = ytext.toString();
-        const words = currentText.trim() === "" ? 0 : currentText.trim().split(/\s+/).length;
-        onStatsChange(words, currentText.length, currentText);
+        reportStats(currentText);
         setMobileText(currentText);
 
         if (transaction.local && !isBurned) {
@@ -588,6 +614,15 @@ const CollaborativeEditor = forwardRef<CollaborativeEditorHandle, CollaborativeE
   const handleEditorDidMount = (editor: any, monacoInstance: any) => {
     editorRef.current = editor;
 
+    // Report stats immediately upon mount with current editor model content
+    const model = editor.getModel();
+    if (model) {
+      reportStats(model.getValue());
+      editor.onDidChangeModelContent(() => {
+        reportStats(editor.getValue());
+      });
+    }
+
     // Bind Ctrl+F inside Monaco
     editor.addCommand(monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.KeyF, () => {
       setIsFindOpen(true);
@@ -630,14 +665,11 @@ const CollaborativeEditor = forwardRef<CollaborativeEditorHandle, CollaborativeE
     if (!model.getValue() && ytext.toString()) {
       model.setValue(ytext.toString());
     }
-    const words = initialContent.trim() === "" ? 0 : initialContent.trim().split(/\s+/).length;
-    onStatsChange(words, initialContent.length, initialContent);
+    reportStats(initialContent);
 
     // Live listener on Monaco model changes to guarantee instant stats update
     const disposable = editorRef.current.onDidChangeModelContent(() => {
-      const text = editorRef.current.getValue();
-      const w = text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
-      onStatsChange(w, text.length, text);
+      reportStats(editorRef.current.getValue());
     });
 
     return () => {
@@ -907,6 +939,7 @@ const CollaborativeEditor = forwardRef<CollaborativeEditorHandle, CollaborativeE
             if (isBurned) return;
             const val = e.target.value;
             setMobileText(val);
+            reportStats(val);
             const ytext = ydoc.getText("monaco");
             applySplice(ytext, val);
           }}
