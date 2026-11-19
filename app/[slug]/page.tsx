@@ -812,6 +812,34 @@ export default function NotePage() {
                   <span>Paste</span>
                 </button>
               </div>
+
+              {/* Minimalist Glassy Live Word & Character Stats Pill in Top-Right Corner */}
+              <div
+                className={`flex items-center gap-2.5 px-3.5 py-1.5 rounded-full text-sm font-medium border shadow-sm backdrop-blur-md select-none transition-all ${
+                  editorTheme === 'light'
+                    ? 'bg-slate-100/90 text-slate-700 border-slate-300 shadow-[0_2px_8px_rgba(0,0,0,0.04)]'
+                    : 'glass-clear text-gray-300 border-white/15 shadow-[0_4px_16px_rgba(0,0,0,0.3)]'
+                }`}
+                title="Live Document Statistics"
+              >
+                <span className="flex items-center gap-1.5">
+                  <span className={`font-semibold ${editorTheme === 'light' ? 'text-slate-900' : 'text-white'}`}>
+                    {wordCount.toLocaleString()}
+                  </span>
+                  <span className={`text-xs ${editorTheme === 'light' ? 'text-slate-500' : 'text-gray-400'}`}>
+                    {wordCount === 1 ? 'word' : 'words'}
+                  </span>
+                </span>
+                <span className={`w-1 h-1 rounded-full ${editorTheme === 'light' ? 'bg-slate-300' : 'bg-white/25'}`} />
+                <span className="flex items-center gap-1.5">
+                  <span className={`font-semibold ${editorTheme === 'light' ? 'text-slate-900' : 'text-white'}`}>
+                    {charCount.toLocaleString()}
+                  </span>
+                  <span className={`text-xs ${editorTheme === 'light' ? 'text-slate-500' : 'text-gray-400'}`}>
+                    {charCount === 1 ? 'char' : 'chars'}
+                  </span>
+                </span>
+              </div>
             </div>
 
             <div className="flex-1 flex flex-col min-h-[400px] relative overflow-hidden">
